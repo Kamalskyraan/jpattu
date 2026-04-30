@@ -1,0 +1,12 @@
+<FilesMatch "^(index\.js|\.env|package.*\.json|.*\.p8|database\.js)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ http://127.0.0.1:9001/ [P,L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ http://127.0.0.1:9001/$1 [P,L]
+</IfModule>
+
