@@ -410,7 +410,7 @@ export const PackageApproved = async (req, res) => {
 
 export const MembersList = async (req, res) => {
   try {
-    const { status = null, start, end, order = "asc" } = req.body;
+    const { status = null, start, end, order = "desc" } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res
@@ -623,6 +623,4 @@ export const withdrawMoney = async (req, res) => {
   }
 };
 
-
-// 
-
+//
