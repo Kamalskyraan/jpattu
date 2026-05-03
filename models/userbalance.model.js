@@ -76,10 +76,8 @@ const UserBalanceModel = {
 
   paymentHistory: async (user_id) => {
     try {
-      // const query =
-      //   "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
       const query =
-        "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL";
+        "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
       const [data] = await db.query(query, [user_id]);
       return data;
     } catch (err) {
@@ -98,7 +96,7 @@ const UserBalanceModel = {
       const [data] = await db.query(received_amount_query, [user_id]);
       const level_amount = data
         .filter(
-          (val) => val.created_at >= startTime && val.created_at <= endTime,
+          (val) =>  val.status === "paid" && val.created_at >= startTime && val.created_at <= endTime,
         )
         .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
       const received_amount = data
