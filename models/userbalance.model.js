@@ -90,8 +90,17 @@ const UserBalanceModel = {
       const startTime = dayjs().startOf("month").valueOf();
       const endTime = dayjs().endOf("month").valueOf();
 
-      const received_amount_query =
-        "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 1000 as created_at FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
+      // const received_amount_query =
+      //   "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 1000 as created_at FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
+
+      const received_amount_query = `
+      SELECT amount,
+      UNIX_TIMESTAMP(updated_at) * 1000 as received_date
+      FROM user_balance_logs
+      WHERE user_id = ?
+      AND deleted_at IS NULL
+      AND status = 'paid'
+    `;
       const [data] = await db.query(received_amount_query, [user_id]);
       const level_amount = data
         .filter(
