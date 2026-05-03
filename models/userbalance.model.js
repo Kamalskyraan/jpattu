@@ -76,8 +76,10 @@ const UserBalanceModel = {
 
   paymentHistory: async (user_id) => {
     try {
+      // const query =
+      //   "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
       const query =
-        "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
+        "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL";
       const [data] = await db.query(query, [user_id]);
       return data;
     } catch (err) {
