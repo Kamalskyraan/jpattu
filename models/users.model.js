@@ -1113,7 +1113,7 @@ export const UserModel = {
       await db.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUser();
+      const lastId = await UserModel.getLastUserTT();
       let baseId = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
@@ -1239,6 +1239,19 @@ export const UserModel = {
     } catch (err) {
       console.error("approveUser error:", err);
       await db.rollback();
+      throw err;
+    }
+  },
+  getLastUserTT: async () => {
+    try {
+      const query = "SELECT user_id from tt_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "TT0";
+      }
+    } catch (err) {
       throw err;
     }
   },
