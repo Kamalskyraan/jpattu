@@ -299,42 +299,7 @@ export const TempUserModel = {
     }
   },
 
-  getAllUsersTT: async ({ start, end }) => {
-    try {
-      const startTime = `${start} 00:00:00`;
-      const endTime = `${end} 23:59:59`;
-      const query = `SELECT 
-                      u.id, 
-                      u.user_id,
-                      u.name, 
-                      u.mobile, 
-                      u.status,
-                      u.email, 
-                      u.pancard,
-                      u.screenshot,
-                      u.password,
-                      u.address,
-                      u.referral_id,
-                      u.account_number,
-                      u.bank_name,
-                      u.holder_name,
-                      u.ifsc_code,
-                      u.txn_id,
-                      u.branch,
-                      IFNULL(r.name, a.name) AS referral_name,
-                      UNIX_TIMESTAMP(u.created_at) as created,
-                      u.created_at
-                    FROM tt_users u
-                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
-                    LEFT JOIN admin a ON u.referral_id = a.user_id
-                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.created_at DESC`;
-      const [data] = await db.query(query, [startTime, endTime]);
-      const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
-      return updatedData;
-    } catch (err) {
-      throw err;
-    }
-  },
+  
 };
 
 export const UserModel = {
@@ -1102,6 +1067,43 @@ export const UserModel = {
       const [data] = await db.query(query, [referral_id]);
 
       return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getAllUsersTT: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.txn_id,
+                      u.branch,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM tt_users u
+                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+      const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
+      return updatedData;
     } catch (err) {
       throw err;
     }
