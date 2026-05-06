@@ -558,3 +558,44 @@ export const getAdminData = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// TT
+
+export const TTRegisterUser = async (req, res) => {
+  try {
+    const data = req.body;
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({
+        message: result.array().map((val) => val.msg),
+      });
+    }
+
+    if (data.role === "user" && !data.referral_id) {
+      res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const user = await UserModel.getUserNameFromTT(data?.referral_id);
+
+    let admin = [];
+    if (user.length === 0 && data.role === "admin") {
+      admin = await AdminModel.getUserName(data.referral_id);
+    }
+
+    if (user.length === 0 && admin.length === 0) {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      const id = await TempUserModel.addTargetUser(data);
+      res.status(201).json({ id: id, message: "Registered Successfully" });
+    }
+  } catch (error) {
+  
+    if (error.message === "referrer not found") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else if (error.message === "Referrar is in Queue") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};

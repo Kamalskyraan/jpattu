@@ -97,6 +97,21 @@ export const TempUserModel = {
     }
   },
 
+  // TT
+  getLastTargetUser: async () => {
+    try {
+      const query = "SELECT user_id from tt_temp_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "TM0";
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
   addUser: async (data) => {
     try {
       const lastId = await TempUserModel.getLastUser();
@@ -193,6 +208,50 @@ export const TempUserModel = {
         "UPDATE temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
       const [result] = await db.query(query, [id]);
       return result.affectedRows;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+  // TT
+
+   addTargetUser: async (data) => {
+    try {
+      const lastId = await TempUserModel.getLastTargetUser();
+      const value = lastId.length > 0 ? lastId.split("TE")[1] : 0;
+      const newValue = ((parseInt(value) || 0) + 1).toString();
+      const newId = "TE" + newValue;
+
+      const referrarQuery =
+        "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
+
+      let [referrar] = await db.query(referrarQuery, [data.referral_id]);
+      if (referrar.length === 0) {
+        const referrarQuery =
+          "SELECT * FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+        [referrar] = await db.query(referrarQuery, [data.referral_id]);
+        if (!referrar[0]?.id) {
+          throw new Error("referrer not found");
+        } else if (referrar[0].status === "Queued") {
+          throw new Error("Referrar is in Queue");
+        }
+      }
+
+      const query =
+        "INSERT INTO tt_temp_users (referral_id, user_id, name, mobile, email, password, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        data.referral_id,
+        newId,
+        data.name,
+        data.mobile,
+        data.email || "",
+        data.password,
+        data.txn_id,
+      ]);
+
+      return newId;
     } catch (err) {
       throw err;
     }
@@ -900,6 +959,9 @@ export const UserModel = {
       await db.rollback();
       throw err;
     }
+
+
+
   },
 
   getNwpDetails: async (user_id) => {
@@ -950,6 +1012,20 @@ export const UserModel = {
       return {
         reward_amount: rows[0]?.reward_amount || 0,
       };
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // TT
+
+   getUserNameFromTT: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
     } catch (err) {
       throw err;
     }

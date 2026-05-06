@@ -5,6 +5,7 @@ import {
   LoginUser,
   LogoutUser,
   RegisterUser,
+  TTRegisterUser,
   UpdateUserToken,
   verifyStatus,
 } from "../controllers/users.controller.js";
@@ -35,5 +36,7 @@ router.post("/logout", LogoutUser);
 router.get("/verify-user", verifyStatus);
 
 router.post("/update-user", UpdateUserToken);
+
+router.post("/tt-register", validateRegister, TTRegisterUser);
 
 export default router;
