@@ -99,6 +99,16 @@ export const verifyStatus = async (req, res) => {
   }
 };
 
+export const TargetUserData = async (req, res) => {
+  try {
+    const targetUser = await AdminModel.fetchTagetUserDatas();
+    res.status(200).json({ user: targetUser, message: "Target " });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 export const approveUser = async (req, res) => {
   try {
     const user_ids = req.body?.user_ids;

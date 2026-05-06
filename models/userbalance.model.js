@@ -74,57 +74,10 @@ const UserBalanceModel = {
     }
   },
 
-  totalPayment: async (user_id) => {
-    try {
-      const startTime = dayjs().startOf("month").valueOf();
-      const endTime = dayjs().endOf("month").valueOf();
-
-      const query = `
-      SELECT 
-        amount,
-        status,
-        UNIX_TIMESTAMP(updated_at) * 1000 AS received_date
-      FROM user_balance_logs
-      WHERE user_id = ?
-        AND deleted_at IS NULL
-        AND status = 'paid'
-    `;
-
-      const [data] = await db.query(query, [user_id]);
-
-      // Home page level_amount = Payment History current month total
-      const level_amount = data
-        .filter(
-          (val) =>
-            val.received_date >= startTime && val.received_date <= endTime,
-        )
-        .reduce((total, val) => total + Number(val.amount), 0);
-
-      // All paid total
-      const received_amount = data.reduce(
-        (total, val) => total + Number(val.amount),
-        0,
-      );
-
-      return [level_amount, received_amount];
-    } catch (err) {
-      throw err;
-    }
-  },
-
   paymentHistory: async (user_id) => {
     try {
-      const query = `
-      SELECT 
-        *,
-        updated_at AS received_date
-      FROM user_balance_logs
-      WHERE user_id = ?
-        AND deleted_at IS NULL
-        AND status = 'paid'
-      ORDER BY updated_at DESC
-    `;
-
+      const query =
+        "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
       const [data] = await db.query(query, [user_id]);
       return data;
     } catch (err) {
@@ -132,40 +85,29 @@ const UserBalanceModel = {
     }
   },
 
-  // paymentHistory: async (user_id) => {
-  //   try {
-  //     const query =
-  //       "SELECT *, updated_at as received_date FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL AND status = 'paid'";
-  //     const [data] = await db.query(query, [user_id]);
-  //     return data;
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // },
+  totalPayment: async (user_id) => {
+    try {
+      const startTime = dayjs().startOf("month").valueOf();
+      const endTime = dayjs().endOf("month").valueOf();
 
-  // totalPayment: async (user_id) => {
-  //   try {
-  //     const startTime = dayjs().startOf("month").valueOf();
-  //     const endTime = dayjs().endOf("month").valueOf();
+      const received_amount_query =
+        "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 1000 as created_at FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
 
-  //     const received_amount_query =
-  //       "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 1000 as created_at FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
+      const [data] = await db.query(received_amount_query, [user_id]);
+      const level_amount = data
+        .filter(
+          (val) =>   val.created_at >= startTime && val.created_at <= endTime,
+        )
+        .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
+      const received_amount = data
+        .filter((val) => val.status === "paid")
+        .reduce((total, val) => total + Number(val.amount), 0);
 
-  //     const [data] = await db.query(received_amount_query, [user_id]);
-  //     const level_amount = data
-  //       .filter(
-  //         (val) =>   val.created_at >= startTime && val.created_at <= endTime,
-  //       )
-  //       .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
-  //     const received_amount = data
-  //       .filter((val) => val.status === "paid")
-  //       .reduce((total, val) => total + Number(val.amount), 0);
-
-  //     return [parseInt(level_amount), parseInt(received_amount)];
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // },
+      return [parseInt(level_amount), parseInt(received_amount)];
+    } catch (err) {
+      throw err;
+    }
+  },
 
   getTotalPayouts: async (all = false, year = null, month = null) => {
     try {

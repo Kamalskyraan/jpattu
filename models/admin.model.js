@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 const AdminModel = {
   getUserName: async (referral_id) => {
     try {
-      const query = "SELECT user_id, name FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+      const query =
+        "SELECT user_id, name FROM admin WHERE user_id = ? AND deleted_at IS NULL";
       const [data] = await db.query(query, [referral_id]);
       return data;
     } catch (err) {
@@ -15,7 +16,7 @@ const AdminModel = {
   getUser: async (user_id) => {
     try {
       const query =
-        "SELECT id, user_id, name, mobile, email, password, bank_name, holder_name, account_number, ifsc_code, branch, created_at, updated_at FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+        "SELECT id, user_id, name, mobile, email, password, bank_name, holder_name, account_number, ifsc_code, branch, created_at, updated_at FROM admin WHERE user_id = ? AND admin_type = 0 AND deleted_at IS NULL";
       const [data] = await db.query(query, [user_id]);
       return data[0] || {};
     } catch (err) {
@@ -71,7 +72,7 @@ const AdminModel = {
       throw err;
     }
   },
-  
+
   getSearchUser: async (user_id, admin) => {
     try {
       let query;
@@ -131,6 +132,16 @@ const AdminModel = {
     } catch (err) {
       throw err;
     }
+  },
+
+  fetchTagetUserDatas: async () => {
+    const result = await db.query(
+      `SELECT user_id , role , admin_type , name , mobile , email , holder_name , account_number , bank_name , ifsc_code , branch  FROM admin WHERE admin_type = 1`,
+    );
+
+    console.log(result);
+
+    return result;
   },
 };
 
