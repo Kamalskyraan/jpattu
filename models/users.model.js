@@ -298,8 +298,6 @@ export const TempUserModel = {
       throw err;
     }
   },
-
-  
 };
 
 export const UserModel = {
@@ -580,7 +578,7 @@ export const UserModel = {
           // Level 9+ payout = 100
           await db.query(
             `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
-     SELECT ancestor_id, ?, 100, 'unpaid'
+     SELECT ancestor_id, ?, 185, 'unpaid'
      FROM user_relations
      WHERE descendant_id = ? AND level >= 9`,
             [newId, newId],
@@ -1105,6 +1103,142 @@ export const UserModel = {
       const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
       return updatedData;
     } catch (err) {
+      throw err;
+    }
+  },
+
+  // TT
+  approveUserTT: async (user_ids) => {
+    try {
+      await db.beginTransaction();
+      const ids = [];
+
+      const lastId = await UserModel.getLastUser();
+      let baseId = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
+      user_ids.sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+      );
+
+      for (const temp_user_id of user_ids) {
+        const [[user]] = await db.query(
+          "SELECT * FROM tt_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
+          [temp_user_id],
+        );
+
+        if (!user) continue;
+
+        const [[referrer]] = await db.query(
+          `SELECT user_id, 'user' as role FROM tt_users WHERE user_id = ?
+         UNION
+         SELECT user_id, role FROM admin WHERE user_id = ?`,
+          [user.referral_id, user.referral_id],
+        );
+
+        let status = "Approved";
+
+        const [[{ count }]] = await db.query(
+          "SELECT COUNT(*) as count FROM tt_users WHERE referral_id = ?",
+          [referrer.user_id],
+        );
+        if (referrer?.role === "admin" && count !== 0) {
+          status = "Queued";
+        } else if (referrer?.role !== "admin" && count >= 2) status = "Queued";
+
+        baseId += 1;
+        const newId = "TT" + baseId.toString();
+
+        await db.query(
+          `INSERT INTO tt_users 
+        (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            referrer?.user_id,
+            newId,
+            user.name,
+            user.mobile,
+            user.email,
+            user.address,
+            user.password,
+            status,
+            user.txn_id,
+            user.screenshot,
+          ],
+        );
+
+        await db.query(
+          "INSERT INTO tt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
+          [newId, 0, "paid"],
+        );
+
+        if (status === "Approved" && referrer?.role === "user") {
+          // Add direct relation
+          await db.query(
+            "INSERT INTO tt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+            [referrer.user_id, newId],
+          );
+
+          // Add upper relations
+          await db.query(
+            `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
+     SELECT ancestor_id, ?, level + 1
+     FROM user_relations
+     WHERE descendant_id = ? AND ancestor_id IS NOT NULL`,
+            [newId, referrer.user_id],
+          );
+
+          // Level 1 payout = 100
+          await db.query(
+            `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+     VALUES (?, ?, 100, 'unpaid')`,
+            [referrer.user_id, newId],
+          );
+
+          // Level 2–8 payout = 10
+          await db.query(
+            `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 10, 'unpaid'
+     FROM user_relations
+     WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+            [newId, newId],
+          );
+
+          // Level 9+ payout = 100
+          await db.query(
+            `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 185, 'unpaid'
+     FROM user_relations
+     WHERE descendant_id = ? AND level >= 9`,
+            [newId, newId],
+          );
+        }
+
+        await db.query(
+          "UPDATE tt_temp_users SET approved = 1 WHERE user_id = ?",
+          [temp_user_id],
+        );
+
+        if (user.email) {
+          user.user_id = newId;
+          user.referral_id = referrer.user_id;
+          sendMail(user);
+        }
+        await sendAdminMail(user);
+        ids.push({
+          new_id: newId,
+          user_id: temp_user_id,
+          mobile: user.mobile,
+          name: user.name,
+          sponsor_id: referrer.user_id,
+          password: user.password,
+          status,
+        });
+      }
+
+      await db.commit();
+      return ids;
+    } catch (err) {
+      console.error("approveUser error:", err);
+      await db.rollback();
       throw err;
     }
   },

@@ -417,3 +417,37 @@ export const getAllTTUsers = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// TT
+
+export const approveTTUser = async (req, res) => {
+  try {
+    const user_ids = req.body?.user_ids;
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "user_id is required and must be an array" });
+    }
+
+    const ids = await UserModel.approveUserTT(user_ids);
+
+    if (ids.length > 0) {
+      // sendAdminMail(ids);
+
+      const newIds = ids.map((id) => ({
+        newId: id.newId,
+        user_id: id.user_id,
+        status: id.status,
+      }));
+
+      return res
+        .status(200)
+        .json({ newIds: newIds, message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
