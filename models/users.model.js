@@ -100,7 +100,8 @@ export const TempUserModel = {
   // TT
   getLastTargetUser: async () => {
     try {
-      const query = "SELECT user_id from tt_temp_users ORDER BY id DESC LIMIT 1";
+      const query =
+        "SELECT user_id from tt_temp_users ORDER BY id DESC LIMIT 1";
       const [id] = await db.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
@@ -111,6 +112,49 @@ export const TempUserModel = {
       throw err;
     }
   },
+
+  getAllUsersTT: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.email,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.approved,
+                      IFNULL(r.user_id, a.user_id) AS referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM tt_temp_users u
+                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at is NULL AND u.approved = 0 ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        address: "",
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  //
 
   addUser: async (data) => {
     try {
@@ -213,11 +257,9 @@ export const TempUserModel = {
     }
   },
 
-
-
   // TT
 
-   addTargetUser: async (data) => {
+  addTargetUser: async (data) => {
     try {
       const lastId = await TempUserModel.getLastTargetUser();
       const value = lastId.length > 0 ? lastId.split("TE")[1] : 0;
@@ -252,6 +294,43 @@ export const TempUserModel = {
       ]);
 
       return newId;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getAllUsersTT: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.txn_id,
+                      u.branch,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM tt_users u
+                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+      const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
+      return updatedData;
     } catch (err) {
       throw err;
     }
@@ -959,9 +1038,6 @@ export const UserModel = {
       await db.rollback();
       throw err;
     }
-
-
-
   },
 
   getNwpDetails: async (user_id) => {
@@ -1019,7 +1095,7 @@ export const UserModel = {
 
   // TT
 
-   getUserNameFromTT: async (referral_id) => {
+  getUserNameFromTT: async (referral_id) => {
     try {
       const query =
         "SELECT user_id, name, user_id, status FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";

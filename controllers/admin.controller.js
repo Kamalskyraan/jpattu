@@ -99,8 +99,6 @@ export const verifyStatus = async (req, res) => {
   }
 };
 
-
-
 export const TargetUserData = async (req, res) => {
   try {
     const targetUser = await AdminModel.fetchTagetUserDatas();
@@ -375,6 +373,45 @@ export const searchUser = async (req, res) => {
     } else {
       res.status(200).json({ data: data });
     }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getAllTTUsers = async (req, res) => {
+  try {
+    const { start, end, type } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const users = await UserModel.getAllUsersTT({ start, end });
+    let temp_users = [];
+    if (type !== "permanent") {
+      temp_users = await TempUserModel.getAllUsersTT({ start, end });
+    }
+
+    const data = [...users, ...temp_users];
+    const updatedData = data.map((val) => {
+      if (val.screenshot)
+        return {
+          ...val,
+          // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+          screenshot: `https://rightshadow.skyraantech.com/server/public/screenshots/${val.screenshot}`,
+        };
+      else return val;
+    });
+
+    updatedData.sort((a, b) => b.created - a.created);
+
+    return res.status(200).json({
+      data: updatedData,
+      message: "Data fetched successfully",
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal Server Error" });
