@@ -135,13 +135,30 @@ const AdminModel = {
   },
 
   fetchTagetUserDatas: async () => {
-    const result = await db.query(
-      `SELECT user_id , role , admin_type , name , mobile , email , holder_name , account_number , bank_name , ifsc_code , branch  FROM admin WHERE admin_type = 1`,
-    );
+    try {
+      const [result] = await db.query(
+        `SELECT 
+        user_id,
+        role,
+        admin_type,
+        name,
+        mobile,
+        email,
+        holder_name,
+        account_number,
+        bank_name,
+        ifsc_code,
+        branch
+       FROM admin
+       WHERE admin_type = ?
+       LIMIT 1`,
+        [1],
+      );
 
-    console.log(result);
-
-    return result;
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
