@@ -83,6 +83,8 @@ export const getTreeChart = async (req, res) => {
   try {
     const id = req.params.id;
 
+    console.log(id);
+
     const [rows] = await db.query(
       `
     SELECT u.user_id,u.name,u.sponsor_id
@@ -95,6 +97,7 @@ export const getTreeChart = async (req, res) => {
       [id],
     );
 
+    console.log(rows);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
