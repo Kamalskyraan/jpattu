@@ -79,27 +79,38 @@ export const getMembersCount = async (req, res) => {
   }
 };
 
+// controller
 export const getTreeChart = async (req, res) => {
   try {
     const id = req.params.id;
 
-    console.log(id);
-
     const [rows] = await db.query(
       `
-    SELECT u.user_id,u.name,u.sponsor_id
-    FROM users u
-    JOIN user_relations r
-      ON u.user_id = r.descendant_id
-    WHERE r.ancestor_id = ?
-    ORDER BY r.level
-  `,
-      [id],
+      SELECT 
+        u.user_id,
+        u.name,
+        u.sponsor_id,
+        r.level
+      FROM users u
+      INNER JOIN user_relations r
+        ON u.user_id = r.descendant_id
+      WHERE r.ancestor_id = ?
+        AND u.user_id != ?
+      ORDER BY r.level ASC, u.user_id ASC
+      `,
+      [id, id],
     );
 
-    console.log("rows");
-    res.json(rows);
+    return res.status(200).json({
+      success: true,
+      root: id,
+      data: rows,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error" });
+    console.log("getTreeChart error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
