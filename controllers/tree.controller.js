@@ -1,3 +1,4 @@
+import db from "../configs/db.js";
 import TreeModel from "../models/tree.model.js";
 import buildTree from "../utilities/BuildTree.js";
 
@@ -11,15 +12,14 @@ export const getTree = async (req, res) => {
     if (!user_id) {
       return res.status(400).json({ message: "user_id is required" });
     }
-    
+
     const [data, id] = await TreeModel.getTree(user_id);
 
-
-    if(!data){
-        res.status(400).json({ message: "User not found" });
-    }else{
-        const tree = buildTree(data, id);
-        res.status(200).json({ data: tree });
+    if (!data) {
+      res.status(400).json({ message: "User not found" });
+    } else {
+      const tree = buildTree(data, id);
+      res.status(200).json({ data: tree });
     }
   } catch (err) {
     console.log(err);
@@ -75,6 +75,28 @@ export const getMembersCount = async (req, res) => {
     res.status(200).json({ data: result });
   } catch (err) {
     console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getTreeChart = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const [rows] = await db.query(
+      `
+    SELECT u.user_id,u.name,u.sponsor_id
+    FROM users u
+    JOIN user_relations r
+      ON u.user_id = r.descendant_id
+    WHERE r.ancestor_id = ?
+    ORDER BY r.level
+  `,
+      [id],
+    );
+
+    res.json(rows);
+  } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

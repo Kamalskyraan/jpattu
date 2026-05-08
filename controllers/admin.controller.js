@@ -432,7 +432,6 @@ export const approveTTUser = async (req, res) => {
     const ids = await UserModel.approveUserTT(user_ids);
 
     
-
     if (ids.length > 0) {
       // sendAdminMail(ids);
 

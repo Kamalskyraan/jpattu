@@ -1242,6 +1242,7 @@ export const UserModel = {
       throw err;
     }
   },
+
   getLastUserTT: async () => {
     try {
       const query = "SELECT user_id from tt_users ORDER BY id DESC LIMIT 1";
@@ -1250,7 +1251,7 @@ export const UserModel = {
         return id[0].user_id;
       } else {
         return "TT0";
-      }
+      } 
     } catch (err) {
       throw err;
     }
