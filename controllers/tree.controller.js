@@ -89,7 +89,6 @@ export const getTreeChart = async (req, res) => {
       SELECT 
         u.user_id,
         u.name,
-        u.sponsor_id,
         r.level
       FROM users u
       INNER JOIN user_relations r
