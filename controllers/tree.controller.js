@@ -97,7 +97,7 @@ export const getTreeChart = async (req, res) => {
       [id],
     );
 
-    console.log(rows);
+    console.log("rows");
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
