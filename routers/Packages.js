@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyAdmin } from "../middlewares/auth.js";
 import {
+  AddPackageToTTUser,
   AddPackageToUser,
   GetPackages,
   GetTTPackages,
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get("/", verifyAdmin, GetPackages);
 router.get("/tt", verifyAdmin, GetTTPackages);
 router.post("/", verifyAdmin, addPackageToUser, AddPackageToUser);
+router.post("/tt", verifyAdmin, addPackageToUser, AddPackageToTTUser);
 
 router.post("/send-mail", verifyAdmin, async (req, res) => {
   try {

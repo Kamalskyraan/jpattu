@@ -1300,6 +1300,100 @@ export const UserModel = {
       throw err;
     }
   },
+
+  addPackageToTTUser: async ({ user_data, level }) => {
+    try {
+      await db.beginTransaction();
+
+      let currentLevel = [user_data.user_id];
+      let new_ids = [];
+
+      const status = "Approved";
+      const cashbackStatus = "paid";
+      const amount = 0;
+
+      const lastId = await UserModel.getLastUser();
+      let value = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
+
+      for (let i = 1; i <= level; i++) {
+        const nextLevel = [];
+
+        for (const referrer_id of currentLevel) {
+          for (let j = 0; j < 2; j++) {
+            value += 1;
+            const newId = "TT" + value.toString();
+
+            const userQuery = `INSERT INTO tt_users
+              (referral_id, user_id, name, mobile, email, address, password, status, bank_name, holder_name, account_number, ifsc_code, branch)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            `;
+
+            await db.query(userQuery, [
+              referrer_id,
+              newId,
+              user_data.name,
+              user_data.mobile,
+              user_data.email,
+              user_data.address,
+              user_data.password,
+              status,
+              user_data.bank_name,
+              user_data.holder_name,
+              user_data.account_number,
+              user_data.ifsc_code,
+              user_data.branch,
+            ]);
+
+            const cashbackQuery = `INSERT INTO tt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
+            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+
+            nextLevel.push(newId);
+            new_ids.push(newId);
+
+            await db.query(
+              "INSERT INTO tt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+              [referrer_id, newId],
+            );
+
+            await db.query(
+              `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
+             SELECT ancestor_id, ?, level + 1
+             FROM tt_user_relations
+             WHERE descendant_id = ? AND level < 9 AND ancestor_id IS NOT NULL`,
+              [newId, referrer_id],
+            );
+
+            await db.query(
+              `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+             VALUES (?, ?, 100, 'unpaid')`,
+              [referrer_id, newId],
+            );
+            await db.query(
+              `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+              SELECT ancestor_id, ?, 10, 'unpaid'
+              FROM tt_user_relations
+              WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+              [newId, newId],
+            );
+
+            await db.query(
+              `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 185, 'unpaid'
+                FROM tt_user_relations
+                WHERE descendant_id = ? AND level = 9`,
+              [newId, newId],
+            );
+          }
+        }
+        currentLevel = nextLevel;
+      }
+      await db.commit();
+      return new_ids;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
