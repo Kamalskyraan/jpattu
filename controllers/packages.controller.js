@@ -75,7 +75,7 @@ export const AddPackageToTTUser = async (req, res) => {
     } else if (level < 1 && level > 2) {
       return res.status(400).json({ message: "Level must be in range 1-2" });
     } else {
-      const new_ids = await UserModel.addPackageToUser({ user_data, level });
+      const new_ids = await UserModel.addPackageToTTUser({ user_data, level });
       return res.status(201).json({ message: "Success", new_ids: new_ids });
     }
   } catch (error) {
