@@ -9,6 +9,7 @@ import {
   searchUser,
   getAllTTUsers,
   approveTTUser,
+  searchTTUser,
 } from "../controllers/admin.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 import { getAllPayouts } from "../controllers/users.controller.js";
@@ -26,4 +27,5 @@ router.get("/search-user/:user_id", verifyAdmin, searchUser);
 // TT
 router.get("/tt-users", verifyAdmin, getAllTTUsers);
 router.post("/approve-tt", verifyAdmin, approveTTUser);
+router.get("/search-tt-user/:user_id", verifyAdmin, searchTTUser);
 export default router;

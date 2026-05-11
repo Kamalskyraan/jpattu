@@ -431,7 +431,6 @@ export const approveTTUser = async (req, res) => {
 
     const ids = await UserModel.approveUserTT(user_ids);
 
-    
     if (ids.length > 0) {
       // sendAdminMail(ids);
 
@@ -449,6 +448,31 @@ export const approveTTUser = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const searchTTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    let admin = false;
+    if (req.user_id.toLowerCase() === user_id.trim().toLowerCase()) {
+      admin = true;
+    }
+
+    const data = await AdminModel.getSearchTTUser(user_id, admin);
+
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data });
+    }
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
