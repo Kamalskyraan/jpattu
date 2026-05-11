@@ -153,6 +153,8 @@ export const getTreeChartForTT = async (req, res) => {
 export const getTreeForTT = async (req, res) => {
   try {
     const { user_id } = req.query || false;
+
+    console.log(user_id);
     if (user_id !== req.user_id && req.role !== "admin") {
       return res.status(403).json({ message: "Action cannot be done!" });
     }
