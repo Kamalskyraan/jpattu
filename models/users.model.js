@@ -1107,7 +1107,6 @@ export const UserModel = {
     }
   },
 
-  // TT
   approveUserTT: async (user_ids) => {
     try {
       await db.beginTransaction();
@@ -1251,7 +1250,52 @@ export const UserModel = {
         return id[0].user_id;
       } else {
         return "TT0";
-      } 
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getUserTT: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      u.referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM tt_users u
+                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL;`;
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  hasTTMembers: async (user_id) => {
+    try {
+      const query =
+        "SELECT user_id from tt_users WHERE referral_id = ? LIMIT 1";
+      const [data] = await db.query(query, [user_id]);
+      return data;
     } catch (err) {
       throw err;
     }

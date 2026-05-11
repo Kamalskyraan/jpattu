@@ -10,10 +10,10 @@ const TreeModel = {
       if (userData === undefined) {
         const [adminData] = await UserModel.hasMembers(id);
         if (adminData === undefined) return [false];
-        
+
         id = adminData.user_id;
       }
-      
+
       const query = `WITH RECURSIVE user_relations AS (
                       SELECT user_id, referral_id, name, mobile, 0 AS level
                       FROM users
@@ -32,7 +32,7 @@ const TreeModel = {
       throw err;
     }
   },
-  
+
   getMemberOnLevel: async ({ user_id, level = 1 }) => {
     try {
       const query = `WITH RECURSIVE user_relations AS (
@@ -60,6 +60,39 @@ const TreeModel = {
         "SELECT COUNT(*) as count, level FROM user_relations WHERE ancestor_id = ? GROUP BY level";
       const [data] = await db.query(query, [user_id]);
       return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // TT
+
+  getTreeTT: async (user_id) => {
+    try {
+      let id = user_id;
+      const [userData] = await UserModel.getUserTT(id);
+
+      if (userData === undefined) {
+        const [adminData] = await UserModel.hasTTMembers(id);
+        if (adminData === undefined) return [false];
+
+        id = adminData.user_id;
+      }
+
+      const query = `WITH RECURSIVE tt_user_relations AS (
+                      SELECT user_id, referral_id, name, mobile, 0 AS level
+                      FROM tt_users
+                      WHERE user_id = ?
+  
+                      UNION ALL
+  
+                      SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
+                      FROM tt_users u
+                      JOIN tt_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 9 AND status = "approved"
+                      )
+                      SELECT * FROM tt_user_relations`;
+      const [data] = await db.query(query, [id]);
+      return [data, id];
     } catch (err) {
       throw err;
     }
