@@ -4,6 +4,7 @@ import {
   getMembersCount,
   getTree,
   getTreeChart,
+  getTreeChartForTT,
   getTreeForTT,
 } from "../controllers/tree.controller.js";
 import { verifyUser } from "../middlewares/auth.js";
@@ -20,4 +21,5 @@ router.get("/tree/:id", verifyUser, getTreeChart);
 
 //TT
 router.get("/", verifyUser, getTreeForTT);
+router.get("/tree:id", verifyUser, getTreeChartForTT);
 export default router;
