@@ -171,6 +171,7 @@ export const getTreeForTT = async (req, res) => {
     } else {
       const tree = buildTree(data, id);
       console.log(tree, "tree for build");
+      
       res.status(200).json({ data: tree });
     }
   } catch (err) {
