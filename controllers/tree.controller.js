@@ -164,15 +164,12 @@ export const getTreeForTT = async (req, res) => {
 
     const [data, id] = await TreeModel.getTreeTT(user_id);
 
-    console.log(data, "from before build treee");
-
     if (!data) {
       res.status(400).json({ message: "User not found" });
     } else {
       const tree = buildTree(data, id);
-      console.log(tree, "tree for build");
-      
-      res.status(200).json({ data: tree });
+
+      res.status(200).json({ data: tree , message : "abcd"});
     }
   } catch (err) {
     console.log(err);
