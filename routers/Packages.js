@@ -3,6 +3,7 @@ import { verifyAdmin } from "../middlewares/auth.js";
 import {
   AddPackageToUser,
   GetPackages,
+  GetTTPackages,
 } from "../controllers/packages.controller.js";
 import { addPackageToUser } from "../validator/packageValidator.js";
 import {
@@ -13,6 +14,7 @@ import {
 const router = express.Router();
 
 router.get("/", verifyAdmin, GetPackages);
+router.get("/tt", verifyAdmin, GetTTPackages);
 router.post("/", verifyAdmin, addPackageToUser, AddPackageToUser);
 
 router.post("/send-mail", verifyAdmin, async (req, res) => {
