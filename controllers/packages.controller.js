@@ -50,12 +50,11 @@ export const AddPackageToUser = async (req, res) => {
 
 export const GetTTPackages = async (req, res) => {
   try {
-    const packages = await PackageModel.getPackages();
+    const packages = await PackageModel.getTTPackages();
     res
       .status(200)
       .json({ packages: packages, message: "Packages fetched successfully" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
