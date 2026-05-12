@@ -124,7 +124,9 @@ export const getTreeChartForTT = async (req, res) => {
       `
       SELECT 
         u.user_id,
-        u.name
+        u.name,
+        r.level,
+        r.ancestor_id
       FROM users u
       INNER JOIN tt_user_relations r
         ON u.user_id = r.descendant_id
