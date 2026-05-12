@@ -1,6 +1,29 @@
 import { JpPurchaseModel, PurchaseModel } from "../models/purchase.model.js";
 import { UserModel } from "../models/users.model.js";
 
+export const getSalesReport = async (req, res) => {
+  try {
+    const { start, end } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserModel.getSales({ start, end });
+    const quantity = await PurchaseModel.getStockQuantity();
+    const user_count = await UserModel.getUsersCount();
+    const available_quantity =
+      quantity - user_count < 0 ? 0 : quantity - user_count;
+    res
+      .status(200)
+      .json({ data: data, available_quantity: available_quantity });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 export const getTTSalesReport = async (req, res) => {
   try {
     const { start, end } = req.query || false;
