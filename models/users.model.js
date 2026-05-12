@@ -1312,7 +1312,7 @@ export const UserModel = {
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUser();
+      const lastId = await UserModel.getLastUserTT();
       let value = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
