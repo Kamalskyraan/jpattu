@@ -21,6 +21,6 @@ router.get("/tree/:id", verifyUser, getTreeChart);
 
 //TT
 router.get("/tt", verifyUser, getTreeForTT);
-router.get("/tree:id", verifyUser, getTreeChartForTT);
+router.get("/tree:id", getTreeChartForTT);
 // router.get("/:level", verifyUser, getMemberOnLevel);
 export default router;
