@@ -80,6 +80,41 @@ export const getMembersCount = async (req, res) => {
 };
 
 // controller
+// export const getTreeChart = async (req, res) => {
+//   try {
+//     const id = req.params.id;
+
+//     const [rows] = await db.query(
+//       `
+//       SELECT
+//         u.user_id,
+//         u.name,
+//         r.level,
+//         r.ancestor_id
+//       FROM users u
+//       INNER JOIN user_relations r
+//         ON u.user_id = r.descendant_id
+//       WHERE r.ancestor_id = ?
+//         AND u.user_id != ?
+//       ORDER BY r.level ASC, u.user_id ASC
+//       `,
+//       [id, id],
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       root: id,
+//       data: rows,
+//     });
+//   } catch (err) {
+//     console.log("getTreeChart error:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
 export const getTreeChart = async (req, res) => {
   try {
     const id = req.params.id;
@@ -89,14 +124,25 @@ export const getTreeChart = async (req, res) => {
       SELECT 
         u.user_id,
         u.name,
-        r.level,
-        r.ancestor_id
+        root.level,
+
+        (
+          SELECT p.ancestor_id
+          FROM user_relations p
+          WHERE p.descendant_id = u.user_id
+            AND p.level = 1
+          LIMIT 1
+        ) AS ancestor_id
+
       FROM users u
-      INNER JOIN user_relations r
-        ON u.user_id = r.descendant_id
-      WHERE r.ancestor_id = ?
+
+      INNER JOIN user_relations root
+        ON u.user_id = root.descendant_id
+
+      WHERE root.ancestor_id = ?
         AND u.user_id != ?
-      ORDER BY r.level ASC, u.user_id ASC
+
+      ORDER BY root.level ASC, u.user_id ASC
       `,
       [id, id],
     );
@@ -114,7 +160,6 @@ export const getTreeChart = async (req, res) => {
     });
   }
 };
-
 // TT
 
 export const getTreeChartForTT = async (req, res) => {
