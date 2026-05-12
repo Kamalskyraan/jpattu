@@ -5,6 +5,7 @@ import {
   getOuterSorceReport,
   getSalesReport,
   getShadowReport,
+  getTTSalesReport,
 } from "../controllers/sales.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 
@@ -16,5 +17,9 @@ router.get("/jarigai-overall", verifyAdmin, getJarikaiOverall);
 router.get("/shadow-overall", verifyAdmin, getShadowReport);
 
 router.get("/outer-src-all-qty", verifyAdmin, getOuterSorceReport);
+
+//TT
+
+router.get("/tt", verifyAdmin, getTTSalesReport);
 
 export default router;

@@ -1,7 +1,7 @@
 import { JpPurchaseModel, PurchaseModel } from "../models/purchase.model.js";
 import { UserModel } from "../models/users.model.js";
 
-export const getSalesReport = async (req, res) => {
+export const getTTSalesReport = async (req, res) => {
   try {
     const { start, end } = req.query || false;
 
