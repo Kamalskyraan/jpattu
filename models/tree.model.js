@@ -88,7 +88,7 @@ const TreeModel = {
   
                       SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
                       FROM tt_users u
-                      JOIN tt_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 9 AND u.status = "approved"
+                      JOIN tt_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 9 AND u.status = "Approved"
                       )
                       SELECT * FROM tt_user_relations`;
       const [data] = await db.query(query, [id]);
