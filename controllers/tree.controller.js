@@ -141,6 +141,7 @@ export const getTreeChartForTT = async (req, res) => {
       success: true,
       root: id,
       data: rows,
+      message: "fetched success",
     });
   } catch (err) {
     console.log("getTreeChart error:", err);
@@ -170,7 +171,7 @@ export const getTreeForTT = async (req, res) => {
     } else {
       const tree = buildTree(data, id);
 
-      res.status(200).json({ data: tree , message : "abcd"});
+      res.status(200).json({ data: tree, message: "abcd" });
     }
   } catch (err) {
     console.log(err);
