@@ -76,7 +76,7 @@ app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
 
 app.get("/check", (req, res) => {
-  res.send("check");
+  res.send("check ongoingggg");
 });
 app.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
