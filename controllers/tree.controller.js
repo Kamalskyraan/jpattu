@@ -124,9 +124,7 @@ export const getTreeChartForTT = async (req, res) => {
       `
       SELECT 
         u.user_id,
-        u.name,
-        r.level,
-        r.ancestor_id as parent
+        u.name
       FROM users u
       INNER JOIN tt_user_relations r
         ON u.user_id = r.descendant_id
@@ -170,7 +168,7 @@ export const getTreeForTT = async (req, res) => {
     } else {
       const tree = buildTree(data, id);
 
-      res.status(200).json({ data: tree, message: "abcd" });
+      res.status(200).json({ data: tree , message : "abcd"});
     }
   } catch (err) {
     console.log(err);
