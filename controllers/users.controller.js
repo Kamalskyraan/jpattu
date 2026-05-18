@@ -60,15 +60,15 @@ export const LoginUser = async (req, res) => {
     if (errors.length > 0) {
       return res.status(400).json({ message: errors.map((val) => val.msg) });
     }
-    const [user] = await UserModel.getUser(user_id);
+    // const [user] = await UserModel.getUser(user_id);
 
-    // let user = null;
+    let user = null;
 
-    // if (user_id?.startsWith("TT")) {
-    //   [user] = await UserModel.getUserTT(user_id);
-    // } else if (user_id?.startsWith("DS") || ) {
-    //   [user] = await UserModel.getUser(user_id);
-    // }
+    if (/^TT/i.test(user_id)) {
+      [user] = await UserModel.getUserTT(user_id);
+    } else if (/^DS/i.test(user_id)) {
+      [user] = await UserModel.getUser(user_id);
+    }
     if (user?.id) {
       const verified = password === user.password;
 
