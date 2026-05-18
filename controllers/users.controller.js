@@ -60,8 +60,15 @@ export const LoginUser = async (req, res) => {
     if (errors.length > 0) {
       return res.status(400).json({ message: errors.map((val) => val.msg) });
     }
-    const [user] = await UserModel.getUser(user_id);
+    // const [user] = await UserModel.getUser(user_id);
 
+    let user = null;
+
+    if (user_id?.startsWith("TT")) {
+      [user] = await UserModel.getUserTT(user_id);
+    } else if (user_id?.startsWith("DS")) {
+      [user] = await UserModel.getUser(user_id);
+    }
     if (user?.id) {
       const verified = password === user.password;
 
@@ -589,7 +596,6 @@ export const TTRegisterUser = async (req, res) => {
       res.status(201).json({ id: id, message: "Registered Successfully" });
     }
   } catch (error) {
-  
     if (error.message === "referrer not found") {
       return res.status(200).json({ message: "Invalid referral Id..." });
     } else if (error.message === "Referrar is in Queue") {
