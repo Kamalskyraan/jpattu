@@ -106,4 +106,14 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+
+  getTTSuppliers: async () => {
+    try {
+      const query = "SELECT * FROM tt_suppliers WHERE deleted_at IS NULL";
+      const [data] = await db.query(query);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
