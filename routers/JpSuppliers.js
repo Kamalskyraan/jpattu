@@ -21,6 +21,6 @@ router.delete("/:id", verifyAdmin, deleteSupplier);
 // TT
 router.post("/tt", verifyAdmin, addSupplierTT);
 router.get("/tt", verifyAdmin, getSuppliersTT);
-router.put("/", verifyAdmin, updateSupplierTT);
+router.put("/tt", verifyAdmin, updateSupplierTT);
 router.delete("/:id", verifyAdmin, deleteSupplierTT);
 export default router;
