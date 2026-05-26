@@ -76,4 +76,34 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+
+  // tt
+
+  addTTSupplier: async (name) => {
+    try {
+      const query = "INSERT INTO tt_suppliers (name) VALUES (?)";
+      await db.query(query, [name]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateTTSupplier: async ({ name, id }) => {
+    try {
+      const query = "UPDATE tt_suppliers SET name = ? WHERE id = ?";
+      await db.query(query, [name, id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteTTSupplier: async (id) => {
+    try {
+      const query = "DELETE FROM tt_suppliers WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
