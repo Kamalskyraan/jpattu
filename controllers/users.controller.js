@@ -605,3 +605,53 @@ export const TTRegisterUser = async (req, res) => {
     }
   }
 };
+
+export const TTPaidProof = async (req, res) => {
+  const image = req.file?.filename;
+  try {
+    const id = req.body?.id;
+    const txn_id = req.body?.txn_id;
+    if (!id) {
+      return res.status(400).json({
+        message: "Id is required",
+      });
+    }
+
+    const submitted = await TempUserModel.TTpaidProof({
+      image,
+      user_id: id,
+      txn_id,
+    });
+    if (submitted) {
+      const [result] = await TempUserModel.getTTUser(id);
+      res.status(200).json({ result, message: "Proof submitted successfully" });
+    } else {
+      if (image) {
+        const imagePath = path.join(
+          process.cwd(),
+          "public",
+          "screenshots",
+          image,
+        );
+        if (existsSync(imagePath)) {
+          rmSync(imagePath);
+        }
+      }
+      res.status(200).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.log(err);
+    if (image) {
+      const imagePath = path.join(
+        process.cwd(),
+        "public",
+        "screenshots",
+        image,
+      );
+      if (existsSync(imagePath)) {
+        rmSync(imagePath);
+      }
+    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

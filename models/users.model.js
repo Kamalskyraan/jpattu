@@ -259,6 +259,45 @@ export const TempUserModel = {
 
   // TT
 
+  getTTUser: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.email,
+                      u.referral_id,
+                      u.approved,
+                      u.pancard,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM tt_temp_users u
+                    LEFT JOIN tt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL`;
+      const [data] = await db.query(query, [user_id]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
   addTargetUser: async (data) => {
     try {
       const lastId = await TempUserModel.getLastTargetUser();
@@ -295,6 +334,57 @@ export const TempUserModel = {
 
       return newId;
     } catch (err) {
+      throw err;
+    }
+  },
+
+  TTpaidProof: async ({ user_id, image, txn_id }) => {
+    try {
+      const [data] = await TempUserModel.getTTUser(user_id);
+      if (!data) return false;
+
+      if (!image) {
+        const updateQuery = `
+        UPDATE tt_temp_users 
+        SET txn_id = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [txn_id, user_id]);
+      } else if (!txn_id) {
+        const updateQuery = `
+        UPDATE tt_temp_users 
+        SET screenshot = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [image, user_id]);
+      }
+
+      const checkQuery = `
+        SELECT user_id 
+        FROM tt_temp_users 
+        WHERE txn_id = ? AND user_id != ? 
+        UNION 
+        SELECT user_id 
+        FROM tt_users 
+        WHERE txn_id = ?;`;
+      const [duplicates] = await db.query(checkQuery, [
+        txn_id,
+        user_id,
+        txn_id,
+      ]);
+
+      if (duplicates.length > 0) {
+        const markDupesQuery = `
+          UPDATE tt_temp_users 
+          SET duplicate_txn_id = TRUE 
+          WHERE txn_id = ?;
+        `;
+        await db.query(markDupesQuery, [txn_id]);
+      }
+
+      return true;
+    } catch (err) {
+      console.log(err);
       throw err;
     }
   },
