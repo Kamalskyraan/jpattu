@@ -7,6 +7,7 @@ import {
   TargetUserData,
   verifyStatus,
 } from "../controllers/admin.controller.js";
+import { verifyTTStatus } from "../controllers/users.controller.js";
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -24,5 +25,6 @@ router.post("/login", validateLogin, LoginAdmin);
 router.post("/logout", LogoutAdmin);
 
 router.get("/verify-user", verifyStatus);
-router.get("/get-target-userdata" , TargetUserData)
+router.get("/verify-tt-user", verifyTTStatus);
+router.get("/get-target-userdata", TargetUserData);
 export default router;
