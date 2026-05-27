@@ -8,6 +8,7 @@ import {
   TTRegisterUser,
   UpdateUserToken,
   verifyStatus,
+  verifyTTStatus,
 } from "../controllers/users.controller.js";
 
 const limiter = rateLimit({
@@ -34,6 +35,8 @@ router.post("/login", validateLogin, LoginUser);
 router.post("/logout", LogoutUser);
 
 router.get("/verify-user", verifyStatus);
+
+router.get("/verify-tt-user", verifyTTStatus);
 
 router.post("/update-user", UpdateUserToken);
 
