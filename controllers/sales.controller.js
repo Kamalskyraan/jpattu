@@ -116,3 +116,31 @@ export const getOuterSorceReport = async (req, res) => {
     res.status(500).josn({ message: "Internal Server Error" });
   }
 };
+
+// tt
+
+export const getJPSalesTTReport = async (req, res) => {
+  try {
+    const { start, end } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await JpPurchaseModel.getSales({ start, end });
+    const quantity = await JpPurchaseModel.getStockQuantity();
+    const shadow_quantity = await PurchaseModel.getStockQuantity();
+    const available_quantity =
+      quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
+    res.status(200).json({
+      data: data,
+      available_quantity: available_quantity,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

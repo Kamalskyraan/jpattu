@@ -17,4 +17,7 @@ router.put("/", verifyAdmin, editPurchaseData);
 router.delete("/:id", verifyAdmin, deletePurchaseData);
 router.get("/:id", verifyAdmin, getSinglePurchaseReports);
 
+// tt
+router.get("/", verifyAdmin, getPurchaseReports);
+
 export default router;

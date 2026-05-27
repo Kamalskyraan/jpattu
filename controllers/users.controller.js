@@ -655,3 +655,64 @@ export const TTPaidProof = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// TT
+
+export const verifyTTStatus = async (req, res) => {
+  const token = req.cookies.auth;
+  if (!token) return res.status(401).json({ authenticated: false });
+  const user = jwt.verify(token, process.env.TOKEN_SECRET);
+
+  try {
+    if (user.role === "user") {
+      const [data] = await UserModel.getUserTT(user.user_id);
+      if (!data.id) {
+        res.cookie(
+          "auth",
+          {},
+          {
+            httpOnly: true,
+            secure: true,
+            // sameSite: "Lax",
+            sameSite: "None",
+            maxAge: 0,
+          },
+        );
+      }
+      res.status(200).json({ authenticated: true, user: data });
+    } else if (user.role === "temp_user") {
+      const [data] = await TempUserModel.getTTUser(user.user_id);
+      if (!data.id) {
+        res.cookie(
+          "auth",
+          {},
+          {
+            httpOnly: true,
+            secure: true,
+            // sameSite: "Lax",
+            sameSite: "None",
+            maxAge: 0,
+          },
+        );
+      }
+      res.status(200).json({ authenticated: true, user: data });
+    } else {
+      res.cookie(
+        "auth",
+        {},
+        {
+          httpOnly: true,
+          secure: true,
+          // sameSite: "Lax",
+          sameSite: "None",
+          maxAge: 0,
+        },
+      );
+      res.status(403).json({ message: "Unable to login" });
+    }
+  } catch (err) {
+    console.log(err);
+    console.log(11);
+    res.status(401).json({ authenticated: false });
+  }
+};

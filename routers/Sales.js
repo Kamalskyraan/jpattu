@@ -21,5 +21,5 @@ router.get("/outer-src-all-qty", verifyAdmin, getOuterSorceReport);
 //TT
 
 router.get("/tt", verifyAdmin, getTTSalesReport);
-
+router.get("/jarigai/tt", verifyAdmin, getJPSalesReport);
 export default router;
