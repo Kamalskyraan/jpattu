@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import {
   fetchAdminDetails,
+  fetchTTAdminDetails,
   getUserFullDetails,
   TempUserModel,
   UserModel,
@@ -714,5 +715,18 @@ export const verifyTTStatus = async (req, res) => {
     console.log(err);
     console.log(11);
     res.status(401).json({ authenticated: false });
+  }
+};
+
+export const getTTAdminData = async (req, res) => {
+  try {
+    const adminData = await fetchTTAdminDetails();
+
+    return res
+      .status(200)
+      .json({ data: adminData, message: "Admin Data fetched Sucessfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

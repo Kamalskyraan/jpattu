@@ -20,7 +20,10 @@ import salesRoutes from "./routers/Sales.js";
 import PackageRoutes from "./routers/Packages.js";
 import NwpRoutes from "./routers/Nwp.js";
 import "./cron/monthEndSettlement.js";
-import { getAdminData } from "./controllers/users.controller.js";
+import {
+  getAdminData,
+  getTTAdminData,
+} from "./controllers/users.controller.js";
 
 const app = express();
 configDotenv();
@@ -75,6 +78,7 @@ app.use("/packages", PackageRoutes);
 app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
 
+app.get("/get-tt-admin-data", getTTAdminData);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
