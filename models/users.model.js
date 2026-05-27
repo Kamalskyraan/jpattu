@@ -1501,7 +1501,7 @@ export const fetchAdminDetails = async () => {
   return rows.length ? rows[0] : null;
 };
 export const fetchTTAdminDetails = async () => {
-  const [rows] = await db.query(`SELECT * FROM admin LIMIT 1 ORDER BY DESC`);
+  const [rows] = await db.query(`SELECT * FROM admin  ORDER BY id DESC LIMIT 1`);
 
   return rows.length ? rows[0] : null;
 };
