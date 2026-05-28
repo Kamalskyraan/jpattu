@@ -730,3 +730,31 @@ export const getTTAdminData = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// tt
+
+export const getTTUserName = async (req, res) => {
+  try {
+    const { referral_id } = req.query || false;
+    if (!referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const data = await UserModel.getTTUserName(referral_id);
+    if (data.length === 0) {
+      const adminData = await AdminModel.getUserName(referral_id);
+
+      if (adminData.length === 0) {
+        res.status(200).json({ message: "User not found" });
+      } else {
+        adminData[0].status = "Approved";
+        res.status(200).json({ data: adminData[0] });
+      }
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

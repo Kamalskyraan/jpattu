@@ -1484,6 +1484,20 @@ export const UserModel = {
       throw err;
     }
   },
+
+  // tt
+
+  getTTUserName: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
@@ -1501,7 +1515,9 @@ export const fetchAdminDetails = async () => {
   return rows.length ? rows[0] : null;
 };
 export const fetchTTAdminDetails = async () => {
-  const [rows] = await db.query(`SELECT * FROM admin  ORDER BY id DESC LIMIT 1`);
+  const [rows] = await db.query(
+    `SELECT * FROM admin  ORDER BY id DESC LIMIT 1`,
+  );
 
   return rows.length ? rows[0] : null;
 };

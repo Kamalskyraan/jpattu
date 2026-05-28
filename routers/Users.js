@@ -11,6 +11,7 @@ import {
   getUserDetails,
   getAdminData,
   TTPaidProof,
+  getTTUserName,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -55,6 +56,9 @@ router.get("/data/:user_id", verifyUser, getHomeDetails);
 router.get("/temp/:user_id", getTempUser);
 router.get("/:user_id", verifyUser, getUser);
 router.post("/user-id", getUserDetails);
+
+// tt
 router.post("/tt-paidproof", screenshots.single("image"), TTPaidProof);
+router.get("/tt", getTTUserName);
 
 export default router;

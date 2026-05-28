@@ -96,7 +96,7 @@ const UserBalanceModel = {
       const [data] = await db.query(received_amount_query, [user_id]);
       const level_amount = data
         .filter(
-          (val) =>   val.created_at >= startTime && val.created_at <= endTime,
+          (val) => val.created_at >= startTime && val.created_at <= endTime,
         )
         .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
       const received_amount = data
@@ -183,6 +183,20 @@ const UserBalanceModel = {
       const query =
         "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total_amount, COUNT(*) AS total_records FROM user_balance_logs WHERE user_id = ? AND status = 'paid' AND deleted_at IS NULL GROUP BY month ORDER BY month DESC;";
       const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // tt
+
+  getTTLevelIncome: async ({ user_id, start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT COUNT(*) as count, level FROM tt_user_relations WHERE ancestor_id = ? AND created_at >= ? AND created_at <= ? GROUP BY level`;
+      const [data] = await db.query(query, [user_id, startTime, endTime]);
       return data;
     } catch (err) {
       throw err;
