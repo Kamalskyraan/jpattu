@@ -740,6 +740,8 @@ export const getTTUserName = async (req, res) => {
       return res.status(400).json({ message: "referral_id is required" });
     }
 
+    console.log(referral_id, "ref");
+
     const data = await UserModel.getTTUserName(referral_id);
     if (data.length === 0) {
       const adminData = await AdminModel.getUserName(referral_id);
