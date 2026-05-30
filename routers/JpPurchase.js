@@ -5,6 +5,7 @@ import {
   deletePurchaseData,
   editPurchaseData,
   getPurchaseReports,
+  getPurchaseTTReports,
   getSinglePurchaseReports,
 } from "../controllers/jp_purchase.controller.js";
 import { addPurchase } from "../validator/purchaseValidator.js";
@@ -19,6 +20,7 @@ router.delete("/:id", verifyAdmin, deletePurchaseData);
 router.get("/:id", verifyAdmin, getSinglePurchaseReports);
 
 // tt
-router.get("/", verifyAdmin, getPurchaseReports);
+
 router.post("/tt", verifyAdmin, addPurchase, addPurchaseTTData);
+router.get("/tt", verifyAdmin, getPurchaseTTReports);
 export default router;

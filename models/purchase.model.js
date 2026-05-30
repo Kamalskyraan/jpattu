@@ -271,8 +271,7 @@ export const PurchaseModel = {
         query = `
         SELECT sum(quantity) as quantity
         FROM tt_purchase_report
-        WHERE supplier = 'jarigai'
-          AND deleted_at IS NULL
+        WHERE deleted_at IS NULL
           AND created_at BETWEEN ? AND ?
       `;
 
@@ -280,11 +279,10 @@ export const PurchaseModel = {
       } else {
         query = `
         SELECT sum(quantity) as quantity
-        FROM purchase_report
+        FROM tt_purchase_report
 
 
-        WHERE supplier = 'jarigai'
-          AND deleted_at IS NULL
+        WHERE  deleted_at IS NULL
       `;
       }
 
@@ -633,6 +631,20 @@ export const JpPurchaseModel = {
         amount,
       ]);
       return true;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getPurchaseTTData: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query =
+        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM tt_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+      return data;
     } catch (err) {
       throw err;
     }
