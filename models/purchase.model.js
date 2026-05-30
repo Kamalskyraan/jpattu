@@ -596,7 +596,7 @@ export const JpPurchaseModel = {
         params = [];
       if (timeline) {
         query =
-          "SELECT sum(quantity) as quantity FROM tt-purchase_report WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= NOW()";
+          "SELECT sum(quantity) as quantity FROM tt_purchase_report WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= NOW()";
         params = [startDateString];
       } else {
         query =
