@@ -6,12 +6,15 @@ export const getPurchaseReports = async (req, res) => {
     const { start, end } = req.query || false;
 
     if (!start || !end) {
-      return res.status(400).json({ message: "start date and end date is required" });
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
     }
     const data = await JpPurchaseModel.getPurchaseData({ start, end });
     const quantity = await JpPurchaseModel.getStockQuantity();
     const shadow_quantity = await PurchaseModel.getStockQuantity();
-    const available_quantity = quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
+    const available_quantity =
+      quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
     res.status(200).json({
       data: data,
       available_quantity: available_quantity,
@@ -22,7 +25,6 @@ export const getPurchaseReports = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const getSinglePurchaseReports = async (req, res) => {
   try {
@@ -92,26 +94,45 @@ export const deletePurchaseData = async (req, res) => {
   }
 };
 
-
 // tt
-
 
 export const getPurchaseTTReports = async (req, res) => {
   try {
     const { start, end } = req.query || false;
 
     if (!start || !end) {
-      return res.status(400).json({ message: "start date and end date is required" });
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
     }
     const data = await JpPurchaseModel.getPurchaseData({ start, end });
     const quantity = await JpPurchaseModel.getStockQuantity();
     const shadow_quantity = await PurchaseModel.getStockQuantity();
-    const available_quantity = quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
+    const available_quantity =
+      quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
     res.status(200).json({
       data: data,
       available_quantity: available_quantity,
       message: "Data fetched successfully",
     });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const addPurchaseTTData = async (req, res) => {
+  try {
+    const data = req.body;
+    const result = validationResult(req);
+    const { errors } = result;
+    if (errors.length > 0) {
+      return res.status(400).json({ message: errors.map((err) => err.msg) });
+    }
+
+    const added = await JpPurchaseModel.addPurchaseTTData(data);
+    if (added) res.status(200).json({ message: "Record added successfully" });
+    else res.status(400).json({ message: "Unable to add data" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal Server Error" });

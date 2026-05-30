@@ -610,4 +610,31 @@ export const JpPurchaseModel = {
       throw err;
     }
   },
+
+  addPurchaseTTData: async ({
+    purchase_date,
+    gst_number,
+    hsn_code,
+    purchase_id,
+    supplier,
+    quantity,
+    amount,
+  }) => {
+    try {
+      const query =
+        "INSERT INTO tt_purchase_report (purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        purchase_date,
+        gst_number,
+        hsn_code,
+        purchase_id,
+        supplier,
+        quantity,
+        amount,
+      ]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
