@@ -2,6 +2,7 @@ import express from "express";
 import {
   getJarikaiOverall,
   getJPSalesReport,
+  getJPSalesTTReport,
   getOuterSorceReport,
   getSalesReport,
   getShadowReport,
@@ -21,5 +22,5 @@ router.get("/outer-src-all-qty", verifyAdmin, getOuterSorceReport);
 //TT
 
 router.get("/tt", verifyAdmin, getTTSalesReport);
-router.get("/jarigai/tt", verifyAdmin, getJPSalesReport);
+router.get("/jarigai/tt", verifyAdmin, getJPSalesTTReport);
 export default router;

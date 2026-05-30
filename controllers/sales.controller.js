@@ -129,9 +129,9 @@ export const getJPSalesTTReport = async (req, res) => {
         .json({ message: "start date and end date is required" });
     }
 
-    const data = await JpPurchaseModel.getSales({ start, end });
-    const quantity = await JpPurchaseModel.getStockQuantity();
-    const shadow_quantity = await PurchaseModel.getStockQuantity();
+    const data = await JpPurchaseModel.getTTSales({ start, end });
+    const quantity = await JpPurchaseModel.getTTStockQuantity();
+    const shadow_quantity = await PurchaseModel.getTTStockQuantity();
     const available_quantity =
       quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
     res.status(200).json({
