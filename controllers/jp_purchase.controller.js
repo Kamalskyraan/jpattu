@@ -107,7 +107,7 @@ export const getPurchaseTTReports = async (req, res) => {
     }
     const data = await JpPurchaseModel.getPurchaseTTData({ start, end });
     const quantity = await JpPurchaseModel.getTTStockQuantity();
-    const shadow_quantity = await PurchaseModel.getStockQuantity();
+    const shadow_quantity = await PurchaseModel.getTTStockQuantity();
     const available_quantity =
       quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
     res.status(200).json({
