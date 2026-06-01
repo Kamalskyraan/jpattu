@@ -760,3 +760,23 @@ export const getTTUserName = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getTempTTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    // if (user_id !== req.user_id && req.role !== "admin") {
+    //   return res.status(403).json({ message: "Action cannot be done!" });
+    // }
+
+    const data = await TempUserModel.getTTUser(user_id);
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

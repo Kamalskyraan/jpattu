@@ -401,7 +401,7 @@ export const getAllTTUsers = async (req, res) => {
         return {
           ...val,
           // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
-          screenshot: `https://rightshadow.skyraantech.com/server/public/screenshots/${val.screenshot}`,
+          screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
         };
       else return val;
     });
