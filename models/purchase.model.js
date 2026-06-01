@@ -347,7 +347,7 @@ export const PurchaseModel = {
         (SELECT SUM(quantity)
          FROM tt_purchase_report
          
-           AND deleted_at IS NULL
+           WHERE deleted_at IS NULL
            
         ) AS sales_quantity,
 
