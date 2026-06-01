@@ -2,7 +2,7 @@ import express from "express";
 import {
   getTTBalanceLogs,
   updateTTBalanceStatus,
-} from "../controllers/userbalance.controller";
+} from "../controllers/userbalance.controller.js";
 import { verifyAdmin, verifyUser } from "../middlewares/auth";
 
 const router = express.Router();
