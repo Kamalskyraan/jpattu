@@ -200,32 +200,34 @@ export const getTreeChartForTT = async (req, res) => {
 };
 
 export const getTreeForTT = async (req, res) => {
-  try {
-    const { user_id } = req.query || false;
+  // try {
+  //   const { user_id } = req.query || false;
 
-    console.log(user_id , "USERIDIRUKKU");
+  //   console.log(user_id , "USERIDIRUKKU");
 
-    if (user_id !== req.user_id && req.role !== "admin") {
-      return res.status(403).json({ message: "Action cannot be done!" });
-    }
+  //   if (user_id !== req.user_id && req.role !== "admin") {
+  //     return res.status(403).json({ message: "Action cannot be done!" });
+  //   }
 
-    if (!user_id) {
-      return res.status(400).json({ message: "user_id is required" });
-    }
+  //   if (!user_id) {
+  //     return res.status(400).json({ message: "user_id is required" });
+  //   }
 
-    const [data, id] = await TreeModel.getTreeTT(user_id);
+  //   const [data, id] = await TreeModel.getTreeTT(user_id);
 
-    console.log(data , "DATA" , id , "ID IRUKKU")
+  //   console.log(data , "DATA" , id , "ID IRUKKU")
 
-    if (!data) {
-      res.status(400).json({ message: "User not found" });
-    } else {
-      const tree = buildTree(data, id);
+  //   if (!data) {
+  //     res.status(400).json({ message: "User not found" });
+  //   } else {
+  //     const tree = buildTree(data, id);
 
-      res.status(200).json({ data: tree, message: "abcd" });
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
+  //     res.status(200).json({ data: tree, message: "abcd" });
+  //   }
+  // } catch (err) {
+  //   console.log(err);
+  //   res.status(500).json({ message: "Internal Server Error" });
+  // }
+
+  res.send("hiiii");
 };
