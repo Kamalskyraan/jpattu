@@ -10,6 +10,11 @@ const LevelModel = {
   //     const query = "INSERT INTO LEVELS (level, members, share, total_income) VALUES (?, ?, ?, ?)";
   //     await db.query(query, [level, members, share, total_income]);
   //   },
+
+  getTTLevels: async () => {
+    const [data] = await db.query("SELECT * FROM tt_levels ORDER BY level ASC");
+    return data;
+  },
 };
 
 export default LevelModel;
