@@ -138,3 +138,53 @@ export const addPurchaseTTData = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const editTTPurchaseData = async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+    const updated = await JpPurchaseModel.editTTPurchaseData(data);
+    if (updated) res.status(200).json({ message: "data updated successfully" });
+    else res.status(400).json({ message: "Unable to update data" });
+  } catch (err) {
+    console.log(err);
+    if (err.message === "no data") {
+      res.status(500).json({ message: "Atleast 1 field is required" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
+
+export const deleteTTPurchaseData = async (req, res) => {
+  try {
+    const { id } = req.params || false;
+
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+    const deleted = await JpPurchaseModel.deleteTTPurchaseData(id);
+    if (deleted) res.status(200).json({ message: "Data deleted successfully" });
+    else res.status(400).json({ message: "Unable to delete data" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getSingleTTPurchaseReports = async (req, res) => {
+  try {
+    const { id } = req.params || false;
+
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+    const data = await JpPurchaseModel.getSingleTTPurchaseData(id);
+    res.status(200).json({ data: data, message: "Data fetched successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

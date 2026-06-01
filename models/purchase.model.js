@@ -645,7 +645,65 @@ export const JpPurchaseModel = {
         "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM tt_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
       const [data] = await db.query(query, [startTime, endTime]);
 
-      
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // tt
+
+  editTTPurchaseData: async (data) => {
+    try {
+      const columns = [
+        "purchase_date",
+        "gst_number",
+        "hsn_code",
+        "purchase_id",
+        "supplier",
+        "quantity",
+        "amount",
+      ];
+      let keys = [],
+        values = [];
+
+      columns.forEach((val) => {
+        if (data[val]) {
+          keys.push(`${val} = ?`);
+          values.push(data[val]);
+        }
+      });
+
+      if (keys.length === 0) {
+        throw new Error("no data");
+      }
+
+      const fields = keys.join(", ");
+      const query = `UPDATE tt_purchase_report SET ${fields} WHERE id = ?`;
+      await db.query(query, [...values, data.id]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  deleteTTPurchaseData: async (id) => {
+    try {
+      const query =
+        "UPDATE tt_purchase_report SET deleted_at = NOW() WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  
+  getSingleTTPurchaseData: async (id) => {
+    try {
+      const query =
+        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM tt_purchase_report WHERE id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [id]);
       return data;
     } catch (err) {
       throw err;
