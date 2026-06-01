@@ -3,10 +3,12 @@ import {
   getBalanceLogs,
   getLevelIncome,
   getPaymentHistory,
+  getTTBalanceLogs,
   getTTLevelIncome,
   getUserBalanceLog,
   receivedAmount,
   updateBalanceStatus,
+  updateTTBalanceStatus,
 } from "../controllers/userbalance.controller.js";
 import { verifyAdmin, verifyUser } from "../middlewares/auth.js";
 
@@ -20,4 +22,6 @@ router.get("/:user_id", verifyUser, receivedAmount);
 router.get("/:user_id", verifyUser, getUserBalanceLog);
 // tt
 router.get("/tt-income/:user_id", verifyUser, getTTLevelIncome);
+router.get("/tt", verifyUser, getTTBalanceLogs);
+router.put("/tt", verifyAdmin, updateTTBalanceStatus);
 export default router;

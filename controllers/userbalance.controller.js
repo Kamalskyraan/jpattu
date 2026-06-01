@@ -203,3 +203,46 @@ export const getTTLevelIncome = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getTTBalanceLogs = async (req, res) => {
+  try {
+    const { start, end, status } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserBalanceModel.getTTLogs({ start, end, status });
+
+    const sortedData = data.sort((a, b) =>
+      a.user_id.localeCompare(b.user_id, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
+
+    res.status(200).json({ data: sortedData, message: "user logs fetched" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateTTBalanceStatus = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "ids is required and must be an array" });
+    }
+
+    await UserBalanceModel.updateBalance(ids);
+    return res.status(200).json({ message: "Status updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
