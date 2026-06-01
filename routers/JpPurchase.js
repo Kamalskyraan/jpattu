@@ -22,5 +22,5 @@ router.get("/:id", verifyAdmin, getSinglePurchaseReports);
 // tt
 
 router.post("/tt", verifyAdmin, addPurchase, addPurchaseTTData);
-router.get("/tt", verifyAdmin, getPurchaseTTReports);
+
 export default router;
