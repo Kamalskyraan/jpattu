@@ -169,3 +169,22 @@ export const getOuterTTSorceReport = async (req, res) => {
     res.status(500).josn({ message: "Internal Server Error" });
   }
 };
+
+export const getTTJarikaiOverall = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallTTQuantity();
+
+    return res.status(200).json({
+      data: {
+        over_all_sales: data.sales_quantity,
+        over_all_stock: data.stock_quantity,
+        start: data.start,
+        end: data.end,
+      },
+      message: "Jarikai Overall Stocks Fetched successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

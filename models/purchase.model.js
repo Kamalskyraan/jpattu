@@ -337,6 +337,35 @@ export const PurchaseModel = {
       throw err;
     }
   },
+
+  getOverallTTQuantity: async () => {
+    try {
+      const params = [];
+
+      const query = `
+      SELECT
+        (SELECT SUM(quantity)
+         FROM tt_purchase_report
+         
+           AND deleted_at IS NULL
+           
+        ) AS sales_quantity,
+
+        (SELECT SUM(quantity)
+         FROM tt_purchase_report
+        ) AS stock_quantity
+    `;
+
+      const [data] = await db.query(query, params);
+
+      return {
+        sales_quantity: data?.[0]?.sales_quantity || 0,
+        stock_quantity: data?.[0]?.stock_quantity || 0,
+      };
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const JpPurchaseModel = {
