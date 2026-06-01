@@ -239,7 +239,7 @@ export const updateTTBalanceStatus = async (req, res) => {
         .json({ message: "ids is required and must be an array" });
     }
 
-    await UserBalanceModel.updateBalance(ids);
+    await UserBalanceModel.updateTTBalance(ids);
     return res.status(200).json({ message: "Status updated successfully" });
   } catch (err) {
     console.log(err);
