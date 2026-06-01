@@ -1601,17 +1601,16 @@ export const UserModel = {
       if (referrar_data.length === 0) {
         return false;
       }
-      const [levelData] = await db.query(
-        `SELECT COUNT(*) as total_levels
-   FROM tt_user_relations
-   WHERE descendant_id = ?`,
-        [referral_id],
-      );
+      //     const [levelData] = await db.query(
+      //       `SELECT COUNT(*) as total_levels
+      //  FROM tt_user_relations
+      //  WHERE descendant_id = ?`,
+      //       [referral_id],
+      //     );
 
-      if (levelData[0].total_levels >= 3) {
-        return false;
-      }
-
+      //     if (levelData[0].total_levels >= 3) {
+      //       return false;
+      //     }
 
       const updatedQuery =
         "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
@@ -1665,7 +1664,6 @@ export const UserModel = {
       throw err;
     }
   },
-  
 };
 
 export const getUserFullDetails = async (user_id) => {
