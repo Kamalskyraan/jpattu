@@ -144,3 +144,28 @@ export const getJPSalesTTReport = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+export const getTTShadowReport = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getShadowTTQuantity();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};
+
+export const getOuterTTSorceReport = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallTTShadowQty();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};

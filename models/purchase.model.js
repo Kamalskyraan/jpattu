@@ -292,6 +292,51 @@ export const PurchaseModel = {
       throw err;
     }
   },
+  getShadowTTQuantity: async () => {
+    try {
+      const query = `
+      SELECT
+  (SELECT COUNT(id)
+   FROM tt_users
+   WHERE deleted_at IS NULL
+     AND status IN ('approved','queued') 
+  ) AS sales_quantity,
+
+  (SELECT SUM(quantity)
+   FROM tt_purchase_report
+  ) AS stock_count;
+
+    `;
+
+      const [data] = await db.query(query);
+
+      return {
+        sales_quantity: data?.[0]?.sales_quantity || 0,
+        stock_count: data?.[0]?.stock_count || 0,
+      };
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
+
+  getOverallTTShadowQty: async () => {
+    try {
+      const query = `
+      SELECT SUM(quantity) AS all_qty 
+      FROM tt_purchase_report
+    `;
+
+      const [rows] = await db.query(query);
+
+      return {
+        all_quantity: rows?.[0]?.all_qty || 0,
+      };
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
 };
 
 export const JpPurchaseModel = {
@@ -698,7 +743,6 @@ export const JpPurchaseModel = {
     }
   },
 
-  
   getSingleTTPurchaseData: async (id) => {
     try {
       const query =

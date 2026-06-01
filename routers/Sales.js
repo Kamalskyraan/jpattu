@@ -4,6 +4,7 @@ import {
   getJPSalesReport,
   getJPSalesTTReport,
   getOuterSorceReport,
+  getOuterTTSorceReport,
   getSalesReport,
   getShadowReport,
   getTTSalesReport,
@@ -23,4 +24,7 @@ router.get("/outer-src-all-qty", verifyAdmin, getOuterSorceReport);
 
 router.get("/tt", verifyAdmin, getTTSalesReport);
 router.get("/jarigai/tt", verifyAdmin, getJPSalesTTReport);
+
+router.get("/shadow-overall/tt", verifyAdmin, getShadowReport);
+router.get("/outer-src-all-qty/tt", verifyAdmin, getOuterTTSorceReport);
 export default router;
