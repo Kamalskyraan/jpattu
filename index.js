@@ -67,6 +67,7 @@ app.use("/levels", levelRoutes);
 app.use("/links", linkRoutes);
 app.use("/products", productRoutes);
 app.use("/treeview", treeRoutes);
+app.use("/treeview-tt", treeRoutes);
 app.use("/cashbacks", cashbackRoutes);
 app.use("/balance", userBalanceRoutes);
 app.use("/purchases", purchaseRoutes);
