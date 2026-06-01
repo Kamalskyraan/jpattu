@@ -476,3 +476,17 @@ export const searchTTUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getTTQueuedUsers = async (req, res) => {
+  try {
+    const data = await UserModel.getQueuedTTUsers();
+
+    return res.status(200).json({
+      data: data,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

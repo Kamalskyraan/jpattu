@@ -1551,6 +1551,36 @@ export const UserModel = {
     await db.query(query, [...values, data.user_id]);
     return true;
   },
+
+  getQueuedTTUsers: async () => {
+    try {
+      const query = `SELECT 
+                      id,
+                      user_id,
+                      name, 
+                      mobile, 
+                      status,
+                      email,
+                      password,
+                      screenshot,
+                      address,
+                      referral_id,
+                      account_number,
+                      bank_name,
+                      holder_name,
+                      ifsc_code,
+                      txn_id,
+                      branch,
+                      UNIX_TIMESTAMP(created_at) as created,
+                      created_at
+                      FROM tt_users
+                    WHERE status = "Queued" AND deleted_at IS NULL`;
+      const [data] = await db.query(query);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
