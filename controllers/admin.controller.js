@@ -490,3 +490,32 @@ export const getTTQueuedUsers = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const AddQueuedTTUser = async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data?.referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const approved = await UserModel.addQueuedTTUser(
+      data.user_id,
+      data.referral_id,
+    );
+
+    if (approved) {
+      return res.status(200).json({ message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    
+    if (error.message === "limit exceed") {
+      return res.status(200).json({ message: "Referral limit reached" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
