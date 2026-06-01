@@ -780,3 +780,54 @@ export const getTempTTUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const updateTTUser = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data.user_type) {
+      return res
+        .status(400)
+        .json({ message: "user_type must be either 'users' or 'temp'" });
+    }
+
+    data.role = req.role;
+    const updated = await UserModel.updateTTUser(data);
+
+    if (updated) {
+      const [user] = await UserModel.getUserTT(data.user_id);
+      if (req.role === "user") {
+        user.role = "user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      } else if (req.role === "temp_user") {
+        user.role = "temp_user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      }
+
+      res
+        .status(200)
+        .json({ user: user, message: "User updated successfully" });
+    } else {
+      res.status(400).json({ message: "Atleast 1 field is required" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

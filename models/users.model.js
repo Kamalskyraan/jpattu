@@ -1498,6 +1498,59 @@ export const UserModel = {
       throw err;
     }
   },
+
+  updateTTUser: async (data) => {
+    let column;
+
+    if (data.user_type === "users") {
+      column = [
+        "name",
+        "mobile",
+        "email",
+        "status",
+        "address",
+        "pancard",
+        "bank_name",
+        "holder_name",
+        "account_number",
+        "ifsc_code",
+        "branch",
+      ];
+    } else {
+      column = ["name", "mobile", "email", "address", "pancard"];
+    }
+
+    let keys = [];
+    let values = [];
+
+    column.forEach((val) => {
+      if (data[val]) {
+        keys.push(`${val} = ?`);
+        values.push(data[val].trim());
+      }
+    });
+
+    if (data.referral_id && data.role === "admin") {
+      keys.push("referral_id = ?");
+      values.push(data.referral_id);
+    }
+
+    if (data.password && data.role === "admin") {
+      keys.push("password = ?");
+      values.push(data.password);
+    }
+
+    if (keys.length === 0) {
+      return false;
+    }
+
+    const list = keys.join(", ");
+    const query = `UPDATE ${
+      data.user_type === "users" ? "tt_users" : "tt_temp_users"
+    } SET ${list} WHERE user_id = ?`;
+    await db.query(query, [...values, data.user_id]);
+    return true;
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
