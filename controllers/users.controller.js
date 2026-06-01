@@ -740,8 +740,6 @@ export const getTTUserName = async (req, res) => {
       return res.status(400).json({ message: "referral_id is required" });
     }
 
-   
-
     const data = await UserModel.getTTUserName(referral_id);
     if (data.length === 0) {
       const adminData = await AdminModel.getUserName(referral_id);
@@ -825,6 +823,35 @@ export const updateTTUser = async (req, res) => {
         .json({ user: user, message: "User updated successfully" });
     } else {
       res.status(400).json({ message: "Atleast 1 field is required" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getTTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    const data = await UserModel.getUserTT(user_id);
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      const updatedData = data.map((val) => {
+        if (val.screenshot)
+          return {
+            ...val,
+            // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+            screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+          };
+        else return val;
+      });
+
+      res.status(200).json({ data: updatedData[0] });
     }
   } catch (err) {
     console.log(err);

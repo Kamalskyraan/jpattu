@@ -14,6 +14,7 @@ import {
   getTTUserName,
   getTempTTUser,
   updateTTUser,
+  getTTUser,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -63,5 +64,6 @@ router.post("/user-id", getUserDetails);
 router.post("/tt-paidproof", screenshots.single("image"), TTPaidProof);
 router.get("/tt", getTTUserName);
 router.get("/temp/tt/:user_id", getTempTTUser);
+router.get("/:user_id", verifyUser, getTTUser);
 router.put("/tt", verifyUser, updateValidation, updateTTUser);
 export default router;
