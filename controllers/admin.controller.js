@@ -13,6 +13,7 @@ import {
   nwpMembersDetails,
   nwpMembersDetailsAll,
 } from "../models/nwp.model.js";
+import db from "../configs/db.js";
 
 export const LoginAdmin = async (req, res) => {
   try {
@@ -511,11 +512,41 @@ export const AddQueuedTTUser = async (req, res) => {
       return res.status(200).json({ message: "User not found" });
     }
   } catch (error) {
-    
     if (error.message === "limit exceed") {
       return res.status(200).json({ message: "Referral limit reached" });
     } else {
       res.status(500).json({ message: "Internal Server Error" });
     }
+  }
+};
+
+export const showAddMember = async (req, res) => {
+  try {
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        message: "user_id is required",
+      });
+    }
+
+    const [levelData] = await db.query(
+      `SELECT COUNT(*) as total_levels
+       FROM tt_user_relations
+       WHERE descendant_id = ?`,
+      [user_id],
+    );
+
+    const canAdd = levelData[0].total_levels < 3;
+
+    return res.status(200).json({
+      canAdd,
+      totalLevels: levelData[0].total_levels,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };

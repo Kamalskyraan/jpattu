@@ -12,6 +12,7 @@ import {
   searchTTUser,
   getTTQueuedUsers,
   AddQueuedTTUser,
+  showAddMember,
 } from "../controllers/admin.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 import { getAllPayouts } from "../controllers/users.controller.js";
@@ -33,4 +34,5 @@ router.get("/search-tt-user/:user_id", verifyAdmin, searchTTUser);
 
 router.get("/queued-users/tt", verifyAdmin, getTTQueuedUsers);
 router.post("/add-user/tt", verifyAdmin, AddQueuedTTUser);
+router.post("/show-add-member", verifyAdmin, showAddMember);
 export default router;

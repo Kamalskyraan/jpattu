@@ -1611,6 +1611,8 @@ export const UserModel = {
       if (levelData[0].total_levels >= 3) {
         return false;
       }
+
+
       const updatedQuery =
         "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
       await db.query(updatedQuery, [referral_id, user_id]);
@@ -1663,6 +1665,7 @@ export const UserModel = {
       throw err;
     }
   },
+  
 };
 
 export const getUserFullDetails = async (user_id) => {
