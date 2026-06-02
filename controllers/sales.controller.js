@@ -145,7 +145,6 @@ export const getJPSalesTTReport = async (req, res) => {
   }
 };
 
-
 export const getTTShadowReport = async (req, res) => {
   try {
     const data = await PurchaseModel.getShadowTTQuantity();

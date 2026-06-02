@@ -176,7 +176,7 @@ export const getTTLevelIncome = async (req, res) => {
     });
     data.sort((a, b) => a.level - b.level);
 
-    const maxLevel = 9;
+    const maxLevel = 3;
     const base = 2;
     let sub_total = 0;
     const result = Array.from({ length: maxLevel }, (_, i) => {
@@ -184,7 +184,7 @@ export const getTTLevelIncome = async (req, res) => {
       const members = base ** level;
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
-      const income = level === 1 ? 100 : level == 9 ? 185 : 10;
+      const income = level === 1 ? 100 : level == 3 ? 10 : 10;
       const total_income = income * entry;
       sub_total += total_income;
 
