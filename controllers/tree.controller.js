@@ -129,15 +129,15 @@ export const getTreeChart = async (req, res) => {
 
         (
           SELECT p.ancestor_id
-          FROM user_relations p
+          FROM tt_user_relations p
           WHERE p.descendant_id = u.user_id
             AND p.level = 1
           LIMIT 1
         ) AS ancestor_id
 
-      FROM users u
+      FROM tt_users u
 
-      INNER JOIN user_relations root
+      INNER JOIN tt_user_relations root
         ON u.user_id = root.descendant_id
 
       WHERE root.ancestor_id = ?
@@ -203,8 +203,6 @@ export const getTreeForTT = async (req, res) => {
   try {
     const { user_id } = req.query || false;
 
-
-
     if (user_id !== req.user_id && req.role !== "admin") {
       return res.status(403).json({ message: "Action cannot be done!" });
     }
@@ -214,8 +212,6 @@ export const getTreeForTT = async (req, res) => {
     }
 
     const [data, id] = await TreeModel.getTreeTT(user_id);
-
-
 
     if (!data) {
       res.status(400).json({ message: "User not found" });
@@ -228,5 +224,4 @@ export const getTreeForTT = async (req, res) => {
     console.log(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
-
 };
