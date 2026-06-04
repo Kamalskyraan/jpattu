@@ -208,11 +208,18 @@ export const getHomeDetails = async (req, res) => {
       true,
     );
     const user_count = await UserModel.getUsersCount(true, year, month, false);
+
     const stockAvailable =
       quantity - user_count < 0 ? 0 : quantity - user_count;
 
     const [activeCount, inactiveCount, queueCount] =
       await UserModel.getUserStatus(true, year, month);
+
+    const [ttActiveCount, ttInactiveCount, ttQueueCount] =
+      await UserModel.getTTUserStatus(true, year, month);
+
+      
+
     const levelPayout = await UserBalanceModel.getTotalPayouts(
       false,
       year,

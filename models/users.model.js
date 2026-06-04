@@ -1664,6 +1664,97 @@ export const UserModel = {
       throw err;
     }
   },
+
+  getTTUserStatus: async (timeline = false, year = null, month = null) => {
+    try {
+      let activeQuery = "",
+        inActiveQuery = "",
+        queuedQuery = "",
+        activeParams = [],
+        inactiveParams = [],
+        queuedParams = [];
+
+      if (timeline) {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const startOfMonth = dayjs(
+          `${targetYear}-${targetMonth}-01`,
+          "YYYY-M-D",
+        )
+          //   .subtract(5, "hour")
+          //   .subtract(30, "minute")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          //   .subtract(5, "hour")
+          //   .subtract(30, "minute")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        // Queries for specific month
+        activeQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+          AND status = 'Approved'
+          AND created_at BETWEEN ? AND ?
+      `;
+        activeParams = [startOfMonth, endOfMonth];
+
+        inActiveQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_temp_users
+        WHERE deleted_at IS NULL
+          AND approved = 0
+          AND created_at BETWEEN ? AND ?
+      `;
+        inactiveParams = [startOfMonth, endOfMonth];
+
+        queuedQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+          AND status = 'Queued'
+          AND created_at BETWEEN ? AND ?
+      `;
+        queuedParams = [startOfMonth, endOfMonth];
+      } else {
+        // All-time queries
+        activeQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+          AND status = 'Approved'
+      `;
+        inActiveQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_temp_users
+        WHERE deleted_at IS NULL
+          AND approved = 0
+      `;
+        queuedQuery = `
+        SELECT COUNT(*) AS count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+          AND status = 'Queued'
+      `;
+      }
+
+      const [activeData] = await db.query(activeQuery, activeParams);
+      const [inActiveData] = await db.query(inActiveQuery, inactiveParams);
+      const [queueData] = await db.query(queuedQuery, queuedParams);
+
+      return [
+        activeData[0]?.count || 0,
+        inActiveData[0]?.count || 0,
+        queueData[0]?.count || 0,
+      ];
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
