@@ -207,6 +207,12 @@ export const getHomeDetails = async (req, res) => {
       month,
       true,
     );
+    const tt_total_user_count = await UserModel.getTTUsersCount(
+      true,
+      year,
+      month,
+      true,
+    );
     const user_count = await UserModel.getUsersCount(true, year, month, false);
 
     const stockAvailable =
@@ -218,13 +224,17 @@ export const getHomeDetails = async (req, res) => {
     const [ttActiveCount, ttInactiveCount, ttQueueCount] =
       await UserModel.getTTUserStatus(true, year, month);
 
-      
-
     const levelPayout = await UserBalanceModel.getTotalPayouts(
       false,
       year,
       month,
     );
+    const levelTTPayout = await UserBalanceModel.getTotalTTPayouts(
+      false,
+      year,
+      month,
+    );
+
     const cashbackPayout = await CashbackModel.getTotalPayouts(
       false,
       year,
@@ -237,12 +247,26 @@ export const getHomeDetails = async (req, res) => {
       year,
       month,
     );
+    const TTtotalCashbackPayouts = await CashbackModel.getTotalTTPayouts(
+      true,
+      year,
+      month,
+    );
+
     const totalPaidLevelAmount = await UserBalanceModel.getTotalPayouts(
       true,
       year,
       month,
     );
+
+    const totalTTPaidLevelAmount = await UserBalanceModel.getTotalTTPayouts(
+      true,
+      year,
+      month,
+    );
     const totalPaidCashbackAmount = totalCashbackPayouts;
+    const TTtotalPaidCashbackAmount = TTtotalCashbackPayouts;
+
     const nwpDetails = await nwpMembersDetails(year, month);
     const nwpDetailsAll = await nwpMembersDetailsAll();
     res.status(200).json({
@@ -251,13 +275,23 @@ export const getHomeDetails = async (req, res) => {
       active_ids: activeCount,
       inactive_ids: inactiveCount,
       queued_ids: queueCount,
+      tt_active_ids: ttActiveCount,
+      tt_inactive_ids: ttInactiveCount,
+      tt_queued_ids: ttQueueCount,
+      tt_total_ids: ttActiveCount + ttInactiveCount + ttQueueCount,
       total_ids: activeCount + inactiveCount + queueCount,
       level_amount: parseInt(levelPayout),
+      tt_level_amount: parseInt(levelTTPayout),
+      tt_total_income: parseInt(tt_total_user_count) * 25000,
       cashback_amount: parseInt(cashbackPayout),
       total_payouts: parseInt(cashbackPayout) + parseInt(levelPayout),
       total_income: parseInt(total_user_count) * 1000,
+
       total_paid_amount:
         parseInt(totalPaidLevelAmount) + parseInt(totalPaidCashbackAmount),
+      tt_total_paid_amount:
+        parseInt(totalTTPaidLevelAmount) + parseInt(TTtotalPaidCashbackAmount),
+
       user_data: userData,
       nwp_details: nwpDetails,
       nwp_details_all: nwpDetailsAll,

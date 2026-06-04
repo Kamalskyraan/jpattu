@@ -1755,6 +1755,60 @@ export const UserModel = {
       throw err;
     }
   },
+  getTTUsersCount: async (
+    timeline = false,
+    year = null,
+    month = null,
+    all = false,
+  ) => {
+    try {
+      let startOfMonth, endOfMonth;
+
+      if (all && typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${2025}-1-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else if (typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else {
+        const now = dayjs();
+        startOfMonth = now.startOf("month").format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = now.endOf("month").format("YYYY-MM-DD HH:mm:ss");
+      }
+
+      let query = "",
+        params = [];
+
+      if (timeline) {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+          AND created_at >= ? AND created_at <= ?
+      `;
+        params = [startOfMonth, endOfMonth];
+      } else {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM tt_users
+        WHERE deleted_at IS NULL
+      `;
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0].user_count || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
