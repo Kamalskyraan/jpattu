@@ -269,8 +269,10 @@ export const getHomeDetails = async (req, res) => {
 
     const nwpDetails = await nwpMembersDetails(year, month);
     const nwpDetailsAll = await nwpMembersDetailsAll();
+
     res.status(200).json({
       company_income: (activeCount + queueCount) * 1000,
+      tt_company_income: (ttActiveCount + ttQueueCount) * 25000,
       stock_available: quantity,
       active_ids: activeCount,
       inactive_ids: inactiveCount,
@@ -282,6 +284,7 @@ export const getHomeDetails = async (req, res) => {
       total_ids: activeCount + inactiveCount + queueCount,
       level_amount: parseInt(levelPayout),
       tt_level_amount: parseInt(levelTTPayout),
+
       tt_total_income: parseInt(tt_total_user_count) * 25000,
       cashback_amount: parseInt(cashbackPayout),
       total_payouts: parseInt(cashbackPayout) + parseInt(levelPayout),
