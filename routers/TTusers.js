@@ -3,6 +3,6 @@ import { getTTUserName } from "../controllers/users.controller.js";
 
 const router = express.Router();
 
-router.get("/tt", getTTUserName);
+router.get("/", getTTUserName);
 
 export default router;
