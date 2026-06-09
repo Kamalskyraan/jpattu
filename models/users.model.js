@@ -1278,25 +1278,25 @@ export const UserModel = {
           // Level 1 payout = 100
           await db.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-     VALUES (?, ?, 100, 'unpaid')`,
+     VALUES (?, ?, 2000, 'unpaid')`,
             [referrer.user_id, newId],
           );
 
           // Level 2–8 payout = 10
           await db.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-     SELECT ancestor_id, ?, 10, 'unpaid'
+     SELECT ancestor_id, ?, 1000, 'unpaid'
      FROM tt_user_relations
-     WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+     WHERE descendant_id = ? AND level = 2`,
             [newId, newId],
           );
 
           // Level 9+ payout = 100
           await db.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-     SELECT ancestor_id, ?, 185, 'unpaid'
+     SELECT ancestor_id, ?, 11500, 'unpaid'
      FROM tt_user_relations
-     WHERE descendant_id = ? AND level >= 9`,
+     WHERE descendant_id = ? AND level = 3`,
             [newId, newId],
           );
         }
