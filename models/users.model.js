@@ -1455,22 +1455,22 @@ export const UserModel = {
 
             await db.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-             VALUES (?, ?, 100, 'unpaid')`,
+             VALUES (?, ?, 2000, 'unpaid')`,
               [referrer_id, newId],
             );
             await db.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-              SELECT ancestor_id, ?, 10, 'unpaid'
+              SELECT ancestor_id, ?, 1000, 'unpaid'
               FROM tt_user_relations
-              WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+              WHERE descendant_id = ? AND level = 2`,
               [newId, newId],
             );
 
             await db.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-                SELECT ancestor_id, ?, 185, 'unpaid'
+                SELECT ancestor_id, ?, 11500, 'unpaid'
                 FROM tt_user_relations
-                WHERE descendant_id = ? AND level = 9`,
+                WHERE descendant_id = ? AND level = 3`,
               [newId, newId],
             );
           }
@@ -1633,29 +1633,29 @@ export const UserModel = {
 
       //Add amount to every parent
       const amountQuery1 = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-            VALUES (?, ?, 100, 'unpaid');`;
+            VALUES (?, ?, 2000, 'unpaid');`;
       await db.query(amountQuery1, [referral_id, user_id]);
 
       const amountQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
                               SELECT
                               ancestor_id,
                               ? AS descendant_id,
-                              10 AS amount,
+                              1000 AS amount,
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level < 2;`;
+                              AND level = 2;`;
       await db.query(amountQuery, [user_id, referral_id]);
 
       const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
                               SELECT
                               ancestor_id,
                               ? AS descendant_id,
-                              185 AS amount,
+                              11500 AS amount,
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 2;`;
+                              AND level = 3;`;
       await db.query(bonusQuery, [user_id, referral_id]);
       db.commit();
       return true;
