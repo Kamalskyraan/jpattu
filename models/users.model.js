@@ -1287,7 +1287,7 @@ export const UserModel = {
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1000, 'unpaid'
      FROM tt_user_relations
-     WHERE descendant_id = ? AND level = 2`,
+     WHERE descendant_id = ? AND level == 2`,
             [newId, newId],
           );
 
@@ -1296,7 +1296,7 @@ export const UserModel = {
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 11500, 'unpaid'
      FROM tt_user_relations
-     WHERE descendant_id = ? AND level = 3`,
+     WHERE descendant_id = ? AND level == 3`,
             [newId, newId],
           );
         }
