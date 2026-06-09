@@ -34,9 +34,9 @@ export const getTTSalesReport = async (req, res) => {
         .json({ message: "start date and end date is required" });
     }
 
-    const data = await UserModel.getSales({ start, end });
-    const quantity = await PurchaseModel.getStockQuantity();
-    const user_count = await UserModel.getUsersCount();
+    const data = await UserModel.getTTSales({ start, end });
+    const quantity = await PurchaseModel.getTTStockQuantity();
+    const user_count = await UserModel.getTTUsersCount();
     const available_quantity =
       quantity - user_count < 0 ? 0 : quantity - user_count;
     res

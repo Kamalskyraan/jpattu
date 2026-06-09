@@ -1809,6 +1809,19 @@ export const UserModel = {
       throw err;
     }
   },
+
+  getTTSales: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query =
+        "SELECT id, referral_id, user_id, name, mobile, 25000 as amount, created_at as purchase_date FROM tt_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
