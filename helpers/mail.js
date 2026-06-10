@@ -1844,7 +1844,7 @@ export const sendMemberTargetPackageMail = async ({
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
       <tr>
         <td align="center">
-          <table style="max-width:800px;background:#c4eab1;border-radius:4px;padding:15px">
+          <table style="max-width:800px;background:#3f25e8;border-radius:4px;padding:15px">
             
             <!-- HEADER -->
             <tr>
@@ -2012,13 +2012,13 @@ export const sendMembersTargetPackageAdminMail = async ({
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
       <tr>
         <td align="center">
-          <table style="max-width:800px;background:#c4eab1;border-radius:4px;padding:15px">
+          <table style="max-width:800px;background:#3f25e8;border-radius:4px;padding:15px">
             
             <!-- HEADER -->
             <tr>
               <td style="padding-bottom:5px">
                 <div style="display:flex;align-items:center;gap:15px">
-                  <img src="${EMAIL_ASSET_BASE_URL}/jkwing.png" width="48" height="48" />
+                  <img src="${EMAIL_ASSET_BASE_URL}/tt6.jpg" width="48" height="48" />
                   <span style="font-size:18px;font-weight:bold;font-style:italic">TARGET</span>
                 </div>
               </td>

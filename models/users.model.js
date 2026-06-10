@@ -1,5 +1,10 @@
 import db from "../configs/db.js";
-import { sendAdminMail, sendMail, sendTargetAdminMail, sendTargetMail } from "../helpers/mail.js";
+import {
+  sendAdminMail,
+  sendMail,
+  sendTargetAdminMail,
+  sendTargetMail,
+} from "../helpers/mail.js";
 import dayjs from "dayjs";
 
 export const TempUserModel = {
@@ -872,6 +877,7 @@ export const UserModel = {
       const [data] = await db.query(query, [user_id]);
 
       if (data.length === 0) {
+        await db.rollback();
         return false;
       }
 
@@ -880,6 +886,22 @@ export const UserModel = {
       const [referrar_data] = await db.query(referrar_query, [referral_id]);
 
       if (referrar_data.length === 0) {
+        await db.rollback();
+        return false;
+      }
+
+      const [[maxLevelData]] = await db.query(
+        `SELECT COALESCE(MAX(level), 0) AS maxLevel
+       FROM user_relations
+       WHERE descendant_id = ?`,
+        [referral_id],
+      );
+
+      const maxLevel = maxLevelData.maxLevel || 0;
+
+      // Prevent level > 9
+      if (maxLevel >= 9) {
+        await db.rollback();
         return false;
       }
 
@@ -914,7 +936,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level < 8;`;
+                              AND level BETWEEN 2 AND 8`;
       await db.query(amountQuery, [user_id, referral_id]);
 
       const bonusQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
@@ -925,7 +947,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 8;`;
+                              AND level = 9;`;
       await db.query(bonusQuery, [user_id, referral_id]);
       db.commit();
       return true;
@@ -1591,6 +1613,7 @@ export const UserModel = {
       const [data] = await db.query(query, [user_id]);
 
       if (data.length === 0) {
+        await db.rollback();
         return false;
       }
 
@@ -1599,18 +1622,24 @@ export const UserModel = {
       const [referrar_data] = await db.query(referrar_query, [referral_id]);
 
       if (referrar_data.length === 0) {
+        await db.rollback();
         return false;
       }
-      //     const [levelData] = await db.query(
-      //       `SELECT COUNT(*) as total_levels
-      //  FROM tt_user_relations
-      //  WHERE descendant_id = ?`,
-      //       [referral_id],
-      //     );
 
-      //     if (levelData[0].total_levels >= 3) {
-      //       return false;
-      //     }
+      const [[maxLevelData]] = await db.query(
+        `SELECT COALESCE(MAX(level), 0) AS maxLevel
+       FROM tt_user_relations
+       WHERE descendant_id = ?`,
+        [referral_id],
+      );
+
+      const maxLevel = maxLevelData.maxLevel || 0;
+
+      
+      if (maxLevel >= 3) {
+        await db.rollback();  
+        return false;
+      }
 
       const updatedQuery =
         "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
@@ -1644,7 +1673,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 2;`;
+                              AND level = 1;`;
       await db.query(amountQuery, [user_id, referral_id]);
 
       const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
@@ -1655,7 +1684,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 3;`;
+                              AND level = 2;`;
       await db.query(bonusQuery, [user_id, referral_id]);
       db.commit();
       return true;
