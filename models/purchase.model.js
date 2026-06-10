@@ -340,23 +340,20 @@ export const PurchaseModel = {
 
   getOverallTTQuantity: async () => {
     try {
-      const params = [];
-
       const query = `
       SELECT
-        (SELECT SUM(quantity)
-         FROM tt_purchase_report
-         
-           WHERE deleted_at IS NULL
-           
+        (SELECT COUNT(*)
+         FROM tt_users
+         WHERE deleted_at IS NULL
         ) AS sales_quantity,
 
         (SELECT SUM(quantity)
          FROM tt_purchase_report
+         WHERE deleted_at IS NULL
         ) AS stock_quantity
     `;
 
-      const [data] = await db.query(query, params);
+      const [data] = await db.query(query);
 
       return {
         sales_quantity: data?.[0]?.sales_quantity || 0,

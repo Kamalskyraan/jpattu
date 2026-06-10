@@ -24,9 +24,11 @@ router.get("/outer-src-all-qty", verifyAdmin, getOuterSorceReport);
 //TT
 
 router.get("/tt", verifyAdmin, getTTSalesReport);
+
 router.get("/jarigai/tt", verifyAdmin, getJPSalesTTReport);
 
 router.get("/shadow-overall/tt", verifyAdmin, getShadowReport);
 router.get("/outer-src-all-qty/tt", verifyAdmin, getOuterTTSorceReport);
+
 router.get("/jarigai-overall/tt", verifyAdmin, getTTJarikaiOverall);
 export default router;
