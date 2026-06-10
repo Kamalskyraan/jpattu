@@ -1,5 +1,5 @@
 import db from "../configs/db.js";
-import { sendAdminMail, sendMail, sendTargetMail } from "../helpers/mail.js";
+import { sendAdminMail, sendMail, sendTargetAdminMail, sendTargetMail } from "../helpers/mail.js";
 import dayjs from "dayjs";
 
 export const TempUserModel = {

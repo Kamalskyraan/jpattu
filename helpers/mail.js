@@ -1348,7 +1348,7 @@ export const sendTargetMail = (user) => {
             style="
               max-width: 800px !important;
               min-width: 320px !important;
-              background-color: #c4eab1;
+              background-color: #3f25e8;
               border-radius: 4px;
               box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             "
@@ -1368,7 +1368,7 @@ export const sendTargetMail = (user) => {
                       >
                         
                         <img
-                          src="${EMAIL_ASSET_BASE_URL}/jkwing.png"
+                          src="${EMAIL_ASSET_BASE_URL}/tt6.jpg"
                           width="48"
                           height="48"
                           alt="Right Shadow Logo"
@@ -1385,14 +1385,14 @@ export const sendTargetMail = (user) => {
                             margin-top: 12px;
                           "
                         >
-                          Jarikai
+                         TARGET
                         </span>
                       </div>
                     </td>
                   </tr>
 
                   <tr>
-                    <td align="start">welcome to the Jarikai team.</td>
+                    <td align="start">welcome to the Right Shadow - Target</td>
                   </tr>
                   <tr>
                     <td align="center">
@@ -1479,7 +1479,7 @@ export const sendTargetMail = (user) => {
                       "
                     >
                       <strong>Customer Care</strong><br />
-                      Jarikai Pattu Team
+                     Right Shadow Team
                     </td>
                   </tr>
 
@@ -1599,7 +1599,7 @@ export const sendTargetAdminMail = (user) => {
             style="
               max-width: 800px !important;
               min-width: 320px !important;
-              background-color: #c4eab1;
+              background-color: #3f25e8;
               border-radius: 4px;
               box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             "
@@ -1619,7 +1619,7 @@ export const sendTargetAdminMail = (user) => {
                       >
                         
                         <img
-                          src="${EMAIL_ASSET_BASE_URL}/jkwing.png"
+                          src="${EMAIL_ASSET_BASE_URL}/tt6.jpg"
                           width="48"
                           height="48"
                           alt="Right Shadow Logo"
@@ -1636,7 +1636,7 @@ export const sendTargetAdminMail = (user) => {
                             margin-top: 12px;
                           "
                         >
-                          Jarikai
+                          Target
                         </span>
                       </div>
                     </td>
