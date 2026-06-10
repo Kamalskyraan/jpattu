@@ -936,7 +936,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level BETWEEN 2 AND 8`;
+                              AND level BETWEEN 2 AND 7`;
       await db.query(amountQuery, [user_id, referral_id]);
 
       const bonusQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
@@ -947,7 +947,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 9;`;
+                              AND level = 8`;
       await db.query(bonusQuery, [user_id, referral_id]);
       db.commit();
       return true;
