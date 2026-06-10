@@ -10,6 +10,8 @@ import { addPackageToUser } from "../validator/packageValidator.js";
 import {
   sendMemberPackageMail,
   sendMembersPackageAdminMail,
+  sendMembersTargetPackageAdminMail,
+  sendMemberTargetPackageMail,
 } from "../helpers/mail.js";
 
 const router = express.Router();
@@ -25,6 +27,19 @@ router.post("/send-mail", verifyAdmin, async (req, res) => {
 
     await sendMemberPackageMail({ memberData, new_ids, level });
     await sendMembersPackageAdminMail({ memberData, new_ids, level });
+
+    res.status(200).json({ message: "Mail Sent Successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Mail Sending Failed" });
+  }
+});
+router.post("/tt-send-mail", verifyAdmin, async (req, res) => {
+  try {
+    const { memberData, new_ids, level } = req.body;
+
+    await sendMemberTargetPackageMail({ memberData, new_ids, level });
+    await sendMembersTargetPackageAdminMail({ memberData, new_ids, level });
 
     res.status(200).json({ message: "Mail Sent Successfully" });
   } catch (error) {
