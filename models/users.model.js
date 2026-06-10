@@ -1,5 +1,5 @@
 import db from "../configs/db.js";
-import { sendAdminMail, sendMail } from "../helpers/mail.js";
+import { sendAdminMail, sendMail, sendTargetMail } from "../helpers/mail.js";
 import dayjs from "dayjs";
 
 export const TempUserModel = {
@@ -1309,9 +1309,9 @@ export const UserModel = {
         if (user.email) {
           user.user_id = newId;
           user.referral_id = referrer.user_id;
-          sendMail(user);
+          sendTargetMail(user);
         }
-        await sendAdminMail(user);
+        await sendTargetAdminMail(user);
         ids.push({
           new_id: newId,
           user_id: temp_user_id,
