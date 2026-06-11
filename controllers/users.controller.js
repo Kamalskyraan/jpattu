@@ -869,7 +869,7 @@ export const deleteTempTTUser = async (req, res) => {
       });
     }
 
-    const result = await TempUserModel.deleteUser(id);
+    const result = await TempUserModel.deleteTTUser(id);
     if (result > 0) {
       res.status(200).json({
         message: "id deleted successfully",
