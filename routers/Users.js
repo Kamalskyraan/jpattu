@@ -52,7 +52,6 @@ const screenshots = multer({
 
 router.delete("/delete-user/:id", deleteTempUser);
 
-
 router.post("/paidProof", screenshots.single("image"), paidProof);
 router.put("/", verifyUser, updateValidation, updateUser);
 router.get("/", getUserName);
@@ -68,5 +67,5 @@ router.get("/tt", getTTUserName);
 router.get("/temp/tt/:user_id", getTempTTUser);
 router.get("/tt/:user_id", verifyUser, getTTUser);
 router.put("/tt", verifyUser, updateValidation, updateTTUser);
-router.delete("/tt-delete-user/:id", deleteTempUser);
+router.delete("/tt-delete-user/:id", getTempTTUser);
 export default router;
