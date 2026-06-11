@@ -393,6 +393,16 @@ export const TempUserModel = {
       throw err;
     }
   },
+  deleteTTUser: async (id) => {
+    try {
+      const query =
+        "UPDATE tt_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
+      const [result] = await db.query(query, [id]);
+      return result.affectedRows;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export const UserModel = {

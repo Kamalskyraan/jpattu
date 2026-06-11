@@ -15,6 +15,7 @@ import {
   getTempTTUser,
   updateTTUser,
   getTTUser,
+  deleteTempTTUser,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -67,5 +68,5 @@ router.get("/tt", getTTUserName);
 router.get("/temp/tt/:user_id", getTempTTUser);
 router.get("/tt/:user_id", verifyUser, getTTUser);
 router.put("/tt", verifyUser, updateValidation, updateTTUser);
-router.delete("/tt-delete-user/:id", getTempTTUser);
+router.delete("/tt-delete-user/:id", deleteTempTTUser);
 export default router;
