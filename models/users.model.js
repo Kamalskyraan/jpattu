@@ -1303,7 +1303,7 @@ export const UserModel = {
             `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM tt_user_relations
-     WHERE descendant_id = ? AND ancestor_id IS NOT NULL`,
+     WHERE descendant_id = ?`,
             [newId, referrer.user_id],
           );
 
@@ -1682,7 +1682,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 1;`;
+                              AND level = 2;`;
       await db.query(amountQuery, [user_id, referral_id]);
 
       const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
@@ -1693,7 +1693,7 @@ export const UserModel = {
                               'unpaid' AS status
                               FROM user_relations
                               WHERE descendant_id = ?
-                              AND level = 2;`;
+                              AND level = 3`;
       await db.query(bonusQuery, [user_id, referral_id]);
       db.commit();
       return true;
