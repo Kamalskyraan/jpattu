@@ -1303,7 +1303,7 @@ export const UserModel = {
             `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM tt_user_relations
-     WHERE descendant_id = ? AND ancestor_id IS NOT NULL AND level < 3`,
+     WHERE descendant_id = ? AND level < 3`,
             [newId, referrer.user_id],
           );
 
