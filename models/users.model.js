@@ -1636,19 +1636,7 @@ export const UserModel = {
         return false;
       }
 
-      // const [[maxLevelData]] = await db.query(
-      //   `SELECT COALESCE(MAX(level), 0) AS maxLevel
-      //  FROM tt_user_relations
-      //  WHERE descendant_id = ?`,
-      //   [referral_id],
-      // );
-
-      // const maxLevel = maxLevelData.maxLevel || 0;
-
-      // if (maxLevel >= 3) {
-      //   await db.rollback();
-      //   return false;
-      // }
+   
 
       const updatedQuery =
         "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
@@ -1680,7 +1668,7 @@ export const UserModel = {
                               ? AS descendant_id,
                               1000 AS amount,
                               'unpaid' AS status
-                              FROM user_relations
+                              FROM tt_user_relations
                               WHERE descendant_id = ?
                               AND level = 2;`;
       await db.query(amountQuery, [user_id, referral_id]);
@@ -1691,7 +1679,7 @@ export const UserModel = {
                               ? AS descendant_id,
                               11500 AS amount,
                               'unpaid' AS status
-                              FROM user_relations
+                              FROM tt_user_relations
                               WHERE descendant_id = ?
                               AND level = 3`;
       await db.query(bonusQuery, [user_id, referral_id]);
