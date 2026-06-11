@@ -1614,83 +1614,179 @@ export const UserModel = {
     }
   },
 
+  // addQueuedTTUser: async (user_id, referral_id) => {
+  //   try {
+  //     db.beginTransaction();
+
+  //     const query =
+  //       "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
+  //     const [data] = await db.query(query, [user_id]);
+
+  //     if (data.length === 0) {
+  //       await db.rollback();
+  //       return false;
+  //     }
+
+  //     const referrar_query =
+  //       "SELECT * FROM tt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL";
+  //     const [referrar_data] = await db.query(referrar_query, [referral_id]);
+
+  //     if (referrar_data.length === 0) {
+  //       await db.rollback();
+  //       return false;
+  //     }
+
+  //     const updatedQuery =
+  //       "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
+  //     await db.query(updatedQuery, [referral_id, user_id]);
+
+  //     //Make relations
+  //     const relationQuery1 = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
+  //                               VALUES (?, ?, 1);`;
+
+  //     await db.query(relationQuery1, [referral_id, user_id]);
+  //     const relationQuery = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
+  //                               SELECT
+  //                                 ancestor_id,
+  //                                 ? AS descendant_id,
+  //                                 level + 1
+  //                                 FROM tt_user_relations
+  //                                 WHERE descendant_id = ?
+  //                                 AND level < 3 AND ancestor_id IS NOT NULL`;
+  //     await db.query(relationQuery, [user_id, referral_id]);
+
+  //     //Add amount to every parent
+  //     const amountQuery1 = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+  //           VALUES (?, ?, 2000, 'unpaid');`;
+  //     await db.query(amountQuery1, [referral_id, user_id]);
+
+  //     const amountQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+  //                             SELECT
+  //                             ancestor_id,
+  //                             ? AS descendant_id,
+  //                             1000 AS amount,
+  //                             'unpaid' AS status
+  //                             FROM tt_user_relations
+  //                             WHERE descendant_id = ?
+  //                             AND level = 2;`;
+  //     await db.query(amountQuery, [user_id, referral_id]);
+
+  //     const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
+  //                             SELECT
+  //                             ancestor_id,
+  //                             ? AS descendant_id,
+  //                             11500 AS amount,
+  //                             'unpaid' AS status
+  //                             FROM tt_user_relations
+  //                             WHERE descendant_id = ?
+  //                             AND level = 3`;
+  //     await db.query(bonusQuery, [user_id, referral_id]);
+  //     db.commit();
+  //     return true;
+  //   } catch (err) {
+  //     db.rollback();
+  //     throw err;
+  //   }
+  // },
+
   addQueuedTTUser: async (user_id, referral_id) => {
     try {
-      db.beginTransaction();
+      await db.beginTransaction();
 
-      const query =
-        "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
-      const [data] = await db.query(query, [user_id]);
+      const [data] = await db.query(
+        "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL",
+        [user_id],
+      );
 
       if (data.length === 0) {
         await db.rollback();
         return false;
       }
 
-      const referrar_query =
-        "SELECT * FROM tt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL";
-      const [referrar_data] = await db.query(referrar_query, [referral_id]);
+      const [referrar_data] = await db.query(
+        "SELECT * FROM tt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
+        [referral_id],
+      );
 
       if (referrar_data.length === 0) {
         await db.rollback();
         return false;
       }
 
-   
+      // Update queued user
+      await db.query(
+        "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
+        [referral_id, user_id],
+      );
 
-      const updatedQuery =
-        "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
-      await db.query(updatedQuery, [referral_id, user_id]);
+      // Level 1 relation
+      await db.query(
+        `INSERT INTO tt_user_relations
+       (ancestor_id, descendant_id, level)
+       VALUES (?, ?, 1)`,
+        [referral_id, user_id],
+      );
 
-      //Make relations
-      const relationQuery1 = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
-                                VALUES (?, ?, 1);`;
+      // Level 2 & 3 relations only
+      await db.query(
+        `INSERT INTO tt_user_relations
+       (ancestor_id, descendant_id, level)
+       SELECT
+         ancestor_id,
+         ?,
+         level + 1
+       FROM tt_user_relations
+       WHERE descendant_id = ?
+       AND level < 3
+       AND ancestor_id IS NOT NULL`,
+        [user_id, referral_id],
+      );
 
-      await db.query(relationQuery1, [referral_id, user_id]);
-      const relationQuery = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
-                                SELECT
-                                  ancestor_id,
-                                  ? AS descendant_id,
-                                  level + 1
-                                  FROM tt_user_relations
-                                  WHERE descendant_id = ?
-                                  AND level < 3 AND ancestor_id IS NOT NULL`;
-      await db.query(relationQuery, [user_id, referral_id]);
+      // Level 1 payout
+      await db.query(
+        `INSERT INTO tt_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       VALUES (?, ?, 2000, 'unpaid')`,
+        [referral_id, user_id],
+      );
 
-      //Add amount to every parent
-      const amountQuery1 = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-            VALUES (?, ?, 2000, 'unpaid');`;
-      await db.query(amountQuery1, [referral_id, user_id]);
+      // Level 2 payout
+      await db.query(
+        `INSERT INTO tt_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         1000,
+         'unpaid'
+       FROM tt_user_relations
+       WHERE descendant_id = ?
+       AND level = 2`,
+        [user_id, user_id],
+      );
 
-      const amountQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-                              SELECT
-                              ancestor_id,
-                              ? AS descendant_id,
-                              1000 AS amount,
-                              'unpaid' AS status
-                              FROM tt_user_relations
-                              WHERE descendant_id = ?
-                              AND level = 2;`;
-      await db.query(amountQuery, [user_id, referral_id]);
+      // Level 3 payout
+      await db.query(
+        `INSERT INTO tt_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         11500,
+         'unpaid'
+       FROM tt_user_relations
+       WHERE descendant_id = ?
+       AND level = 3`,
+        [user_id, user_id],
+      );
 
-      const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-                              SELECT
-                              ancestor_id,
-                              ? AS descendant_id,
-                              11500 AS amount,
-                              'unpaid' AS status
-                              FROM tt_user_relations
-                              WHERE descendant_id = ?
-                              AND level = 3`;
-      await db.query(bonusQuery, [user_id, referral_id]);
-      db.commit();
+      await db.commit();
       return true;
     } catch (err) {
-      db.rollback();
+      await db.rollback();
       throw err;
     }
   },
-
   getTTUserStatus: async (timeline = false, year = null, month = null) => {
     try {
       let activeQuery = "",
