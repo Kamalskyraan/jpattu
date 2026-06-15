@@ -879,94 +879,175 @@ export const UserModel = {
     }
   },
 
+  // addQueuedUser: async (user_id, referral_id) => {
+  //   try {
+  //     db.beginTransaction();
+  //     const query =
+  //       "SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL";
+  //     const [data] = await db.query(query, [user_id]);
+
+  //     if (data.length === 0) {
+  //       await db.rollback();
+  //       return false;
+  //     }
+
+  //     const referrar_query =
+  //       "SELECT * FROM users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL";
+  //     const [referrar_data] = await db.query(referrar_query, [referral_id]);
+
+  //     if (referrar_data.length === 0) {
+  //       await db.rollback();
+  //       return false;
+  //     }
+
+  //     const updatedQuery =
+  //       "UPDATE users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
+  //     await db.query(updatedQuery, [referral_id, user_id]);
+
+  //     //Make relations
+  //     const relationQuery1 = `INSERT INTO user_relations (ancestor_id, descendant_id, level)
+  //                               VALUES (?, ?, 1);`;
+  //     await db.query(relationQuery1, [referral_id, user_id]);
+  //     const relationQuery = `INSERT INTO user_relations (ancestor_id, descendant_id, level)
+  //                               SELECT
+  //                                 ancestor_id,
+  //                                 ? AS descendant_id,
+  //                                 level + 1
+  //                                 FROM user_relations
+  //                                 WHERE descendant_id = ?
+  //                                 AND level < 9 AND ancestor_id IS NOT NULL`;
+  //     await db.query(relationQuery, [user_id, referral_id]);
+
+  //     //Add amount to every parent
+  //     const amountQuery1 = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
+  //           VALUES (?, ?, 100, 'unpaid');`;
+  //     await db.query(amountQuery1, [referral_id, user_id]);
+
+  //     const amountQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
+  //                             SELECT
+  //                             ancestor_id,
+  //                             ? AS descendant_id,
+  //                             10 AS amount,
+  //                             'unpaid' AS status
+  //                             FROM user_relations
+  //                             WHERE descendant_id = ?
+  //                             AND level BETWEEN 2 AND 8`;
+  //     await db.query(amountQuery, [user_id, referral_id]);
+
+  //     const bonusQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
+  //                             SELECT
+  //                             ancestor_id,
+  //                             ? AS descendant_id,
+  //                             185 AS amount,
+  //                             'unpaid' AS status
+  //                             FROM user_relations
+  //                             WHERE descendant_id = ?
+  //                             AND level = 9`;
+  //     await db.query(bonusQuery, [user_id, referral_id]);
+  //     db.commit();
+  //     return true;
+  //   } catch (err) {
+  //     db.rollback();
+  //     throw err;
+  //   }
+  // },
+
   addQueuedUser: async (user_id, referral_id) => {
     try {
-      db.beginTransaction();
-      const query =
-        "SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL";
-      const [data] = await db.query(query, [user_id]);
+      await db.beginTransaction();
+
+      const [data] = await db.query(
+        "SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL",
+        [user_id],
+      );
 
       if (data.length === 0) {
         await db.rollback();
         return false;
       }
 
-      const referrar_query =
-        "SELECT * FROM users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL";
-      const [referrar_data] = await db.query(referrar_query, [referral_id]);
+      const [referrar_data] = await db.query(
+        "SELECT * FROM users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
+        [referral_id],
+      );
 
       if (referrar_data.length === 0) {
         await db.rollback();
         return false;
       }
 
-      // const [[maxLevelData]] = await db.query(
-      //   `SELECT COALESCE(MAX(level), 0) AS maxLevel
-      //  FROM user_relations
-      //  WHERE descendant_id = ?`,
-      //   [referral_id],
-      // );
+      // Update queued user
+      await db.query(
+        "UPDATE users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
+        [referral_id, user_id],
+      );
 
-      // const maxLevel = maxLevelData.maxLevel || 0;
+      // Level 1 relation
+      await db.query(
+        `INSERT INTO user_relations (ancestor_id, descendant_id, level)
+       VALUES (?, ?, 1)`,
+        [referral_id, user_id],
+      );
 
-      // // Prevent level > 9
-      // if (maxLevel >= 9) {
-      //   await db.rollback();
-      //   return false;
-      // }
+      // Level 2 - 9 relations
+      await db.query(
+        `INSERT INTO user_relations (ancestor_id, descendant_id, level)
+       SELECT
+         ancestor_id,
+         ?,
+         level + 1
+       FROM user_relations
+       WHERE descendant_id = ?
+       AND level < 9
+       AND ancestor_id IS NOT NULL`,
+        [user_id, referral_id],
+      );
 
-      const updatedQuery =
-        "UPDATE users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
-      await db.query(updatedQuery, [referral_id, user_id]);
+      // Level 1 payout = 100
+      await db.query(
+        `INSERT INTO user_balance_logs
+       (user_id, related_user_id, amount, status)
+       VALUES (?, ?, 100, 'unpaid')`,
+        [referral_id, user_id],
+      );
 
-      //Make relations
-      const relationQuery1 = `INSERT INTO user_relations (ancestor_id, descendant_id, level)
-                                VALUES (?, ?, 1);`;
-      await db.query(relationQuery1, [referral_id, user_id]);
-      const relationQuery = `INSERT INTO user_relations (ancestor_id, descendant_id, level)
-                                SELECT
-                                  ancestor_id,
-                                  ? AS descendant_id,
-                                  level + 1
-                                  FROM user_relations
-                                  WHERE descendant_id = ?
-                                  AND level < 9 AND ancestor_id IS NOT NULL`;
-      await db.query(relationQuery, [user_id, referral_id]);
+      // Level 2 - 8 payout = 10
+      await db.query(
+        `INSERT INTO user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         10,
+         'unpaid'
+       FROM user_relations
+       WHERE descendant_id = ?
+       AND level BETWEEN 2 AND 8`,
+        [user_id, user_id],
+      );
 
-      //Add amount to every parent
-      const amountQuery1 = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
-            VALUES (?, ?, 100, 'unpaid');`;
-      await db.query(amountQuery1, [referral_id, user_id]);
+      // Level 9 payout = 185
+      await db.query(
+        `INSERT INTO user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         185,
+         'unpaid'
+       FROM user_relations
+       WHERE descendant_id = ?
+       AND level = 9`,
+        [user_id, user_id],
+      );
 
-      const amountQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
-                              SELECT
-                              ancestor_id,
-                              ? AS descendant_id,
-                              10 AS amount,
-                              'unpaid' AS status
-                              FROM user_relations
-                              WHERE descendant_id = ?
-                              AND level BETWEEN 2 AND 7`;
-      await db.query(amountQuery, [user_id, referral_id]);
-
-      const bonusQuery = `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
-                              SELECT
-                              ancestor_id,
-                              ? AS descendant_id,
-                              185 AS amount,
-                              'unpaid' AS status
-                              FROM user_relations
-                              WHERE descendant_id = ?
-                              AND level = 8`;
-      await db.query(bonusQuery, [user_id, referral_id]);
-      db.commit();
+      await db.commit();
       return true;
     } catch (err) {
-      db.rollback();
+      await db.rollback();
       throw err;
     }
   },
-
   allUserPayouts: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
