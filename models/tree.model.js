@@ -108,6 +108,27 @@ const TreeModel = {
       throw err;
     }
   },
+
+   getTTMemberOnLevel: async ({ user_id, level = 1 }) => {
+    try {
+      const query = `WITH RECURSIVE tt_user_relations AS (
+                        SELECT user_id, referral_id, name, mobile, created_at, 0 AS level
+                        FROM tt_users
+                        WHERE user_id = ?
+
+                        UNION ALL
+
+                        SELECT u.user_id, u.referral_id, u.name, u.mobile, u.created_at, ut.level + 1
+                        FROM tt_users u
+                        JOIN tt_user_relations ut ON u.referral_id = ut.user_id AND status = "approved"
+                        )
+                        SELECT * FROM tt_user_relations WHERE level = ?`;
+      const [data] = await db.query(query, [user_id, level]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default TreeModel;

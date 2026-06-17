@@ -264,3 +264,22 @@ export const getTTMembersCount = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+
+export const getTTMemberOnLevel = async (req, res) => {
+  try {
+    const { level } = req.params || false;
+    const { user_id } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    const data = await TreeModel.getTTMemberOnLevel({ user_id, level });
+
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
