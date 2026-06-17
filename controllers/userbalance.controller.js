@@ -184,7 +184,7 @@ export const getTTLevelIncome = async (req, res) => {
       const members = base ** level;
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
-      const income = level === 1 ? 100 : level == 3 ? 10 : 10;
+      const income = level === 1 ? 1000 : level == 3 ? 11500 : 1000;
       const total_income = income * entry;
       sub_total += total_income;
 
