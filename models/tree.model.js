@@ -97,6 +97,17 @@ const TreeModel = {
       throw err;
     }
   },
+
+   getTTMembersCount: async (user_id) => {
+    try {
+      const query =
+        "SELECT COUNT(*) as count, level FROM tt_user_relations WHERE ancestor_id = ? GROUP BY level";
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default TreeModel;

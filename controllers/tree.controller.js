@@ -225,3 +225,42 @@ export const getTreeForTT = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+// 
+
+
+export const getTTMembersCount = async (req, res) => {
+  try {
+    const { user_id } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    const data = await TreeModel.getTTMembersCount(user_id);
+
+    data.sort((a, b) => a.level - b.level);
+    const maxLevel = 3;
+    const base = 2;
+
+    const result = Array.from({ length: maxLevel }, (_, i) => {
+      const level = i + 1;
+      const total = base ** level;
+      const record = data.find((item) => item.level === level);
+      const count = record ? record.count : 0;
+      const balance = total - count;
+
+      return {
+        level,
+        total,
+        count,
+        balance,
+      };
+    });
+
+    res.status(200).json({ data: result });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
