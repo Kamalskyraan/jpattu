@@ -316,6 +316,17 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  getReceivedTTAmount: async (user_id) => {
+    try {
+      const query =
+        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total_amount, COUNT(*) AS total_records FROM tt_user_balance_logs WHERE user_id = ? AND status = 'paid' AND deleted_at IS NULL GROUP BY month ORDER BY month DESC;";
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default UserBalanceModel;
