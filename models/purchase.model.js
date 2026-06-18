@@ -197,7 +197,7 @@ export const PurchaseModel = {
 
   (SELECT SUM(quantity)
    FROM purchase_report
-   WHERE supplier = 'jarigai'
+  
   ) AS stock_count;
 
     `;
