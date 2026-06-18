@@ -1560,8 +1560,6 @@ export const sendTargetMail = (user) => {
   });
 };
 
-
-
 export const sendTargetAdminMail = (user) => {
   const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
 
@@ -1815,10 +1813,6 @@ export const sendTargetAdminMail = (user) => {
   });
 };
 
-
-
-
-
 export const sendMemberTargetPackageMail = async ({
   memberData,
   new_ids = [],
@@ -1844,7 +1838,7 @@ export const sendMemberTargetPackageMail = async ({
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
       <tr>
         <td align="center">
-          <table style="max-width:800px;background:#3f25e8;border-radius:4px;padding:15px">
+          <table style="max-width:800px;background:#d8d5f0;border-radius:4px;padding:15px">
             
             <!-- HEADER -->
             <tr>
@@ -2012,7 +2006,7 @@ export const sendMembersTargetPackageAdminMail = async ({
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
       <tr>
         <td align="center">
-          <table style="max-width:800px;background:#3f25e8;border-radius:4px;padding:15px">
+          <table style="max-width:800px;background:#d8d5f0;border-radius:4px;padding:15px">
             
             <!-- HEADER -->
             <tr>
