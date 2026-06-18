@@ -117,6 +117,7 @@ export const getPurchaseTTReports = async (req, res) => {
     res.status(200).json({
       data: data,
       available_quantity: available_quantity,
+      total_quantity,
       message: "Data fetched successfully",
     });
   } catch (err) {
