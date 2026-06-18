@@ -134,8 +134,7 @@ export const PurchaseModel = {
         query = `
         SELECT sum(quantity) as quantity
         FROM purchase_report
-        WHERE supplier = 'jarigai'
-          AND deleted_at IS NULL
+        WHERE deleted_at IS NULL
           AND created_at BETWEEN ? AND ?
       `;
 
@@ -146,8 +145,7 @@ export const PurchaseModel = {
         FROM purchase_report
 
 
-        WHERE supplier = 'jarigai'
-          AND deleted_at IS NULL
+        WHERE  deleted_at IS NULL
       `;
       }
 
@@ -780,7 +778,7 @@ export const JpPurchaseModel = {
     }
   },
 
-    getPurchaseTTDataForTotal: async ({ start, end }) => {
+  getPurchaseTTDataForTotal: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
