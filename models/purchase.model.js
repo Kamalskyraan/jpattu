@@ -713,7 +713,7 @@ export const JpPurchaseModel = {
       const endTime = `${end} 23:59:59`;
 
       const query =
-        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM tt_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
+        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, SUM(quantity) as t_quantity amount FROM tt_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
       const [data] = await db.query(query, [startTime, endTime]);
 
       return data;
