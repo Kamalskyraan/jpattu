@@ -1348,7 +1348,7 @@ export const sendTargetMail = (user) => {
             style="
               max-width: 800px !important;
               min-width: 320px !important;
-              background-color: #3f25e8;
+              background-color: #d8d5f0;
               border-radius: 4px;
               box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             "
@@ -1597,7 +1597,7 @@ export const sendTargetAdminMail = (user) => {
             style="
               max-width: 800px !important;
               min-width: 320px !important;
-              background-color: #3f25e8;
+              background-color: #d8d5f0;
               border-radius: 4px;
               box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             "
