@@ -3,6 +3,7 @@ import { configDotenv } from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import userAuthRoutes from "./routers/UserAuth.js";
+import ttUserAuthRoutes from "./routers/TTuser.js";
 import adminAuthRoutes from "./routers/AdminAuth.js";
 import adminRoutes from "./routers/Admin.js";
 import userRoutes from "./routers/Users.js";
@@ -64,6 +65,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/public", express.static("public"));
 app.use(cookieParser());
 app.use("/users/auth", userAuthRoutes);
+app.use("/tt-users/auth", ttUserAuthRoutes);
 app.use("/admin/auth", adminAuthRoutes);
 
 app.use("/admin", adminRoutes);
@@ -93,13 +95,3 @@ app.get("/get-tt-admin-data", getTTAdminData);
 app.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
