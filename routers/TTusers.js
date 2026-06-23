@@ -1,6 +1,7 @@
 import express from "express";
 import {
     getHomeDetails,
+  getTTHomeDetails,
   getTTUser,
   getTTUserName,
   updateTTUser,
@@ -13,5 +14,5 @@ const router = express.Router();
 router.get("/", getTTUserName);
 router.get("/:user_id", verifyUser, getTTUser);
 router.put("/", verifyUser, updateValidation, updateTTUser);
-router.get("/data/:user_id", verifyUser, getHomeDetails);
+router.get("/data/:user_id", verifyUser, getTTHomeDetails);
 export default router;
