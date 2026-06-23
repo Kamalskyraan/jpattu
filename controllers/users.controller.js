@@ -910,23 +910,23 @@ export const getTTHomeDetails = async (req, res) => {
     // const nwpDetails = await UserModel?.getNwpDetails(user_id);
     // const rewardDetails = await UserModel.getRewardDetails(user_id);
 
-    const detail = nwpDetails[0];
+    // const detail = nwpDetails[0];
 
-    const approvedDate = dayjs(detail.approved_at).startOf("day");
+    // const approvedDate = dayjs(detail.approved_at).startOf("day");
     const currentDate = dayjs().startOf("day");
 
-    let totalDays = currentDate.diff(approvedDate, "day") + 1;
+    // let totalDays = currentDate.diff(approvedDate, "day") + 1;
 
-    const totalAmount = detail.daily_amt * totalDays;
+    // const totalAmount = detail.daily_amt * totalDays;
 
     res.status(200).json({
       level_amount: levelAmount,
       received_amount: receivedAmount,
       direct_id: direct_id,
       total_ids: totalCount,
-      total_days: totalDays,
-      total_amount: totalAmount,
-      daily_amount: detail.daily_amt,
+      // total_days: totalDays,
+      // total_amount: totalAmount,
+      // daily_amount: detail.daily_amt,
       // reward_amount: rewardDetails.reward_amount,
     });
   } catch (err) {
