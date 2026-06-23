@@ -327,6 +327,30 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  totalTTPayment: async (user_id) => {
+    try {
+      const startTime = dayjs().startOf("month").valueOf();
+      const endTime = dayjs().endOf("month").valueOf();
+
+      const received_amount_query =
+        "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 1000 as created_at FROM tt_user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
+
+      const [data] = await db.query(received_amount_query, [user_id]);
+      const level_amount = data
+        .filter(
+          (val) => val.created_at >= startTime && val.created_at <= endTime,
+        )
+        .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
+      const received_amount = data
+        .filter((val) => val.status === "paid")
+        .reduce((total, val) => total + Number(val.amount), 0);
+
+      return [parseInt(level_amount), parseInt(received_amount)];
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default UserBalanceModel;

@@ -2025,6 +2025,8 @@ export const UserModel = {
       throw err;
     }
   },
+
+    
 };
 
 export const getUserFullDetails = async (user_id) => {
