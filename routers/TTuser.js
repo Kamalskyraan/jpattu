@@ -1,6 +1,7 @@
 import express from "express";
 import { TTRegisterUser } from "../controllers/users.controller.js";
 import { validateRegister } from "../validator/authValidator.js";
+import rateLimit from "express-rate-limit";
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
