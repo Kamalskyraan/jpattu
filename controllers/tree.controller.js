@@ -85,67 +85,37 @@ export const getMembersCount = async (req, res) => {
 //   try {
 //     const { id } = req.params;
 
-//     // Root + descendants upto 3 levels
-//     const [users] = await db.query(
-//       `
-//       SELECT DISTINCT
-//           u.user_id,
-//           u.name
-//       FROM tt_users u
-//       WHERE u.user_id = ?
-
-//       UNION
-
-//       SELECT DISTINCT
-//           u.user_id,
-//           u.name
-//       FROM tt_user_relations r
-//       INNER JOIN tt_users u
-//           ON u.user_id = r.descendant_id
-//       WHERE r.ancestor_id = ?
-//       AND r.level <= 3
-//       `,
-//       [id, id],
-//     );
-
-//     // Direct parent-child relationships only
-//     const [relations] = await db.query(
+//     const [rows] = await db.query(
 //       `
 //       SELECT
-//           ancestor_id AS parent_id,
-//           descendant_id AS child_id
-//       FROM tt_user_relations
-//       WHERE level = 1
+//           u.user_id,
+//           u.name,
+//           r.level,
+//           p.ancestor_id AS parent_id
+//       FROM tt_user_relations r
+
+//       INNER JOIN tt_users u
+//           ON u.user_id = r.descendant_id
+
+//       LEFT JOIN tt_user_relations p
+//           ON p.descendant_id = r.descendant_id
+//           AND p.level = 1
+
+//       WHERE r.ancestor_id = ?
+//       AND r.level <= 3
+
+//       ORDER BY r.level ASC, u.user_id ASC
 //       `,
+//       [id],
 //     );
-
-//     const nodeMap = {};
-
-//     users.forEach((user) => {
-//       nodeMap[user.user_id] = {
-//         user_id: user.user_id,
-//         name: user.name,
-//         children: [],
-//       };
-//     });
-
-//     relations.forEach((rel) => {
-//       const parent = nodeMap[rel.parent_id];
-//       const child = nodeMap[rel.child_id];
-
-//       if (parent && child) {
-//         parent.children.push(child);
-//       }
-//     });
-
-//     const tree = nodeMap[id];
 
 //     return res.status(200).json({
 //       success: true,
-//       data: tree || null,
+//       root: id,
+//       data: rows,
 //     });
 //   } catch (error) {
-//     console.error(error);
+//     console.log(error);
 
 //     return res.status(500).json({
 //       success: false,
@@ -153,6 +123,7 @@ export const getMembersCount = async (req, res) => {
 //     });
 //   }
 // };
+
 
 export const getTreeChartForTT = async (req, res) => {
   try {
@@ -164,22 +135,26 @@ export const getTreeChartForTT = async (req, res) => {
           u.user_id,
           u.name,
           r.level,
-          p.ancestor_id AS parent_id
+          (
+            SELECT ancestor_id
+            FROM tt_user_relations pr
+            WHERE pr.descendant_id = r.descendant_id
+              AND pr.level = 1
+              AND pr.deleted_at IS NULL
+            LIMIT 1
+          ) AS parent_id
       FROM tt_user_relations r
-
       INNER JOIN tt_users u
           ON u.user_id = r.descendant_id
-
-      LEFT JOIN tt_user_relations p
-          ON p.descendant_id = r.descendant_id
-          AND p.level = 1
-
       WHERE r.ancestor_id = ?
-      AND r.level <= 3
-
-      ORDER BY r.level ASC, u.user_id ASC
+        AND r.level <= 3
+        AND u.deleted_at IS NULL
+      ORDER BY
+          r.level ASC,
+          parent_id ASC,
+          u.user_id ASC
       `,
-      [id],
+      [id]
     );
 
     return res.status(200).json({
