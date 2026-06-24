@@ -69,4 +69,5 @@ router.get("/temp/tt/:user_id", getTempTTUser);
 router.get("/tt/:user_id", verifyUser, getTTUser);
 router.put("/tt", verifyUser, updateValidation, updateTTUser);
 router.delete("/tt-delete-user/:id", deleteTempTTUser);
+
 export default router;

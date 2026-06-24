@@ -859,7 +859,6 @@ export const getTTUser = async (req, res) => {
   }
 };
 
-
 export const deleteTempTTUser = async (req, res) => {
   try {
     const id = req.params?.id;
@@ -887,7 +886,6 @@ export const deleteTempTTUser = async (req, res) => {
   }
 };
 
-
 export const getTTHomeDetails = async (req, res) => {
   try {
     const { user_id } = req.params || false;
@@ -907,27 +905,14 @@ export const getTTHomeDetails = async (req, res) => {
       (total, current) => total + current.count,
       0,
     );
-    // const nwpDetails = await UserModel?.getNwpDetails(user_id);
-    // const rewardDetails = await UserModel.getRewardDetails(user_id);
 
-    // const detail = nwpDetails[0];
-
-    // const approvedDate = dayjs(detail.approved_at).startOf("day");
     const currentDate = dayjs().startOf("day");
-
-    // let totalDays = currentDate.diff(approvedDate, "day") + 1;
-
-    // const totalAmount = detail.daily_amt * totalDays;
 
     res.status(200).json({
       level_amount: levelAmount,
       received_amount: receivedAmount,
       direct_id: direct_id,
       total_ids: totalCount,
-      // total_days: totalDays,
-      // total_amount: totalAmount,
-      // daily_amount: detail.daily_amt,
-      // reward_amount: rewardDetails.reward_amount,
     });
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
