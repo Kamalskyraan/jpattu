@@ -85,28 +85,69 @@ export const getTreeChartForTT = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [rows] = await db.query(
+    // Root + descendants upto 3 levels
+    const [users] = await db.query(
       `
-      SELECT
+      SELECT DISTINCT
           u.user_id,
-          u.name,
-          parent.ancestor_id AS parent_id
+          u.name
       FROM tt_users u
-      LEFT JOIN tt_user_relations parent
-          ON parent.descendant_id = u.user_id
-          AND parent.level = 1
-      WHERE u.deleted_at IS NULL
-      `
+      WHERE u.user_id = ?
+      
+      UNION
+      
+      SELECT DISTINCT
+          u.user_id,
+          u.name
+      FROM tt_user_relations r
+      INNER JOIN tt_users u
+          ON u.user_id = r.descendant_id
+      WHERE r.ancestor_id = ?
+      AND r.level <= 3
+      `,
+      [id, id],
     );
 
-    res.status(200).json({
+    // Direct parent-child relationships only
+    const [relations] = await db.query(
+      `
+      SELECT
+          ancestor_id AS parent_id,
+          descendant_id AS child_id
+      FROM tt_user_relations
+      WHERE level = 1
+      `,
+    );
+
+    const nodeMap = {};
+
+    users.forEach((user) => {
+      nodeMap[user.user_id] = {
+        user_id: user.user_id,
+        name: user.name,
+        children: [],
+      };
+    });
+
+    relations.forEach((rel) => {
+      const parent = nodeMap[rel.parent_id];
+      const child = nodeMap[rel.child_id];
+
+      if (parent && child) {
+        parent.children.push(child);
+      }
+    });
+
+    const tree = nodeMap[id];
+
+    return res.status(200).json({
       success: true,
-      root: id,
-      data: rows,
+      data: tree || null,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
