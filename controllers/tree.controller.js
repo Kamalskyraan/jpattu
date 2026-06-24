@@ -116,7 +116,7 @@ export const getMembersCount = async (req, res) => {
 //   }
 // };
 
-export const getTreeChart = async (req, res) => {
+export const getTreeChartForTT = async (req, res) => {
   try {
     const id = req.params.id;
 
