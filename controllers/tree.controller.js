@@ -81,7 +81,6 @@ export const getMembersCount = async (req, res) => {
 
 // controller
 
-
 export const getTreeChartForTT = async (req, res) => {
   try {
     const id = req.params.id;
