@@ -81,48 +81,7 @@ export const getMembersCount = async (req, res) => {
 
 // controller
 
-// export const getTreeChartForTT = async (req, res) => {
-//   try {
-//     const { id } = req.params;
 
-//     const [rows] = await db.query(
-//       `
-//       SELECT
-//           u.user_id,
-//           u.name,
-//           r.level,
-//           p.ancestor_id AS parent_id
-//       FROM tt_user_relations r
-
-//       INNER JOIN tt_users u
-//           ON u.user_id = r.descendant_id
-
-//       LEFT JOIN tt_user_relations p
-//           ON p.descendant_id = r.descendant_id
-//           AND p.level = 1
-
-//       WHERE r.ancestor_id = ?
-//       AND r.level <= 3
-
-//       ORDER BY r.level ASC, u.user_id ASC
-//       `,
-//       [id],
-//     );
-
-//     return res.status(200).json({
-//       success: true,
-//       root: id,
-//       data: rows,
-//     });
-//   } catch (error) {
-//     console.log(error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
 
 
 export const getTreeChartForTT = async (req, res) => {
@@ -181,22 +140,40 @@ WHERE u.user_id = ?
 
 export const getTreeChart = async (req, res) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
 
     const [rows] = await db.query(
       `
       SELECT
-        r.descendant_id AS user_id,
-        u.name,
-        r.level
-      FROM tt_user_relations r
-      INNER JOIN tt_users u
-        ON u.user_id = r.descendant_id
-      WHERE r.ancestor_id = ?
-        AND r.level > 0
-      ORDER BY r.level ASC, r.descendant_id ASC
+    u.user_id,
+    u.name,
+    r.level,
+    (
+      SELECT ancestor_id
+      FROM user_relations pr
+      WHERE pr.descendant_id = r.descendant_id
+        AND pr.level = 1
+        AND pr.deleted_at IS NULL
+      LIMIT 1
+    ) AS parent_id
+FROM user_relations r
+INNER JOIN users u
+    ON u.user_id = r.descendant_id
+WHERE r.ancestor_id = ?
+  AND r.level <= 3
+  AND u.deleted_at IS NULL
+
+UNION
+
+SELECT
+    u.user_id,
+    u.name,
+    0 AS level,
+    NULL AS parent_id
+FROM users u
+WHERE u.user_id = ?
       `,
-      [id],
+      [id ,id]
     );
 
     return res.status(200).json({
@@ -204,8 +181,8 @@ export const getTreeChart = async (req, res) => {
       root: id,
       data: rows,
     });
-  } catch (err) {
-    console.log("getTreeChart error:", err);
+  } catch (error) {
+    console.log(error);
 
     return res.status(500).json({
       success: false,
