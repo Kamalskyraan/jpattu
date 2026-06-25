@@ -132,29 +132,35 @@ export const getTreeChartForTT = async (req, res) => {
     const [rows] = await db.query(
       `
       SELECT
-          u.user_id,
-          u.name,
-          r.level,
-          (
-            SELECT ancestor_id
-            FROM tt_user_relations pr
-            WHERE pr.descendant_id = r.descendant_id
-              AND pr.level = 1
-              AND pr.deleted_at IS NULL
-            LIMIT 1
-          ) AS parent_id
-      FROM tt_user_relations r
-      INNER JOIN tt_users u
-          ON u.user_id = r.descendant_id
-      WHERE r.ancestor_id = ?
-        AND r.level <= 3
-        AND u.deleted_at IS NULL
-      ORDER BY
-          r.level ASC,
-          parent_id ASC,
-          u.user_id ASC
+    u.user_id,
+    u.name,
+    r.level,
+    (
+      SELECT ancestor_id
+      FROM tt_user_relations pr
+      WHERE pr.descendant_id = r.descendant_id
+        AND pr.level = 1
+        AND pr.deleted_at IS NULL
+      LIMIT 1
+    ) AS parent_id
+FROM tt_user_relations r
+INNER JOIN tt_users u
+    ON u.user_id = r.descendant_id
+WHERE r.ancestor_id = ?
+  AND r.level <= 3
+  AND u.deleted_at IS NULL
+
+UNION
+
+SELECT
+    u.user_id,
+    u.name,
+    0 AS level,
+    NULL AS parent_id
+FROM tt_users u
+WHERE u.user_id = ?
       `,
-      [id]
+      [id ,id]
     );
 
     return res.status(200).json({
