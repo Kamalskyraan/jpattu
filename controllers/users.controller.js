@@ -417,7 +417,7 @@ export const getHomeDetails = async (req, res) => {
     const currentMonth = currentDate.format("MMM");
 
     const totalAmount = detail.total_amount;
-
+    console.log(detail);
     res.status(200).json({
       level_amount: levelAmount,
       received_amount: receivedAmount,
