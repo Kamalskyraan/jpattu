@@ -1,6 +1,10 @@
 import express from "express";
 import {
-    getHomeDetails,
+  getHomeDetails,
+  getPaymentDetails,
+  getPaymentDetailsTT,
+  getTempTTUser,
+  getTempUser,
   getTTHomeDetails,
   getTTUser,
   getTTUserName,
@@ -15,4 +19,6 @@ router.get("/", getTTUserName);
 router.get("/:user_id", verifyUser, getTTUser);
 router.put("/", verifyUser, updateValidation, updateTTUser);
 router.get("/data/:user_id", verifyUser, getTTHomeDetails);
+router.get("/payment-details", getPaymentDetailsTT);
+router.get("/temp/:user_id", getTempTTUser);
 export default router;

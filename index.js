@@ -65,7 +65,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/public", express.static("public"));
 app.use(cookieParser());
 app.use("/users/auth", userAuthRoutes);
-app.use("ttt-users/", ttUserAuthRoutes);
+app.use("tt-users/", ttUserAuthRoutes);
 app.use("/admin/auth", adminAuthRoutes);
 
 app.use("/admin", adminRoutes);

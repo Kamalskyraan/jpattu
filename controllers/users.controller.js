@@ -410,15 +410,20 @@ export const getHomeDetails = async (req, res) => {
     const currentDate = dayjs().startOf("day");
 
     let totalDays = currentDate.diff(approvedDate, "day") + 1;
+    const monthStart = currentDate.startOf("month");
+    const monthEnd = currentDate.endOf("month");
 
-    const totalAmount = detail.daily_amt * totalDays;
+    // Current month name (first 3 letters)
+    const currentMonth = currentDate.format("MMM");
+
+    const totalAmount = detail.total_amount;
 
     res.status(200).json({
       level_amount: levelAmount,
       received_amount: receivedAmount,
       direct_id: direct_id,
       total_ids: totalCount,
-      total_days: totalDays,
+      total_days: currentMonth,
       total_amount: totalAmount,
       daily_amount: detail.daily_amt,
       reward_amount: rewardDetails.reward_amount,
@@ -915,6 +920,16 @@ export const getTTHomeDetails = async (req, res) => {
       total_ids: totalCount,
     });
   } catch (err) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getPaymentDetailsTT = async (req, res) => {
+  try {
+    const data = await AdminModel.getPaymentDetailsTT();
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
