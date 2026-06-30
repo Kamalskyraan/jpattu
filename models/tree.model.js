@@ -56,8 +56,33 @@ const TreeModel = {
 
   getMembersCount: async (user_id) => {
     try {
-      const query =
-        "SELECT COUNT(*) as count, level FROM user_relations WHERE ancestor_id = ? GROUP BY level";
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3 , 4 , 5,6, 7, 8, 9)
+      GROUP BY level
+      ORDER BY level
+    `;
+
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getMembersCount: async (user_id) => {
+    try {
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3)
+      GROUP BY level
+      ORDER BY level
+    `;
+
       const [data] = await db.query(query, [user_id]);
       return data;
     } catch (err) {
