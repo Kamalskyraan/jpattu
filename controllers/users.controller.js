@@ -903,8 +903,10 @@ export const getTTHomeDetails = async (req, res) => {
       await UserBalanceModel.totalTTPayment(user_id);
 
     const membersCount = await TreeModel.getTTMembersCount(user_id);
+   
 
     const levelOne = membersCount?.filter((val) => val.level === 1)[0];
+
     const direct_id = levelOne?.count || 0;
     const totalCount = membersCount.reduce(
       (total, current) => total + current.count,

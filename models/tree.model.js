@@ -98,18 +98,37 @@ const TreeModel = {
     }
   },
 
-   getTTMembersCount: async (user_id) => {
+  // getTTMembersCount: async (user_id) => {
+  //   try {
+  //     const query =
+  //       "SELECT COUNT(*) as count, level FROM tt_user_relations WHERE ancestor_id = ? GROUP BY level";
+  //     const [data] = await db.query(query, [user_id]);
+
+  //     return data;
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // },
+
+  getTTMembersCount: async (user_id) => {
     try {
-      const query =
-        "SELECT COUNT(*) as count, level FROM tt_user_relations WHERE ancestor_id = ? GROUP BY level";
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM tt_user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3)
+      GROUP BY level
+      ORDER BY level
+    `;
+
       const [data] = await db.query(query, [user_id]);
+
       return data;
     } catch (err) {
       throw err;
     }
   },
-
-   getTTMemberOnLevel: async ({ user_id, level = 1 }) => {
+  getTTMemberOnLevel: async ({ user_id, level = 1 }) => {
     try {
       const query = `WITH RECURSIVE tt_user_relations AS (
                         SELECT user_id, referral_id, name, mobile, created_at, 0 AS level
