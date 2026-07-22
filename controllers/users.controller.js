@@ -393,7 +393,7 @@ export const getHomeDetails = async (req, res) => {
     const [levelAmount, receivedAmount] =
       await UserBalanceModel.totalPayment(user_id);
 
-    const membersCount = await TreeModel.getMembersCount(user_id);
+    const membersCount = await TreeModel.getMembersCountForTotal(user_id);
 
     const levelOne = membersCount?.filter((val) => val.level === 1)[0];
     const direct_id = levelOne?.count || 0;
