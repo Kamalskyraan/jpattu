@@ -903,7 +903,6 @@ export const getTTHomeDetails = async (req, res) => {
       await UserBalanceModel.totalTTPayment(user_id);
 
     const membersCount = await TreeModel.getTTMembersCount(user_id);
-   
 
     const levelOne = membersCount?.filter((val) => val.level === 1)[0];
 
@@ -930,6 +929,248 @@ export const getPaymentDetailsTT = async (req, res) => {
   try {
     const data = await AdminModel.getPaymentDetailsTT();
     res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// repeat
+
+export const getRTUserName = async (req, res) => {
+  try {
+    const { referral_id } = req.query || false;
+    if (!referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const data = await UserModel.getRTUserName(referral_id);
+    if (data.length === 0) {
+      const adminData = await AdminModel.getUserName(referral_id);
+
+      if (adminData.length === 0) {
+        res.status(200).json({ message: "User not found" });
+      } else {
+        adminData[0].status = "Approved";
+        res.status(200).json({ data: adminData[0] });
+      }
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getRTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    const data = await UserModel.getUserRT(user_id);
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      const updatedData = data.map((val) => {
+        if (val.screenshot)
+          return {
+            ...val,
+            // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+            screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+          };
+        else return val;
+      });
+
+      res.status(200).json({ data: updatedData[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+export const RTRegisterUser = async (req, res) => {
+  try {
+    const data = req.body;
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({
+        message: result.array().map((val) => val.msg),
+      });
+    }
+
+    if (data.role === "user" && !data.referral_id) {
+      res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const user = await UserModel.getUserNameFromRT(data?.referral_id);
+
+    let admin = [];
+    if (user.length === 0 && data.role === "admin") {
+      admin = await AdminModel.getUserName(data.referral_id);
+    }
+
+    if (user.length === 0 && admin.length === 0) {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      const id = await TempUserModel.addRepeatUser(data);
+      res.status(201).json({ id: id, message: "Registered Successfully" });
+    }
+  } catch (error) {
+    if (error.message === "referrer not found") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else if (error.message === "Referrar is in Queue") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
+
+export const RTPaidProof = async (req, res) => {
+  const image = req.file?.filename;
+  try {
+    const id = req.body?.id;
+    const txn_id = req.body?.txn_id;
+    if (!id) {
+      return res.status(400).json({
+        message: "Id is required",
+      });
+    }
+
+    const submitted = await TempUserModel.RTpaidProof({
+      image,
+      user_id: id,
+      txn_id,
+    });
+    if (submitted) {
+      const [result] = await TempUserModel.getRTUser(id);
+      res.status(200).json({ result, message: "Proof submitted successfully" });
+    } else {
+      if (image) {
+        const imagePath = path.join(
+          process.cwd(),
+          "public",
+          "screenshots",
+          image,
+        );
+        if (existsSync(imagePath)) {
+          rmSync(imagePath);
+        }
+      }
+      res.status(200).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.log(err);
+    if (image) {
+      const imagePath = path.join(
+        process.cwd(),
+        "public",
+        "screenshots",
+        image,
+      );
+      if (existsSync(imagePath)) {
+        rmSync(imagePath);
+      }
+    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteTempRTUser = async (req, res) => {
+  try {
+    const id = req.params?.id;
+    if (!id) {
+      return res.status(400).json({
+        message: "id is required",
+      });
+    }
+
+    const result = await TempUserModel.deleteRTUser(id);
+    if (result > 0) {
+      res.status(200).json({
+        message: "id deleted successfully",
+      });
+    } else {
+      res.status(404).json({
+        message: "id not found",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getTempRTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    // if (user_id !== req.user_id && req.role !== "admin") {
+    //   return res.status(403).json({ message: "Action cannot be done!" });
+    // }
+
+    const data = await TempUserModel.getRTUser(user_id);
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateRTUser = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data.user_type) {
+      return res
+        .status(400)
+        .json({ message: "user_type must be either 'users' or 'temp'" });
+    }
+
+    data.role = req.role;
+    const updated = await UserModel.updateRTUser(data);
+
+    if (updated) {
+      const [user] = await UserModel.getUserRT(data.user_id);
+      if (req.role === "user") {
+        user.role = "user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      } else if (req.role === "temp_user") {
+        user.role = "temp_user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      }
+
+      res
+        .status(200)
+        .json({ user: user, message: "User updated successfully" });
+    } else {
+      res.status(400).json({ message: "Atleast 1 field is required" });
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal Server Error" });

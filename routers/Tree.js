@@ -4,6 +4,7 @@ import {
   getMembersCount,
   getTree,
   getTreeChart,
+  getTreeChartForRT,
   getTreeChartForTT,
   getTreeForTT,
 } from "../controllers/tree.controller.js";
@@ -23,5 +24,6 @@ router.get("/tree/:id", verifyUser, getTreeChart);
 router.get("/tt", verifyUser, getTreeForTT);
 
 router.get("/tree-tt/:id", getTreeChartForTT);
+router.get("/tree-rt/:id", getTreeChartForRT);
 
 export default router;

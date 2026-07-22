@@ -16,6 +16,12 @@ import {
   updateTTUser,
   getTTUser,
   deleteTempTTUser,
+  RTPaidProof,
+  deleteTempRTUser,
+  getRTUserName,
+  getRTUser,
+  getTempRTUser,
+  updateRTUser,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -70,4 +76,11 @@ router.get("/tt/:user_id", verifyUser, getTTUser);
 router.put("/tt", verifyUser, updateValidation, updateTTUser);
 router.delete("/tt-delete-user/:id", deleteTempTTUser);
 
+// rt
+router.post("/rt-paidproof", screenshots.single("image"), RTPaidProof);
+router.delete("/rt-delete-user/:id", deleteTempRTUser);
+router.get("/rt", getRTUserName);
+router.get("/rt/:user_id", verifyUser, getRTUser);
+router.get("/temp/rt/:user_id", getTempRTUser);
+router.put("/rt", verifyUser, updateValidation, updateRTUser);
 export default router;

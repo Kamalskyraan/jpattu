@@ -233,7 +233,7 @@ export const sendMail = (user) => {
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web :
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -701,7 +701,7 @@ export const sendAdminMail = (user) => {
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -1278,7 +1278,7 @@ export const sendMembersPackageAdminMail = async ({
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -1521,7 +1521,7 @@ export const sendTargetMail = (user) => {
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -1770,7 +1770,7 @@ export const sendTargetAdminMail = (user) => {
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -1952,7 +1952,7 @@ export const sendMemberTargetPackageMail = async ({
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"
@@ -2120,7 +2120,854 @@ export const sendMembersTargetPackageAdminMail = async ({
 
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+         
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+    const info = await transporter.sendMail({
+      from: process.env.SENDER_MAIL,
+      to: process.env.ADMIN_MAIL_TARGET,
+      subject: "New Package Member Added - Target",
+      html: mailContent,
+    });
+
+    console.log(" Mail sent:", info.response);
+  } catch (error) {
+    console.log(" Mail error:", error);
+  }
+};
+
+// REPEAT
+
+export const sendRepeatMail = (user) => {
+  const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
+
+  const mailContent = `
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome Letter</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    "
+  >
+    <table
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      width="100%"
+      style="background-color: #fff; padding: 0; margin: 0"
+    >
+      <tr>
+        <td align="center">
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 800px !important;
+              min-width: 320px !important;
+              color: #5b4000;
+              background-color: #ffd878;
+              border: 1px solid #e6d38c;
+              border-radius: 4px;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            "
+          >
+            <tr>
+              <td style="padding: 5px 20px">
+                <table width="100%" style="margin-bottom: 6px">
+                  <tr>
+                    <td align="center" style="padding-bottom: 6px">
+                      <div
+                        style="
+                          display: flex !important;
+                          align-items: center !important;
+                          justify-content: start;
+                          gap: 20px;
+                        "
+                      >
+                        <img
+                          src="${EMAIL_ASSET_BASE_URL}/tt6.jpg"
+                          width="48"
+                          height="48"
+                          alt="Right Shadow Logo"
+                          style="display: block; border-radius: 4px"
+                        />
+
+                        <span
+                          style="
+                            font-size: 18px;
+                            font-weight: bold;
+                            font-style: italic;
+                            color: #000;
+                            margin-top: 12px;
+                          "
+                        >
+                          REPEAT
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="start">welcome to the Right Shadow - Repeat</td>
+                  </tr>
+                  <tr>
+                    <td align="center">
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        style="margin: 0 auto"
+                      ></table>
+                    </td>
+                  </tr>
+                </table>
+                <table width="100%" style="margin-bottom: 5px">
+                  <tr>
+                    <td style="font-weight: 600; padding-bottom: 1px">
+                      Mr/Ms. ${user.name},
+                    </td>
+                  </tr>
+                </table>
+
+                <div
+                  style="
+                    border: 1px solid white;
+                    border-collapse: collapse;
+                    padding: 5px 2px;
+                  "
+                >
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="margin-bottom: 2px"
+                  >
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0; width: 35%">
+                        Member
+                      </td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${user.user_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Joining</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${new Date(user.created_at).toLocaleDateString(
+                          "en-US",
+                          { day: "numeric", month: "short", year: "numeric" },
+                        )}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Mobile</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${user.mobile}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Sponsor</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${user.referral_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Password</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${user.password}
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="color: #000; font-size: 16px; line-height: 1.5"
+                >
+                  <tr>
+                    <td
+                      style="
+                        padding-bottom: 4px;
+                        font-size: 15px;
+                        font-weight: bold;
+                      "
+                    >
+                      <strong>Customer Care</strong><br />
+                      Right Shadow Team
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9944550804"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 44 55 08 04
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 3px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9955441130"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 55 44 11 30
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+
+`;
+
+  var mailOptions = {
+    from: process.env.SENDER_MAIL,
+    to: user.email,
+    subject: "Welcome to Right Shadow (Target Plan)",
+    html: mailContent,
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent successfully!");
+      console.log("Accepted:", info.accepted);
+      console.log("Rejected:", info.rejected);
+    }
+  });
+};
+
+export const sendRepeatAdminMail = (user) => {
+  const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
+
+  const users = [user];
+  const membersHtml = users
+    .map(
+      (usr) => `
+   <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome Letter</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    "
+  >
+    <table
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      width="100%"
+      style="background-color: #fff; padding: 0; margin: 0"
+    >
+      <tr>
+        <td align="center">
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 800px !important;
+              min-width: 320px !important;
+              color: #5b4000;
+              background-color: #ffd878;
+              border: 1px solid #e6d38c;
+              border-radius: 4px;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            "
+          >
+            <tr>
+              <td style="padding: 5px 20px">
+                <table width="100%" style="margin-bottom: 6px">
+                  <tr>
+                    <td align="center" style="padding-bottom: 6px">
+                      <div
+                        style="
+                          display: flex !important;
+                          align-items: center !important;
+                          justify-content: start;
+                          gap: 20px;
+                        "
+                      >
+                        <img
+                          src="${EMAIL_ASSET_BASE_URL}/tt6.jpg"
+                          width="48"
+                          height="48"
+                          alt="Right Shadow Logo"
+                          style="display: block; border-radius: 4px"
+                        />
+
+                        <span
+                          style="
+                            font-size: 18px;
+                            font-weight: bold;
+                            font-style: italic;
+                            color: #000;
+                            margin-top: 12px;
+                          "
+                        >
+                          REPEAT
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="start">welcome to the Right Shadow - Repeat</td>
+                  </tr>
+                  <tr>
+                    <td align="center">
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        style="margin: 0 auto"
+                      ></table>
+                    </td>
+                  </tr>
+                </table>
+                <table width="100%" style="margin-bottom: 5px">
+                  <tr>
+                    <td style="font-weight: 600; padding-bottom: 1px">
+                      Mr/Ms. ${usr.name},
+                    </td>
+                  </tr>
+                </table>
+
+                <div
+                  style="
+                    border: 1px solid white;
+                    border-collapse: collapse;
+                    padding: 5px 2px;
+                  "
+                >
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="margin-bottom: 2px"
+                  >
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0; width: 35%">
+                        Member
+                      </td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${usr.user_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Joining</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${new Date(user.created_at).toLocaleDateString(
+                          "en-US",
+                          { day: "numeric", month: "short", year: "numeric" },
+                        )}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Mobile</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${usr.mobile}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Sponsor</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${usr.referral_id}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600; padding: 6px 0">Password</td>
+                      <td style="color: #000; padding: 6px 0">
+                        : ${usr.password}
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="color: #000; font-size: 16px; line-height: 1.5"
+                >
+                  <tr>
+                    <td
+                      style="
+                        padding-bottom: 4px;
+                        font-size: 15px;
+                        font-weight: bold;
+                      "
+                    >
+                      <strong>Customer Care</strong><br />
+                      Right Shadow Team
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9944550804"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 44 55 08 04
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 3px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9955441130"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 55 44 11 30
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+
+
+    `,
+    )
+    .join("");
+
+  const htmlContent = `
+ 
+`;
+
+  const mailOptions = {
+    from: process.env.SENDER_MAIL,
+    to: process.env.ADMIN_MAIL_TARGET,
+    subject: `Approved Target members - ${dayjs().format("DD-MM-YYYY")}`,
+    html: membersHtml,
+  };
+
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.error("Admin Mail Error:", err);
+    } else {
+      console.log("Admin Mail Sent ✅", info.accepted);
+    }
+  });
+};
+
+export const sendMemberRepeatPackageMail = async ({
+  memberData,
+  new_ids = [],
+  level,
+}) => {
+  try {
+    const recipient = memberData?.email;
+    const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
+    if (!recipient) {
+      console.log("No email found. Skipping mail.");
+      return;
+    }
+    const firstId = new_ids?.[0];
+    const lastId = new_ids?.[new_ids.length - 1];
+
+    const mailContent = `
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Package Added</title>
+  </head>
+  <body style="margin:0;padding:0;background:#fff;font-family:Arial,sans-serif;font-size:14px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
+      <tr>
+        <td align="center">
+          <table style="max-width:800px;color: #5b4000;
+              background-color: #ffd878;
+              border: 1px solid #e6d38c;border-radius:4px;padding:15px">
+            
+            <!-- HEADER -->
+            <tr>
+              <td style="padding-bottom:5px">
+                <div style="display:flex;align-items:center;gap:15px">
+                  <img src="${EMAIL_ASSET_BASE_URL}/tt6.jpg" width="48" height="48" />
+                  <span style="font-size:18px;font-weight:bold;font-style:italic">Target</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- TITLE -->
+            <tr>
+              <td style="font-size:16px;font-weight:bold;padding-bottom:5px">
+                New Package Added
+              </td>
+            </tr>
+
+            <!-- MEMBER NAME -->
+            <tr>
+              <td style="padding-bottom:5px">
+                Mr/Ms. ${memberData.name},
+              </td>
+            </tr>
+
+            <!-- MEMBER DETAILS -->
+            <tr>
+              <td>
+                <table width="100%" style="background:#fff;border-radius:4px;padding:5px">
+                  <tr>
+                    <td style="font-weight:600;width:35%">User ID</td>
+                    <td>: ${memberData.user_id}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Mobile</td>
+                    <td>: ${memberData.mobile}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- NEW IDS -->
+         <tr>
+  <td style="padding-top:2px">
+    <b>New IDs Added:</b>
+
+    <div style="
+      margin-top:4px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:600;
+      font-size:14px;
+      letter-spacing:0.5px;
+    ">
+      ${firstId && lastId ? `${firstId} to ${lastId}` : "No IDs Generated"}
+    </div>
+  </td>
+</tr>
+
+            <!-- FOOTER -->
+        
+                  <tr>
+                    <td
+                      style="
+                        padding-bottom: 4px;
+                        font-size: 15px;
+                        font-weight: bold;
+                      "
+                    >
+                      <strong>Customer Care</strong><br />
+                      Right Shadow Team
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9944550804"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 44 55 08 04
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 3px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9955441130"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 55 44 11 30
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+         
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+    const info = await transporter.sendMail({
+      from: `"Right Shadow" <${process.env.SENDER_MAIL}>`,
+      to: recipient,
+      subject: "New Package Member Added (Target)",
+      html: mailContent,
+    });
+
+    console.log(" Mail sent:", info.response);
+  } catch (error) {
+    console.log(" Mail error:", error);
+  }
+};
+
+export const sendMembersRepeatPackageAdminMail = async ({
+  memberData,
+  new_ids = [],
+  level,
+}) => {
+  try {
+    const firstId = new_ids?.[0];
+    const lastId = new_ids?.[new_ids.length - 1];
+    const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
+
+    const mailContent = `
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Package Added</title>
+  </head>
+  <body style="margin:0;padding:0;background:#fff;font-family:Arial,sans-serif;font-size:14px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff">
+      <tr>
+        <td align="center">
+          <table style="max-width:800px;color: #5b4000;
+              background-color: #ffd878;
+              border: 1px solid #e6d38c;border-radius:4px;padding:15px">
+            
+            <!-- HEADER -->
+            <tr>
+              <td style="padding-bottom:5px">
+                <div style="display:flex;align-items:center;gap:15px">
+                  <img src="${EMAIL_ASSET_BASE_URL}/tt6.jpg" width="48" height="48" />
+                  <span style="font-size:18px;font-weight:bold;font-style:italic">REPEAT</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- TITLE -->
+            <tr>
+              <td style="font-size:16px;font-weight:bold;padding-bottom:5px">
+                New Package Added
+              </td>
+            </tr>
+
+            <!-- MEMBER NAME -->
+            <tr>
+              <td style="padding-bottom:5px">
+                Mr/Ms. ${memberData.name},
+              </td>
+            </tr>
+
+            <!-- MEMBER DETAILS -->
+            <tr>
+              <td>
+                <table width="100%" style="background:#fff;border-radius:4px;padding:5px">
+                  <tr>
+                    <td style="font-weight:600;width:35%">User ID</td>
+                    <td>: ${memberData.user_id}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Mobile</td>
+                    <td>: ${memberData.mobile}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- NEW IDS -->
+         <tr>
+  <td style="padding-top:2px">
+    <b>New IDs Added:</b>
+
+    <div style="
+      margin-top:4px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:600;
+      font-size:14px;
+      letter-spacing:0.5px;
+    ">
+      ${firstId && lastId ? `${firstId} to ${lastId}` : "No IDs Generated"}
+    </div>
+  </td>
+</tr>
+
+            <!-- FOOTER -->
+        
+                  <tr>
+                    <td
+                      style="
+                        padding-bottom: 4px;
+                        font-size: 15px;
+                        font-weight: bold;
+                      "
+                    >
+                      <strong>Customer Care</strong><br />
+                      Right Shadow Team
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9944550804"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 44 55 08 04
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 3px; font-size: 14px">
+                      Mobile:
+                      <a
+                        href="tel:9955441130"
+                        style="text-decoration: none; color: #000"
+                      >
+                        99 55 44 11 30
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
                       <a
                         href="https://www.rightshadow.in"
                         style="text-decoration: none; color: #000"

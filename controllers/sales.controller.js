@@ -187,3 +187,72 @@ export const getTTJarikaiOverall = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// RT
+
+export const getRTSalesReport = async (req, res) => {
+  try {
+    const { start, end } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserModel.getRTSales({ start, end });
+    const quantity = await PurchaseModel.getRTStockQuantity();
+    const user_count = await UserModel.getRTUsersCount();
+    const available_quantity =
+      quantity - user_count < 0 ? 0 : quantity - user_count;
+    res
+      .status(200)
+      .json({ data: data, available_quantity: available_quantity });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getRTJarikaiOverall = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallRTQuantity();
+
+    return res.status(200).json({
+      data: {
+        over_all_sales: data.sales_quantity,
+        over_all_stock: data.stock_quantity,
+        start: data.start,
+        end: data.end,
+      },
+      message: "Jarikai Overall Stocks Fetched successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getShadowReportRT = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getShadowQuantityRT();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};
+
+export const getOuterRTSorceReport = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallRTShadowQty();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};

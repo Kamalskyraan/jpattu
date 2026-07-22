@@ -4,6 +4,7 @@ import { validateLogin } from "../validator/authValidator.js";
 import {
   LoginAdmin,
   LogoutAdmin,
+  repeatUserData,
   TargetUserData,
   verifyStatus,
 } from "../controllers/admin.controller.js";
@@ -27,4 +28,5 @@ router.post("/logout", LogoutAdmin);
 router.get("/verify-user", verifyStatus);
 router.get("/verify-tt-user", verifyTTStatus);
 router.get("/get-target-userdata", TargetUserData);
+router.get("/get-repeat-userdata", repeatUserData);
 export default router;

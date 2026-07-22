@@ -116,6 +116,22 @@ export const TargetUserData = async (req, res) => {
     });
   }
 };
+export const repeatUserData = async (req, res) => {
+  try {
+    const targetUser = await AdminModel.fetchRepeatUserDatas();
+
+    res.status(200).json({
+      data: targetUser,
+      message: "Target User Data fetched successfully",
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
 
 export const approveUser = async (req, res) => {
   try {
@@ -536,8 +552,6 @@ export const getTTQueuedUsers = async (req, res) => {
   }
 };
 
-
-
 export const AddQueuedTTUser = async (req, res) => {
   try {
     const data = req.body;
@@ -594,5 +608,144 @@ export const showAddMember = async (req, res) => {
     res.status(500).json({
       message: "Internal Server Error",
     });
+  }
+};
+
+// RT
+
+export const getAllRTUsers = async (req, res) => {
+  try {
+    const { start, end, type } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const users = await UserModel.getAllUsersRT({ start, end });
+    let temp_users = [];
+    if (type !== "permanent") {
+      temp_users = await TempUserModel.getAllUsersRT({ start, end });
+    }
+
+    const data = [...users, ...temp_users];
+    const updatedData = data.map((val) => {
+      if (val.screenshot)
+        return {
+          ...val,
+          // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+          screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+        };
+      else return val;
+    });
+
+    updatedData.sort((a, b) => b.created - a.created);
+
+    return res.status(200).json({
+      data: updatedData,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const approveRTUser = async (req, res) => {
+  try {
+    const user_ids = req.body?.user_ids;
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "user_id is required and must be an array" });
+    }
+
+    const ids = await UserModel.approveUserRT(user_ids);
+
+    if (ids.length > 0) {
+      const newIds = ids.map((id) => ({
+        newId: id.newId,
+        user_id: id.user_id,
+        status: id.status,
+      }));
+
+      return res
+        .status(200)
+        .json({ newIds: newIds, message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const searchRTUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    let admin = false;
+    if (req.user_id.toLowerCase() === user_id.trim().toLowerCase()) {
+      admin = true;
+    }
+
+    const data = await AdminModel.getSearchRTUser(user_id, admin);
+
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getRTQueuedUsers = async (req, res) => {
+  try {
+    const data = await UserModel.getQueuedRTUsers();
+
+    return res.status(200).json({
+      data: data,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const AddQueuedRTUser = async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data?.referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const approved = await UserModel.addQueuedRTUser(
+      data.user_id,
+      data.referral_id,
+    );
+
+    if (approved) {
+      return res.status(200).json({ message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    if (error.message === "limit exceed") {
+      return res.status(200).json({ message: "Referral limit reached" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
   }
 };

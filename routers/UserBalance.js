@@ -3,6 +3,7 @@ import {
   getBalanceLogs,
   getLevelIncome,
   getPaymentHistory,
+  getRTLevelIncome,
   getTTBalanceLogs,
   getTTLevelIncome,
   getUserBalanceLog,
@@ -24,4 +25,8 @@ router.get("/:user_id", verifyUser, getUserBalanceLog);
 router.get("/tt-income/:user_id", verifyUser, getTTLevelIncome);
 router.get("/tt", verifyUser, getTTBalanceLogs);
 router.put("/tt", verifyAdmin, updateTTBalanceStatus);
+
+// rt
+
+router.get("/rt-income/:user_id", verifyUser, getRTLevelIncome);
 export default router;

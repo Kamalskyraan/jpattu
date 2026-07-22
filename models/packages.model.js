@@ -22,4 +22,14 @@ export const PackageModel = {
       throw err;
     }
   },
+  getRTPackages: async (req, res) => {
+    try {
+      const query =
+        "SELECT id, name, amount, description, created_at from rpt_packages ORDER BY id";
+      const [result] = await db.query(query);
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  },
 };

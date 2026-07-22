@@ -5,6 +5,7 @@ import {
   LoginUser,
   LogoutUser,
   RegisterUser,
+  RTRegisterUser,
   TTRegisterUser,
   UpdateUserToken,
   verifyStatus,
@@ -41,5 +42,6 @@ router.get("/verify-tt-user", verifyTTStatus);
 router.post("/update-user", UpdateUserToken);
 
 router.post("/tt-register", validateRegister, TTRegisterUser);
+router.post("/rt-register", validateRegister, RTRegisterUser);
 
 export default router;

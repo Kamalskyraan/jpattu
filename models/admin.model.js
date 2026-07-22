@@ -161,6 +161,33 @@ const AdminModel = {
     }
   },
 
+  fetchRepeatUserDatas: async () => {
+    try {
+      const [result] = await db.query(
+        `SELECT
+          user_id,
+          role,
+          admin_type,
+          name,
+          mobile,
+          email,
+          holder_name,
+          account_number,
+          bank_name,
+          ifsc_code,
+          branch
+       FROM admin
+       WHERE user_id LIKE ?
+       LIMIT 1`,
+        ["repeat%"],
+      );
+
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   getSearchTTUser: async (user_id, admin) => {
     try {
       let query;
@@ -229,6 +256,67 @@ const AdminModel = {
       const [data] = await db.query(query, []);
       console.log(data);
       return data[0] || [{}];
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getSearchRTUser: async (user_id, admin) => {
+    try {
+      let query;
+      if (admin) {
+        query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM rpt_users u
+                    LEFT JOIN rpt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.referral_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL;`;
+      } else {
+        query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM rpt_users u
+                    LEFT JOIN rpt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL;`;
+      }
+      const [data] = await db.query(query, [`%${user_id}%`]);
+      return data;
     } catch (err) {
       throw err;
     }

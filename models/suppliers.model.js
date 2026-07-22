@@ -116,4 +116,43 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+  // RT
+  getRTSuppliers: async () => {
+    try {
+      const query = "SELECT * FROM rpt_suppliers WHERE deleted_at IS NULL";
+      const [data] = await db.query(query);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  addRTSupplier: async (name) => {
+    try {
+      const query = "INSERT INTO rpt_suppliers (name) VALUES (?)";
+      await db.query(query, [name]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateRTSupplier: async ({ name, id }) => {
+    try {
+      const query = "UPDATE rpt_suppliers SET name = ? WHERE id = ?";
+      await db.query(query, [name, id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteRTSupplier: async (id) => {
+    try {
+      const query = "DELETE FROM rpt_suppliers WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

@@ -193,3 +193,49 @@ export const getSingleTTPurchaseReports = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getPurchaseRTReports = async (req, res) => {
+  try {
+    const { start, end } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+    const data = await JpPurchaseModel.getPurchaseRTData({ start, end });
+    const total_quantity = await JpPurchaseModel.getPurchaseRTDataForTotal({
+      start,
+      end,
+    });
+    const quantity = await JpPurchaseModel.getRTStockQuantity();
+    const shadow_quantity = await PurchaseModel.getRTStockQuantity();
+    const available_quantity =
+      quantity - shadow_quantity < 0 ? 0 : quantity - shadow_quantity;
+    res.status(200).json({
+      data: data,
+      available_quantity: available_quantity,
+      total_quantity,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteRTPurchaseData = async (req, res) => {
+  try {
+    const { id } = req.params || false;
+
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+    const deleted = await JpPurchaseModel.deleteRTPurchaseData(id);
+    if (deleted) res.status(200).json({ message: "Data deleted successfully" });
+    else res.status(400).json({ message: "Unable to delete data" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

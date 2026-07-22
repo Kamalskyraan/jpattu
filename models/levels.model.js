@@ -15,6 +15,12 @@ const LevelModel = {
     const [data] = await db.query("SELECT * FROM tt_levels ORDER BY level ASC");
     return data;
   },
+  getRTLevels: async () => {
+    const [data] = await db.query(
+      "SELECT * FROM rpt_levels ORDER BY level ASC",
+    );
+    return data;
+  },
 };
 
 export default LevelModel;
