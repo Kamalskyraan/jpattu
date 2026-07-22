@@ -8,7 +8,7 @@ import adminAuthRoutes from "./routers/AdminAuth.js";
 import adminRoutes from "./routers/Admin.js";
 import userRoutes from "./routers/Users.js";
 import userTTRoutes from "./routers/TTusers.js";
-import userRTRoutes from "./routers/RTusers.js";
+import userRTRoutes from "./routers/RTUsers.js";
 import levelRoutes from "./routers/Levels.js";
 import linkRoutes from "./routers/Links.js";
 import productRoutes from "./routers/Products.js";
