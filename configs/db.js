@@ -1,4 +1,5 @@
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
+
 
 // const db = mysql.createConnection({
 //   host: "localhost",
@@ -25,14 +26,6 @@ const db = mysql.createPool({
 
 db.query("SET time_zone = '+05:30'");
 
-const testDb = async () => {
-  try {
-    await db.promise().query("SELECT 1");
-    console.log(" DB Connected");
-  } catch {
-    console.log(" DB Failed");
-  }
-};
-testDb();
 
-export default db.promise();
+
+export default db;
