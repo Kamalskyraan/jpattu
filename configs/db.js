@@ -7,7 +7,7 @@ import mysql from "mysql2";
 //   database: "rightshadow_db",
 // });
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "localhost",
   user: "skyraantech_rightshadow_user",
   password: "%[n6mU&iiEg~NSUZ",
