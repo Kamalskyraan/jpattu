@@ -40,7 +40,7 @@ import {
   getAdminData,
   getTTAdminData,
 } from "./controllers/users.controller.js";
-import db from "./configs/db.js";
+
 
 const app = express();
 configDotenv();
@@ -113,7 +113,7 @@ app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
 
 app.get("/get-tt-admin-data", getTTAdminData);
-db();
+
 app.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
 });
