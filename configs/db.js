@@ -7,8 +7,6 @@ import mysql from "mysql2";
 //   database: "rightshadow_db",
 // });
 
-
-
 const db = mysql.createConnection({
   host: "localhost",
   user: "skyraantech_rightshadow_user",
@@ -21,7 +19,17 @@ const db = mysql.createConnection({
 //   password: "",
 //   database: "right_shadow",
 // });
- 
+
 db.query("SET time_zone = '+05:30'");
+
+const testDb = async () => {
+  try {
+    await db.promise().query("SELECT 1");
+    console.log(" DB Connected");
+  } catch {
+    console.log(" DB Failed");
+  }
+};
+testDb();
 
 export default db.promise();
