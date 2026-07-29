@@ -12,6 +12,9 @@ const db = mysql.createConnection({
   user: "skyraantech_rightshadow_user",
   password: "%[n6mU&iiEg~NSUZ",
   database: "skyraantech_rightshadow_db",
+  connectionLimit: 10,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 // const db = mysql.createConnection({
 //   host: "localhost",
