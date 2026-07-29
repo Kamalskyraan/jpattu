@@ -6,12 +6,21 @@ import mysql from "mysql2";
 //   password: "Nm^VOyCZ!@e9S8Yq",
 //   database: "rightshadow_db",
 // });
+
+
+
 const db = mysql.createConnection({
   host: "localhost",
-  user: "root",
-  password: "",
-  database: "right_shadow",
+  user: "skyraantech_rightshadow_user",
+  password: "%[n6mU&iiEg~NSUZ",
+  database: "skyraantech_rightshadow_db",
 });
+// const db = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "right_shadow",
+// });
  
 db.query("SET time_zone = '+05:30'");
 
