@@ -174,3 +174,62 @@ export const deleteSupplierRT = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// NP
+
+export const getSuppliersNP = async (req, res) => {
+  try {
+    const data = await JpSuppliersModel.getNPSuppliers();
+    res.status(200).json({ data: data, message: "data fetched successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const addSupplierNP = async (req, res) => {
+  try {
+    const { name } = req.body || false;
+    if (!name) {
+      return res.status(400).json({ message: "name is required" });
+    }
+
+    await JpSuppliersModel.addNPSupplier(name);
+    res.status(200).json({ message: "data updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateSupplierNP = async (req, res) => {
+  try {
+    const { name, id } = req.body || false;
+    if (!name) {
+      return res.status(400).json({ message: "name is required" });
+    } else if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+
+    await JpSuppliersModel.updateRTSupplier({ name, id });
+    res.status(200).json({ message: "data updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteSupplierNP = async (req, res) => {
+  try {
+    const { id } = req.params || false;
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+
+    await JpSuppliersModel.deleteNPSupplier(id);
+    res.status(200).json({ message: "data deleted successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

@@ -1,15 +1,19 @@
 import express from "express";
 import {
   addSupplier,
+  addSupplierNP,
   addSupplierRT,
   addSupplierTT,
   deleteSupplier,
+  deleteSupplierNP,
   deleteSupplierRT,
   deleteSupplierTT,
   getSuppliers,
+  getSuppliersNP,
   getSuppliersRT,
   getSuppliersTT,
   updateSupplier,
+  updateSupplierNP,
   updateSupplierRT,
   updateSupplierTT,
 } from "../controllers/jp_suppliers.controller.js";
@@ -33,4 +37,11 @@ router.get("/rt", verifyAdmin, getSuppliersRT);
 router.post("/rt", verifyAdmin, addSupplierRT);
 router.put("/rt", verifyAdmin, updateSupplierRT);
 router.delete("/rt/:id", verifyAdmin, deleteSupplierRT);
+
+// NP
+router.get("/np", verifyAdmin, getSuppliersNP);
+router.post("/np", verifyAdmin, addSupplierNP);
+router.put("/np", verifyAdmin, updateSupplierNP);
+router.delete("/np/:id", verifyAdmin, deleteSupplierNP);
+
 export default router;

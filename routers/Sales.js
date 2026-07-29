@@ -3,12 +3,15 @@ import {
   getJarikaiOverall,
   getJPSalesReport,
   getJPSalesTTReport,
+  getNPJarikaiOverall,
+  getOuterNPSorceReport,
   getOuterRTSorceReport,
   getOuterSorceReport,
   getOuterTTSorceReport,
   getRTJarikaiOverall,
   getSalesReport,
   getShadowReport,
+  getShadowReportNP,
   getShadowReportRT,
   getTTJarikaiOverall,
   getTTSalesReport,
@@ -40,4 +43,11 @@ router.get("/jarigai-overall/tt", verifyAdmin, getTTJarikaiOverall);
 router.get("/jarigai-overall/rt", verifyAdmin, getRTJarikaiOverall);
 router.get("/shadow-overall/rt", verifyAdmin, getShadowReportRT);
 router.get("/outer-src-all-qty/rt", verifyAdmin, getOuterRTSorceReport);
+
+// NP
+
+router.get("/jarigai-overall/np", verifyAdmin, getNPJarikaiOverall);
+router.get("/shadow-overall/np", verifyAdmin, getShadowReportNP);
+
+router.get("/outer-src-all-qty/np", verifyAdmin, getOuterNPSorceReport);
 export default router;

@@ -1,9 +1,8 @@
 import express from "express";
 import {
   getMembersCount,
-  getRTMemberOnLevel,
-  getRTMembersCount,
   getTree,
+  getTreeForNP,
   getTreeForRT,
   getTreeForTT,
   getTTMemberOnLevel,
@@ -13,9 +12,8 @@ import { verifyUser } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get("/", verifyUser, getTreeForRT);
-// router.get("/member-count", verifyUser, getTTMembersCount);
+router.get("/", verifyUser, getTreeForNP);
+router.get("/member-count", verifyUser, getTTMembersCount);
 
-router.get("/:level", verifyUser, getRTMemberOnLevel);
-router.get("/member-count", verifyUser, getRTMembersCount);
+router.get("/:level", verifyUser, getTTMemberOnLevel);
 export default router;

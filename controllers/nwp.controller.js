@@ -21,8 +21,6 @@ import { sendNWPAdminMail, sendNWPMail } from "../helpers/mail.js";
 
 export const AddNewPackageToUser = async (req, res) => {
   try {
-    console.log("req");
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res
@@ -39,7 +37,7 @@ export const AddNewPackageToUser = async (req, res) => {
       package_id,
       package_amount,
     );
-    console.log("req", nwpUserPackage);
+
     return res.status(201).json({
       success: true,
       data: nwpUserPackage,
@@ -49,6 +47,7 @@ export const AddNewPackageToUser = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 export const PackageList = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -110,168 +109,6 @@ export const DeleteMember = async (req, res) => {
   }
 };
 
-// export const PackageApproved = async (req, res) => {
-//   let connection;
-
-//   try {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res
-//         .status(400)
-//         .json({ message: errors.array().map((e) => e.msg) });
-//     }
-
-//     const { user_package_ids = [], save = true } = req.body;
-
-//     if (!Array.isArray(user_package_ids) || user_package_ids.length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "No package IDs provided",
-//       });
-//     }
-
-//     const startMoment = dayjs();
-//     const start_date = startMoment.format("YYYY-MM-DD");
-
-//     if (typeof db.getConnection === "function") {
-//       connection = await db.getConnection();
-
-//       try {
-//         await connection.beginTransaction();
-//         const allInserts = [];
-
-//         for (const pkgId of user_package_ids) {
-//           // ✅ Get user_id, reward_id, and package_amount using JOIN
-//           const [pkgRows] = await connection.query(
-//             `SELECT
-//                 up.user_id,
-//                 up.reward_id,
-//                 up.package_id,
-//                 p.amount AS package_amount
-//              FROM nwp_users_package AS up
-//              INNER JOIN nwp_packages AS p
-//                ON up.package_id = p.id
-//              WHERE up.id = ?`,
-//             [pkgId]
-//           );
-
-//           if (pkgRows.length === 0) {
-//             console.warn(`Package ID ${pkgId} not found`);
-//             continue;
-//           }
-
-//           const {
-//             user_id: pkgUserId,
-//             reward_id: pkgRewardId,
-//             package_amount,
-//           } = pkgRows[0];
-
-//           // Generate schedule based on the specific package amount
-//           const schedule = generateNwpSchedule({ package_amount, start_date });
-
-//           // ✅ Update package
-//           await updatePackage(pkgId, connection);
-
-//           // ✅ Insert related earnings
-//           if (save) {
-//             const insertResult = await insertNwpEarnings(
-//               pkgUserId,
-//               pkgRewardId,
-//               pkgId,
-//               schedule.rows,
-//               connection
-//             );
-//             allInserts.push({ pkgId, insertResult });
-//           }
-//           await sendNWPMail({
-//             email: user.email,
-//             userName: user.name,
-//             userId: pkgUserId,
-//             joinDate: dayjs(user.created_at).format("DD MMM YYYY"),
-//             mobile: user.mobile,
-
-//             packageAmount: package_amount,
-//             countingDays: schedule.total_days,
-//             dailyAmount: schedule.daily_amount,
-//             benefitAmount: schedule.benefit_amount,
-//             settlementAmount: schedule.settlement_amount,
-//             totalAmount: schedule.total_amount,
-//           });
-//         }
-
-//         await connection.commit();
-//         connection.release();
-
-//         return res.status(200).json({
-//           success: true,
-//           message: "Packages approved successfully",
-//           approvedPackages: user_package_ids,
-//           insert: allInserts,
-//         });
-//       } catch (txErr) {
-//         console.error("Transaction error:", txErr);
-//         await connection.rollback();
-//         connection.release();
-//         throw txErr;
-//       }
-//     } else {
-//       // ⚙️ Fallback (no connection pooling)
-//       const allInserts = [];
-
-//       for (const pkgId of user_package_ids) {
-//         // ✅ JOIN query to get data
-//         const [pkgRows] = await db.query(
-//           `SELECT
-//               up.user_id,
-//               up.reward_id,
-//               up.package_id,
-//               p.amount AS package_amount
-//            FROM nwp_users_package AS up
-//            INNER JOIN nwp_packages AS p
-//              ON up.package_id = p.id
-//            WHERE up.id = ?`,
-//           [pkgId]
-//         );
-
-//         if (pkgRows.length === 0) {
-//           console.warn(`Package ID ${pkgId} not found`);
-//           continue;
-//         }
-
-//         const {
-//           user_id: pkgUserId,
-//           reward_id: pkgRewardId,
-//           package_amount,
-//         } = pkgRows[0];
-
-//         const schedule = generateNwpSchedule({ package_amount, start_date });
-
-//         await updatePackage(pkgId);
-
-//         if (save) {
-//           const insertResult = await insertNwpEarnings(
-//             pkgUserId,
-//             pkgRewardId,
-//             pkgId,
-//             schedule.rows
-//           );
-//           allInserts.push({ pkgId, insertResult });
-//         }
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-//         message: "Packages approved successfully (no transaction)",
-//         approvedPackages: user_package_ids,
-//         insert: allInserts,
-//       });
-//     }
-//   } catch (err) {
-//     console.error("PackageApproved error:", err);
-//     return res.status(500).json({ success: false, message: err.message });
-//   }
-// };
-
 export const PackageApproved = async (req, res) => {
   let connection;
 
@@ -294,7 +131,6 @@ export const PackageApproved = async (req, res) => {
 
     const start_date = dayjs().format("YYYY-MM-DD");
 
-    // ✅ Get connection if using pool
     if (typeof db.getConnection === "function") {
       connection = await db.getConnection();
       await connection.beginTransaction();
@@ -307,7 +143,7 @@ export const PackageApproved = async (req, res) => {
       const [pkgRows] = await (connection
         ? connection.query(
             `SELECT 
-              up.user_id, up.reward_id, up.package_id, p.amount AS package_amount,
+              up.user_id, up.reward_id, up.package_id,up.daily_amt AS daily_amt,  p.amount AS package_amount,
               u.name AS user_name, u.email, u.mobile, u.created_at
             FROM nwp_users_package AS up
             INNER JOIN nwp_packages AS p ON up.package_id = p.id
@@ -317,7 +153,7 @@ export const PackageApproved = async (req, res) => {
           )
         : db.query(
             `SELECT 
-              up.user_id, up.reward_id, up.package_id, p.amount AS package_amount,
+              up.user_id, up.reward_id, up.package_id,up.daily_amt AS daily_amt, p.amount AS package_amount,
               u.name AS user_name, u.email, u.mobile, u.created_at
             FROM nwp_users_package AS up
             INNER JOIN nwp_packages AS p ON up.package_id = p.id
@@ -334,6 +170,7 @@ export const PackageApproved = async (req, res) => {
       const {
         user_id,
         reward_id,
+        daily_amt,
         package_amount,
         user_name,
         email,
@@ -344,6 +181,7 @@ export const PackageApproved = async (req, res) => {
       const schedule = await generateNwpSchedule({
         package_amount,
         start_date,
+        daily_amt,
       });
 
       await updatePackage(pkgId, connection);
@@ -616,6 +454,86 @@ export const withdrawMoney = async (req, res) => {
   } catch (err) {
     await db.rollback();
     console.log(err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getSettlementAmount = async (req, res) => {
+  try {
+    const { start, end, status } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date and End date are required",
+      });
+    }
+
+    const sql = `
+      SELECT
+          ne.id,
+          ne.user_id,
+          ne.reward_id,
+          ne.user_package_id,
+          ne.total_amount,
+          ne.type,
+          ne.status,
+          ne.earned_date,
+          ne.received_date,
+          ne.year,
+       
+          ne.created_at,
+          ne.updated_at,
+
+          u.name,
+          u.email,
+          u.mobile,
+
+          np.daily_amt,
+             np.approved_at,
+          np.package_id
+
+      FROM nwp_earnings ne
+
+      INNER JOIN users u
+          ON u.user_id = ne.user_id
+
+      LEFT JOIN nwp_users_package np
+          ON np.id = ne.user_package_id
+
+      WHERE DATE(ne.earned_date) BETWEEN ? AND ?
+      AND ne.type = ?
+
+      ORDER BY ne.earned_date ASC, ne.id ASC
+    `;
+
+    const [rows] = await db.query(sql, [start, end, "monthly"]);
+
+    const totalAmount = rows.reduce(
+      (sum, row) => sum + Number(row.total_amount),
+      0,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Settlement data fetched successfully",
+
+      summary: {
+        start_date: start,
+        end_date: end,
+        total_users: new Set(rows.map((x) => x.user_id)).size,
+        total_records: rows.length,
+        total_amount: totalAmount,
+      },
+
+      result: rows,
+    });
+  } catch (err) {
+    console.log(err);
+
     return res.status(500).json({
       success: false,
       message: err.message,

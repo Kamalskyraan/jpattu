@@ -155,4 +155,44 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+
+  // NP
+    getNPSuppliers: async () => {
+    try {
+      const query = "SELECT * FROM np_suppliers WHERE deleted_at IS NULL";
+      const [data] = await db.query(query);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+    addNPSupplier: async (name) => {
+    try {
+      const query = "INSERT INTO np_suppliers (name) VALUES (?)";
+      await db.query(query, [name]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+    updateNPSupplier: async ({ name, id }) => {
+    try {
+      const query = "UPDATE np_suppliers SET name = ? WHERE id = ?";
+      await db.query(query, [name, id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+   deleteNPSupplier: async (id) => {
+    try {
+      const query = "DELETE FROM np_suppliers WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

@@ -32,4 +32,15 @@ export const PackageModel = {
       throw err;
     }
   },
+
+  getNPPackages: async (req, res) => {
+    try {
+      const query =
+        "SELECT id, name, amount, description, created_at from np_packages ORDER BY id";
+      const [result] = await db.query(query);
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  },
 };

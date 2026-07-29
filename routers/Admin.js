@@ -18,6 +18,11 @@ import {
   searchRTUser,
   getRTQueuedUsers,
   AddQueuedRTUser,
+  approveNPUser,
+  getAllNPUsers,
+  getNPQueuedUsers,
+  AddQueuedNPUser,
+  searchNPUser,
 } from "../controllers/admin.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 import { getAllPayouts } from "../controllers/users.controller.js";
@@ -48,4 +53,12 @@ router.get("/search-rt-user/:user_id", verifyAdmin, searchRTUser);
 router.get("/queued-users/rt", verifyAdmin, getRTQueuedUsers);
 router.post("/add-user/rt", verifyAdmin, AddQueuedRTUser);
 
+// NP
+
+router.post("/approve-np", verifyAdmin, approveNPUser);
+router.get("/np-users", verifyAdmin, getAllNPUsers);
+router.get("/queued-users/np", verifyAdmin, getNPQueuedUsers);
+router.post("/add-user/np", verifyAdmin, AddQueuedNPUser);
+
+router.get("/search-np-user/:user_id", verifyAdmin, searchNPUser);
 export default router;

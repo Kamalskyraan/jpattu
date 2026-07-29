@@ -5,6 +5,7 @@ import {
   DeleteMember,
   EarningsList,
   Earningspaid,
+  getSettlementAmount,
   getWithdrawEarningsForUser,
   MembersList,
   PackageApproved,
@@ -26,5 +27,6 @@ router.post("/deletemembers", DeleteMember);
 // kamal
 router.post("/get-earnings-fromuser", getWithdrawEarningsForUser);
 router.post("/withdraw-money", withdrawMoney);
+router.get("/settlement-amount" ,getSettlementAmount)
 
 export default router;

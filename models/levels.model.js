@@ -21,6 +21,12 @@ const LevelModel = {
     );
     return data;
   },
+  getNPLevels: async () => {
+    const [data] = await db.query(
+      "SELECT * FROM np_levels ORDER BY level ASC",
+    );
+    return data;
+  },
 };
 
 export default LevelModel;

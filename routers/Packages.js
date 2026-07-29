@@ -1,17 +1,21 @@
 import express from "express";
 import { verifyAdmin } from "../middlewares/auth.js";
 import {
+  AddPackageToNPUser,
   AddPackageToRTUser,
   AddPackageToTTUser,
   AddPackageToUser,
+  GetNPPackages,
   GetPackages,
   GetRTPackages,
   GetTTPackages,
 } from "../controllers/packages.controller.js";
 import { addPackageToUser } from "../validator/packageValidator.js";
 import {
+  sendMemberNPPackageMail,
   sendMemberPackageMail,
   sendMemberRepeatPackageMail,
+  sendMembersNPPackageAdminMail,
   sendMembersPackageAdminMail,
   sendMembersRepeatPackageAdminMail,
   sendMembersTargetPackageAdminMail,
@@ -51,8 +55,12 @@ router.post("/tt-send-mail", verifyAdmin, async (req, res) => {
     res.status(500).json({ message: "Mail Sending Failed" });
   }
 });
+
+// rt
 router.get("/rt", verifyAdmin, GetRTPackages);
+
 router.post("/rt", verifyAdmin, addPackageToUser, AddPackageToRTUser);
+
 router.post("/rt-send-mail", verifyAdmin, async (req, res) => {
   try {
     const { memberData, new_ids, level } = req.body;
@@ -66,4 +74,24 @@ router.post("/rt-send-mail", verifyAdmin, async (req, res) => {
     res.status(500).json({ message: "Mail Sending Failed" });
   }
 });
+
+// np
+
+router.get("/np", verifyAdmin, GetNPPackages);
+router.post("/np", verifyAdmin, addPackageToUser, AddPackageToNPUser);
+
+router.post("/np-send-mail", verifyAdmin, async (req, res) => {
+  try {
+    const { memberData, new_ids, level } = req.body;
+
+    await sendMemberNPPackageMail({ memberData, new_ids, level });
+    await sendMembersNPPackageAdminMail({ memberData, new_ids, level });
+
+    res.status(200).json({ message: "Mail Sent Successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Mail Sending Failed" });
+  }
+});
+
 export default router;

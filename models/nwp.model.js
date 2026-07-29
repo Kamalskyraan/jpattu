@@ -17,9 +17,10 @@ export async function insertNwpUserPackage(
   package_amount,
 ) {
   try {
+    const monthlyInterestRate = 0.03;
+    const monthly_interest = Number(package_amount) * monthlyInterestRate;
     // Calculate daily amount and interest
-    const daily_amt = Number(package_amount) / 400;
-    const interest_amount = Number(package_amount) * 0.05;
+    const daily_amt = monthly_interest / 30;
 
     // Insert into nwp_users_package
     const insertNwpUserPackageSql = `
@@ -34,6 +35,7 @@ export async function insertNwpUserPackage(
       package_id,
       daily_amt,
     ]);
+
     const insertId = userPackageResult.insertId ?? null;
 
     // Insert into nwp_rewards
@@ -48,16 +50,17 @@ export async function insertNwpUserPackage(
       user_id, // referred person
       reward_id, // who gets reward
       user_package_id,
-      interest_amount, // reward amount
+      monthly_interest, // reward amount
       "reward",
     ]);
-    console.log("insertRewardsResult lvivbiv", insertRewardsResult);
+
     return { result: 1, insertId };
   } catch (err) {
     console.error("Error inserting NWP user package:", err);
     return { result: 0, error: err.message };
   }
 }
+
 export async function nwpPackageList() {
   const sql = "SELECT * FROM nwp_packages";
   const [result] = await db.query(sql);
@@ -180,6 +183,7 @@ export async function nwpEarningsList(status, start, end) {
         )
       WHERE 
         1 = 1
+          AND nwp.type = 'monthly'
     `;
 
   const params = [];
@@ -462,6 +466,7 @@ export async function nwpMembersDetails(year = null, month = null) {
   SELECT COALESCE(SUM(total_amount), 0) AS total
   FROM nwp_earnings
   WHERE earned_date <= LAST_DAY(NOW())
+  AND type != 'reward'
 `);
 
   return {

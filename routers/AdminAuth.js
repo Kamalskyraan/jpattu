@@ -4,6 +4,7 @@ import { validateLogin } from "../validator/authValidator.js";
 import {
   LoginAdmin,
   LogoutAdmin,
+  newUserData,
   repeatUserData,
   TargetUserData,
   verifyStatus,
@@ -29,4 +30,5 @@ router.get("/verify-user", verifyStatus);
 router.get("/verify-tt-user", verifyTTStatus);
 router.get("/get-target-userdata", TargetUserData);
 router.get("/get-repeat-userdata", repeatUserData);
+router.get("/get-new-userdata", newUserData);
 export default router;

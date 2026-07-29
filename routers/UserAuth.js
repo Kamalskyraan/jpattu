@@ -4,10 +4,13 @@ import { validateLogin, validateRegister } from "../validator/authValidator.js";
 import {
   LoginUser,
   LogoutUser,
+  NPRegisterUser,
   RegisterUser,
   RTRegisterUser,
   TTRegisterUser,
   UpdateUserToken,
+  verifyNPStatus,
+  verifyRTStatus,
   verifyStatus,
   verifyTTStatus,
 } from "../controllers/users.controller.js";
@@ -37,11 +40,16 @@ router.post("/logout", LogoutUser);
 
 router.get("/verify-user", verifyStatus);
 
+
+
 router.get("/verify-tt-user", verifyTTStatus);
+router.get("/verify-rt-user", verifyRTStatus);
+router.get("/verify-np-user", verifyNPStatus);
 
 router.post("/update-user", UpdateUserToken);
 
 router.post("/tt-register", validateRegister, TTRegisterUser);
 router.post("/rt-register", validateRegister, RTRegisterUser);
+router.post("/np-register", validateRegister, NPRegisterUser);
 
 export default router;

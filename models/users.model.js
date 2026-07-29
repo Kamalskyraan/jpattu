@@ -2,6 +2,8 @@ import db from "../configs/db.js";
 import {
   sendAdminMail,
   sendMail,
+  sendNPAdminMail,
+  sendNPMail,
   sendRepeatAdminMail,
   sendRepeatMail,
   sendTargetAdminMail,
@@ -108,7 +110,7 @@ export const TempUserModel = {
   getLastTargetUser: async () => {
     try {
       const query =
-        "SELECT user_id from rpt_temp_users ORDER BY id DESC LIMIT 1";
+        "SELECT user_id from tt_temp_users ORDER BY id DESC LIMIT 1";
       const [id] = await db.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
@@ -410,10 +412,10 @@ export const TempUserModel = {
 
   addRepeatUser: async (data) => {
     try {
-      const lastId = await TempUserModel.getLastTargetUser();
-      const value = lastId.length > 0 ? lastId.split("RE")[1] : 0;
+      const lastId = await TempUserModel.getLastRepeatUser();
+      const value = lastId.length > 0 ? lastId.split("TEM")[1] : 0;
       const newValue = ((parseInt(value) || 0) + 1).toString();
-      const newId = "RE" + newValue;
+      const newId = "TEM" + newValue;
 
       const referrarQuery =
         "SELECT * FROM rpt_users WHERE user_id = ? AND deleted_at IS NULL";
@@ -456,7 +458,7 @@ export const TempUserModel = {
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
-        return "TM0";
+        return "TEM";
       }
     } catch (err) {
       throw err;
@@ -598,6 +600,194 @@ export const TempUserModel = {
         "UPDATE rpt_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
       const [result] = await db.query(query, [id]);
       return result.affectedRows;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // NP
+
+  addNPUser: async (data) => {
+    try {
+      const lastId = await TempUserModel.getLastNpUser();
+      const value = lastId.length > 0 ? lastId.split("TMP")[1] : 0;
+      const newValue = ((parseInt(value) || 0) + 1).toString();
+      const newId = "TMP" + newValue;
+
+      const referrarQuery =
+        "SELECT * FROM np_users WHERE user_id = ? AND deleted_at IS NULL";
+
+      let [referrar] = await db.query(referrarQuery, [data.referral_id]);
+      if (referrar.length === 0) {
+        const referrarQuery =
+          "SELECT * FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+        [referrar] = await db.query(referrarQuery, [data.referral_id]);
+        if (!referrar[0]?.id) {
+          throw new Error("referrer not found");
+        } else if (referrar[0].status === "Queued") {
+          throw new Error("Referrar is in Queue");
+        }
+      }
+
+      const query =
+        "INSERT INTO np_temp_users (referral_id, user_id, name, mobile, email, password, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        data.referral_id,
+        newId,
+        data.name,
+        data.mobile,
+        data.email || "",
+        data.password,
+        data.txn_id,
+      ]);
+
+      return newId;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getLastNpUser: async () => {
+    try {
+      const query =
+        "SELECT user_id from np_temp_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "TMP";
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  NPpaidProof: async ({ user_id, image, txn_id }) => {
+    try {
+      const [data] = await TempUserModel.getNPUser(user_id);
+      if (!data) return false;
+
+      if (!image) {
+        const updateQuery = `
+        UPDATE np_temp_users 
+        SET txn_id = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [txn_id, user_id]);
+      } else if (!txn_id) {
+        const updateQuery = `
+        UPDATE np_temp_users 
+        SET screenshot = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [image, user_id]);
+      }
+
+      const checkQuery = `
+        SELECT user_id 
+        FROM np_temp_users 
+        WHERE txn_id = ? AND user_id != ? 
+        UNION 
+        SELECT user_id 
+        FROM np_users 
+        WHERE txn_id = ?;`;
+      const [duplicates] = await db.query(checkQuery, [
+        txn_id,
+        user_id,
+        txn_id,
+      ]);
+
+      if (duplicates.length > 0) {
+        const markDupesQuery = `
+          UPDATE np_temp_users 
+          SET duplicate_txn_id = TRUE 
+          WHERE txn_id = ?;
+        `;
+        await db.query(markDupesQuery, [txn_id]);
+      }
+
+      return true;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
+
+  getNPUser: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.email,
+                      u.referral_id,
+                      u.approved,
+                      u.pancard,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM np_temp_users u
+                    LEFT JOIN np_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL`;
+      const [data] = await db.query(query, [user_id]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getAllUsersNP: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.email,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.approved,
+                      IFNULL(r.user_id, a.user_id) AS referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM np_temp_users u
+                    LEFT JOIN np_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at is NULL AND u.approved = 0 ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        address: "",
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
     } catch (err) {
       throw err;
     }
@@ -1894,81 +2084,6 @@ export const UserModel = {
     }
   },
 
-  // addQueuedTTUser: async (user_id, referral_id) => {
-  //   try {
-  //     db.beginTransaction();
-
-  //     const query =
-  //       "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL";
-  //     const [data] = await db.query(query, [user_id]);
-
-  //     if (data.length === 0) {
-  //       await db.rollback();
-  //       return false;
-  //     }
-
-  //     const referrar_query =
-  //       "SELECT * FROM tt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL";
-  //     const [referrar_data] = await db.query(referrar_query, [referral_id]);
-
-  //     if (referrar_data.length === 0) {
-  //       await db.rollback();
-  //       return false;
-  //     }
-
-  //     const updatedQuery =
-  //       "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?";
-  //     await db.query(updatedQuery, [referral_id, user_id]);
-
-  //     //Make relations
-  //     const relationQuery1 = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
-  //                               VALUES (?, ?, 1);`;
-
-  //     await db.query(relationQuery1, [referral_id, user_id]);
-  //     const relationQuery = `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
-  //                               SELECT
-  //                                 ancestor_id,
-  //                                 ? AS descendant_id,
-  //                                 level + 1
-  //                                 FROM tt_user_relations
-  //                                 WHERE descendant_id = ?
-  //                                 AND level < 3 AND ancestor_id IS NOT NULL`;
-  //     await db.query(relationQuery, [user_id, referral_id]);
-
-  //     //Add amount to every parent
-  //     const amountQuery1 = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-  //           VALUES (?, ?, 2000, 'unpaid');`;
-  //     await db.query(amountQuery1, [referral_id, user_id]);
-
-  //     const amountQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-  //                             SELECT
-  //                             ancestor_id,
-  //                             ? AS descendant_id,
-  //                             1000 AS amount,
-  //                             'unpaid' AS status
-  //                             FROM tt_user_relations
-  //                             WHERE descendant_id = ?
-  //                             AND level = 2;`;
-  //     await db.query(amountQuery, [user_id, referral_id]);
-
-  //     const bonusQuery = `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
-  //                             SELECT
-  //                             ancestor_id,
-  //                             ? AS descendant_id,
-  //                             11500 AS amount,
-  //                             'unpaid' AS status
-  //                             FROM tt_user_relations
-  //                             WHERE descendant_id = ?
-  //                             AND level = 3`;
-  //     await db.query(bonusQuery, [user_id, referral_id]);
-  //     db.commit();
-  //     return true;
-  //   } catch (err) {
-  //     db.rollback();
-  //     throw err;
-  //   }
-  // },
-
   addQueuedTTUser: async (user_id, referral_id) => {
     try {
       await db.beginTransaction();
@@ -2396,7 +2511,7 @@ export const UserModel = {
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
-        return "RT0";
+        return "RP0";
       }
     } catch (err) {
       throw err;
@@ -2409,7 +2524,7 @@ export const UserModel = {
       const ids = [];
 
       const lastId = await UserModel.getLastUserRT();
-      let baseId = lastId.length > 0 ? parseInt(lastId.split("RT")[1]) : 0;
+      let baseId = lastId.length > 0 ? parseInt(lastId.split("RP")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
@@ -2440,7 +2555,7 @@ export const UserModel = {
         } else if (referrer?.role !== "admin" && count >= 2) status = "Queued";
 
         baseId += 1;
-        const newId = "RT" + baseId.toString();
+        const newId = "RP" + baseId.toString();
 
         await db.query(
           `INSERT INTO rpt_users 
@@ -2481,26 +2596,37 @@ export const UserModel = {
             [newId, referrer.user_id],
           );
 
-          // Level 1 payout = 100
+          // Level 1 payout = 1000
           await db.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
-     VALUES (?, ?, 100, 'unpaid')`,
+     VALUES (?, ?, 1000, 'unpaid')`,
             [referrer.user_id, newId],
           );
 
-          // Level 2–8 payout = 10
+          // Level 2–3 payout = 500
+
           await db.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
-     SELECT ancestor_id, ?, 10, 'unpaid'
+     SELECT ancestor_id, ?, 500, 'unpaid'
      FROM rpt_user_relations
-     WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+     WHERE descendant_id = ? AND level BETWEEN 2 AND 3`,
             [newId, newId],
           );
 
-          // Level 9+ payout = 100
+          // Level 4–8 payout = 200
+
           await db.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
-     SELECT ancestor_id, ?, 185, 'unpaid'
+     SELECT ancestor_id, ?, 200, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level BETWEEN 4 AND 8`,
+            [newId, newId],
+          );
+
+          // Level 9+ payout = 5650
+          await db.query(
+            `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 5650, 'unpaid'
      FROM rpt_user_relations
      WHERE descendant_id = ? AND level = 9`,
             [newId, newId],
@@ -2681,26 +2807,41 @@ export const UserModel = {
         [user_id, referral_id],
       );
 
-      // Level 1 payout = 100
+      // Level 1 payout = 1000
       await db.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
-       VALUES (?, ?, 100, 'unpaid')`,
+       VALUES (?, ?, 1000, 'unpaid')`,
         [referral_id, user_id],
       );
 
-      // Level 2 - 8 payout = 10
+      // Level 2 - 3 payout = 500
       await db.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
          ancestor_id,
          ?,
-         10,
+         500,
          'unpaid'
        FROM rpt_user_relations
        WHERE descendant_id = ?
-       AND level BETWEEN 2 AND 8`,
+       AND level BETWEEN 2 AND 3`,
+        [user_id, user_id],
+      );
+
+      // level 4 to 8 --200
+      await db.query(
+        `INSERT INTO rpt_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         200,
+         'unpaid'
+       FROM rpt_user_relations
+       WHERE descendant_id = ?
+       AND level BETWEEN 4 AND 8`,
         [user_id, user_id],
       );
 
@@ -2711,7 +2852,7 @@ export const UserModel = {
        SELECT
          ancestor_id,
          ?,
-         185,
+         5650,
          'unpaid'
        FROM rpt_user_relations
        WHERE descendant_id = ?
@@ -2859,6 +3000,807 @@ export const UserModel = {
       return new_ids;
     } catch (err) {
       await db.rollback();
+      throw err;
+    }
+  },
+
+  // NP
+
+  getUserNameFromNP: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM np_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getNPUserName: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM np_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  approveUserNP: async (user_ids) => {
+    try {
+      await db.beginTransaction();
+      const ids = [];
+
+      const lastId = await UserModel.getLastUserNP();
+      let baseId = lastId.length > 0 ? parseInt(lastId.split("MR")[1]) : 0;
+      user_ids.sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+      );
+
+      for (const temp_user_id of user_ids) {
+        const [[user]] = await db.query(
+          "SELECT * FROM np_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
+          [temp_user_id],
+        );
+
+        if (!user) continue;
+
+        const [[referrer]] = await db.query(
+          `SELECT user_id, 'user' as role FROM np_users WHERE user_id = ?
+         UNION
+         SELECT user_id, role FROM admin WHERE user_id = ?`,
+          [user.referral_id, user.referral_id],
+        );
+
+        let status = "Approved";
+
+        const [[{ count }]] = await db.query(
+          "SELECT COUNT(*) as count FROM np_users WHERE referral_id = ?",
+          [referrer.user_id],
+        );
+        if (referrer?.role === "admin" && count !== 0) {
+          status = "Queued";
+        } else if (referrer?.role !== "admin" && count >= 2) status = "Queued";
+
+        baseId += 1;
+        const newId = "MR" + baseId.toString();
+
+        await db.query(
+          `INSERT INTO np_users 
+        (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            referrer?.user_id,
+            newId,
+            user.name,
+            user.mobile,
+            user.email,
+            user.address,
+            user.password,
+            status,
+            user.txn_id,
+            user.screenshot,
+          ],
+        );
+
+        await db.query(
+          "INSERT INTO np_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
+          [newId, 0, "paid"],
+        );
+
+        if (status === "Approved" && referrer?.role === "user") {
+          // Add direct relation
+          await db.query(
+            "INSERT INTO np_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+            [referrer.user_id, newId],
+          );
+
+          // Add upper relations
+          await db.query(
+            `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
+     SELECT ancestor_id, ?, level + 1
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND ancestor_id IS NOT NULL`,
+            [newId, referrer.user_id],
+          );
+
+          // Level 1 payout = 800
+          await db.query(
+            `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+     VALUES (?, ?, 800, 'unpaid')`,
+            [referrer.user_id, newId],
+          );
+          // level 2 = 100
+
+          await db.query(
+            `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 100, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level = 2`,
+            [newId, newId],
+          );
+          // Level 3–8 payout = 50
+          await db.query(
+            `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 50, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level BETWEEN 3 AND 8`,
+            [newId, newId],
+          );
+
+          // Level 9+ payout = 100
+          await db.query(
+            `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 1900, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level = 9`,
+            [newId, newId],
+          );
+        }
+
+        await db.query(
+          "UPDATE np_temp_users SET approved = 1 WHERE user_id = ?",
+          [temp_user_id],
+        );
+
+        if (user.email) {
+          user.user_id = newId;
+          user.referral_id = referrer.user_id;
+          sendNPMail(user);
+        }
+        await sendNPAdminMail(user);
+        ids.push({
+          new_id: newId,
+          user_id: temp_user_id,
+          mobile: user.mobile,
+          name: user.name,
+          sponsor_id: referrer.user_id,
+          password: user.password,
+          status,
+        });
+      }
+
+      await db.commit();
+      return ids;
+    } catch (err) {
+      console.error("approveUser error:", err);
+      await db.rollback();
+      throw err;
+    }
+  },
+
+  getLastUserNP: async () => {
+    try {
+      const query = "SELECT user_id from np_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "MR0";
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getAllUsersNP: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.txn_id,
+                      u.branch,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM np_users u
+                    LEFT JOIN np_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+      const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getUserNP: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      u.referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM np_users u
+                    LEFT JOIN np_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL;`;
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  updateNPUser: async (data) => {
+    let column;
+
+    if (data.user_type === "users") {
+      column = [
+        "name",
+        "mobile",
+        "email",
+        "status",
+        "address",
+        "pancard",
+        "bank_name",
+        "holder_name",
+        "account_number",
+        "ifsc_code",
+        "branch",
+      ];
+    } else {
+      column = ["name", "mobile", "email", "address", "pancard"];
+    }
+
+    let keys = [];
+    let values = [];
+
+    column.forEach((val) => {
+      if (data[val]) {
+        keys.push(`${val} = ?`);
+        values.push(data[val].trim());
+      }
+    });
+
+    if (data.referral_id && data.role === "admin") {
+      keys.push("referral_id = ?");
+      values.push(data.referral_id);
+    }
+
+    if (data.password && data.role === "admin") {
+      keys.push("password = ?");
+      values.push(data.password);
+    }
+
+    if (keys.length === 0) {
+      return false;
+    }
+
+    const list = keys.join(", ");
+    const query = `UPDATE ${
+      data.user_type === "users" ? "np_users" : "np_temp_users"
+    } SET ${list} WHERE user_id = ?`;
+    await db.query(query, [...values, data.user_id]);
+    return true;
+  },
+
+  getUserNP: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      u.referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM np_users u
+                    LEFT JOIN np_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL;`;
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  hasNPMembers: async (user_id) => {
+    try {
+      const query =
+        "SELECT user_id from np_users WHERE referral_id = ? LIMIT 1";
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getQueuedTTUsers: async () => {
+    try {
+      const query = `SELECT 
+                      id,
+                      user_id,
+                      name, 
+                      mobile, 
+                      status,
+                      email,
+                      password,
+                      screenshot,
+                      address,
+                      referral_id,
+                      account_number,
+                      bank_name,
+                      holder_name,
+                      ifsc_code,
+                      txn_id,
+                      branch,
+                      UNIX_TIMESTAMP(created_at) as created,
+                      created_at
+                      FROM np_users
+                    WHERE status = "Queued" AND deleted_at IS NULL`;
+      const [data] = await db.query(query);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  addQueuedNPUser: async (user_id, referral_id) => {
+    try {
+      await db.beginTransaction();
+
+      const [data] = await db.query(
+        "SELECT * FROM np_users WHERE user_id = ? AND deleted_at IS NULL",
+        [user_id],
+      );
+
+      if (data.length === 0) {
+        await db.rollback();
+        return false;
+      }
+
+      const [referrar_data] = await db.query(
+        "SELECT * FROM np_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
+        [referral_id],
+      );
+
+      if (referrar_data.length === 0) {
+        await db.rollback();
+        return false;
+      }
+
+      // Update queued user
+      await db.query(
+        "UPDATE np_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
+        [referral_id, user_id],
+      );
+
+      // Level 1 relation
+      await db.query(
+        `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
+       VALUES (?, ?, 1)`,
+        [referral_id, user_id],
+      );
+
+      // Level 2 - 9 relations
+      await db.query(
+        `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
+       SELECT
+         ancestor_id,
+         ?,
+         level + 1
+       FROM np_user_relations
+       WHERE descendant_id = ?
+       AND level < 9
+       AND ancestor_id IS NOT NULL`,
+        [user_id, referral_id],
+      );
+
+      // Level 1 payout = 100
+      await db.query(
+        `INSERT INTO np_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       VALUES (?, ?, 800, 'unpaid')`,
+        [referral_id, user_id],
+      );
+
+      await db.query(
+        `INSERT INTO np_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         100,
+         'unpaid'
+       FROM np_user_relations
+       WHERE descendant_id = ?
+       AND level = 2`,
+        [user_id, user_id],
+      );
+
+      // Level 3 - 8 payout = 10
+      await db.query(
+        `INSERT INTO np_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         50,
+         'unpaid'
+       FROM np_user_relations
+       WHERE descendant_id = ?
+       AND level BETWEEN 3 AND 8`,
+        [user_id, user_id],
+      );
+
+      // Level 9 payout = 185
+      await db.query(
+        `INSERT INTO np_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         1900,
+         'unpaid'
+       FROM np_user_relations
+       WHERE descendant_id = ?
+       AND level = 9`,
+        [user_id, user_id],
+      );
+
+      await db.commit();
+      return true;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
+
+  getNPSales: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query =
+        "SELECT id, referral_id, user_id, name, mobile, 5000 as amount, created_at as purchase_date FROM np_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getNPUsersCount: async (
+    timeline = false,
+    year = null,
+    month = null,
+    all = false,
+  ) => {
+    try {
+      let startOfMonth, endOfMonth;
+
+      if (all && typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${2025}-1-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else if (typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else {
+        const now = dayjs();
+        startOfMonth = now.startOf("month").format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = now.endOf("month").format("YYYY-MM-DD HH:mm:ss");
+      }
+
+      let query = "",
+        params = [];
+
+      if (timeline) {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM np_users
+        WHERE deleted_at IS NULL
+          AND created_at >= ? AND created_at <= ?
+      `;
+        params = [startOfMonth, endOfMonth];
+      } else {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM np_users
+        WHERE deleted_at IS NULL
+      `;
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0].user_count || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  addPackageToRTUser: async ({ user_data, level }) => {
+    try {
+      await db.beginTransaction();
+
+      let currentLevel = [user_data.user_id];
+      let new_ids = [];
+      console.log("level", level);
+      const status = "Approved";
+      const cashbackStatus = "paid";
+      const amount = 0;
+
+      const lastId = await UserModel.getLastUserRT();
+      let value = lastId.length > 0 ? parseInt(lastId.split("RP")[1]) : 0;
+
+      for (let i = 1; i <= level; i++) {
+        const nextLevel = [];
+
+        for (const referrer_id of currentLevel) {
+          for (let j = 0; j < 2; j++) {
+            value += 1;
+            const newId = "RP" + value.toString();
+
+            const userQuery = `INSERT INTO rpt_users
+              (referral_id, user_id, name, mobile, email, address, password, status, bank_name, holder_name, account_number, ifsc_code, branch)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            `;
+
+            await db.query(userQuery, [
+              referrer_id,
+              newId,
+              user_data.name,
+              user_data.mobile,
+              user_data.email,
+              user_data.address,
+              user_data.password,
+              status,
+              user_data.bank_name,
+              user_data.holder_name,
+              user_data.account_number,
+              user_data.ifsc_code,
+              user_data.branch,
+            ]);
+
+            const cashbackQuery = `INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
+            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+
+            nextLevel.push(newId);
+            new_ids.push(newId);
+
+            await db.query(
+              "INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+              [referrer_id, newId],
+            );
+
+            await db.query(
+              `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
+             SELECT ancestor_id, ?, level + 1
+             FROM rpt_user_relations
+             WHERE descendant_id = ? AND level < 9 AND ancestor_id IS NOT NULL`,
+              [newId, referrer_id],
+            );
+
+            await db.query(
+              `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
+             VALUES (?, ?, 1000, 'unpaid')`,
+              [referrer_id, newId],
+            );
+            await db.query(
+              `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
+              SELECT ancestor_id, ?, 500, 'unpaid'
+              FROM rpt_user_relations
+              WHERE descendant_id = ? AND level BETWEEN 2 AND 3`,
+              [newId, newId],
+            );
+            await db.query(
+              `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
+              SELECT ancestor_id, ?, 200, 'unpaid'
+              FROM rpt_user_relations
+              WHERE descendant_id = ? AND level BETWEEN 4 AND 8`,
+              [newId, newId],
+            );
+              
+
+            await db.query(
+              `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 5650, 'unpaid'
+                FROM rpt_user_relations
+                WHERE descendant_id = ? AND level = 9`,
+              [newId, newId],
+            );
+
+            
+          }
+        }
+        currentLevel = nextLevel;
+      }
+      await db.commit();
+      return new_ids;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
+  addPackageToNPUser: async ({ user_data, level }) => {
+    try {
+      await db.beginTransaction();
+
+      let currentLevel = [user_data.user_id];
+      let new_ids = [];
+      console.log("level", level);
+      const status = "Approved";
+      const cashbackStatus = "paid";
+      const amount = 0;
+
+      const lastId = await UserModel.getLastUserNP();
+      let value = lastId.length > 0 ? parseInt(lastId.split("MR")[1]) : 0;
+
+      for (let i = 1; i <= level; i++) {
+        const nextLevel = [];
+
+        for (const referrer_id of currentLevel) {
+          for (let j = 0; j < 2; j++) {
+            value += 1;
+            const newId = "MR" + value.toString();
+
+            const userQuery = `INSERT INTO np_users
+              (referral_id, user_id, name, mobile, email, address, password, status, bank_name, holder_name, account_number, ifsc_code, branch)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            `;
+
+            await db.query(userQuery, [
+              referrer_id,
+              newId,
+              user_data.name,
+              user_data.mobile,
+              user_data.email,
+              user_data.address,
+              user_data.password,
+              status,
+              user_data.bank_name,
+              user_data.holder_name,
+              user_data.account_number,
+              user_data.ifsc_code,
+              user_data.branch,
+            ]);
+
+            const cashbackQuery = `INSERT INTO np_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
+            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+
+            nextLevel.push(newId);
+            new_ids.push(newId);
+
+            await db.query(
+              "INSERT INTO np_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+              [referrer_id, newId],
+            );
+
+            await db.query(
+              `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
+             SELECT ancestor_id, ?, level + 1
+             FROM np_user_relations
+             WHERE descendant_id = ? AND level < 9 AND ancestor_id IS NOT NULL`,
+              [newId, referrer_id],
+            );
+
+            await db.query(
+              `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+             VALUES (?, ?, 800, 'unpaid')`,
+              [referrer_id, newId],
+            );
+            await db.query(
+              `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+              SELECT ancestor_id, ?, 50, 'unpaid'
+              FROM np_user_relations
+              WHERE descendant_id = ? AND level BETWEEN 3 AND 8`,
+              [newId, newId],
+            );
+
+            await db.query(
+              `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 1900, 'unpaid'
+                FROM np_user_relations
+                WHERE descendant_id = ? AND level = 9`,
+              [newId, newId],
+            );
+
+            await db.query(
+              `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 100, 'unpaid'
+                FROM np_user_relations
+                WHERE descendant_id = ? AND level = 2`,
+              [newId, newId],
+            );
+          }
+        }
+        currentLevel = nextLevel;
+      }
+      await db.commit();
+      return new_ids;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
+
+
+   getUserRT: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      u.referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM rpt_users u
+                    LEFT JOIN rpt_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL;`;
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
       throw err;
     }
   },
