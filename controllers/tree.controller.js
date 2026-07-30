@@ -481,3 +481,57 @@ WHERE u.user_id = ?
     });
   }
 };
+
+
+export const getMRMemberOnLevel = async (req, res) => {
+  try {
+    const { level } = req.params || false;
+    const { user_id } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    const data = await TreeModel.getNPMemberOnLevel({ user_id, level });
+
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+export const getMRMembersCount = async (req, res) => {
+  try {
+    const { user_id } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    const data = await TreeModel.getMRMembersCount(user_id);
+
+    data.sort((a, b) => a.level - b.level);
+    const maxLevel = 9;
+    const base = 2;
+
+    const result = Array.from({ length: maxLevel }, (_, i) => {
+      const level = i + 1;
+      const total = base ** level;
+      const record = data.find((item) => item.level === level);
+      const count = record ? record.count : 0;
+      const balance = total - count;
+
+      return {
+        level,
+        total,
+        count,
+        balance,
+      };
+    });
+
+    res.status(200).json({ data: result });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

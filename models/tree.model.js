@@ -294,6 +294,46 @@ const TreeModel = {
       throw err;
     }
   },
+
+  getNPMemberOnLevel: async ({ user_id, level = 1 }) => {
+    try {
+      const query = `WITH RECURSIVE np_user_relations AS (
+                        SELECT user_id, referral_id, name, mobile, created_at, 0 AS level
+                        FROM np_users
+                        WHERE user_id = ?
+
+                        UNION ALL
+
+                        SELECT u.user_id, u.referral_id, u.name, u.mobile, u.created_at, ut.level + 1
+                        FROM np_users u
+                        JOIN np_user_relations ut ON u.referral_id = ut.user_id AND status = "approved"
+                        )
+                        SELECT * FROM np_user_relations WHERE level = ?`;
+      const [data] = await db.query(query, [user_id, level]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getMRMembersCount: async (user_id) => {
+    try {
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM np_user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3 , 4,5,6,7,8,9)
+      GROUP BY level
+      ORDER BY level
+    `;
+
+      const [data] = await db.query(query, [user_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default TreeModel;

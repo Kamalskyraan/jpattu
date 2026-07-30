@@ -1,6 +1,7 @@
 import express from "express";
 import {
     getNPBalanceLogs,
+  getNPLevelIncome,
   getRTBalanceLogs,
   getTTBalanceLogs,
   getTTLevelIncome,
@@ -16,6 +17,6 @@ const router = express.Router();
 
 router.get("/", verifyUser, getNPBalanceLogs);
 router.put("/", verifyAdmin, updateNPBalanceStatus);
-router.get("/income/:user_id", verifyUser, getTTLevelIncome);
+router.get("/income/:user_id", verifyUser, getNPLevelIncome);
 router.get("/:user_id", verifyUser, receivedTTAmount);
 export default router;

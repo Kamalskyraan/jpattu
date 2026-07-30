@@ -409,6 +409,18 @@ const AdminModel = {
       throw err;
     }
   },
+
+    getPaymentDetailsNP: async () => {
+    try {
+      const query =
+        "SELECT holder_name, account_number, ifsc_code, bank_name, branch FROM admin WHERE deleted_at IS NULL";
+      const [data] = await db.query(query, []);
+      console.log(data);
+      return data[0] || [{}];
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default AdminModel;

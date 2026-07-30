@@ -4,6 +4,7 @@ import {
   getNPUser,
   getNPUserName,
   getPaymentDetails,
+  getPaymentDetailsNP,
   getPaymentDetailsTT,
   getRTUser,
   getRTUserName,
@@ -22,6 +23,6 @@ router.get("/", getNPUserName);
 router.get("/:user_id", verifyUser, getNPUser);
 router.put("/", verifyUser, updateValidation, updateTTUser);
 router.get("/data/:user_id", verifyUser, getTTHomeDetails);
-router.get("/payment-details", getPaymentDetailsTT);
+router.get("/payment-details", getPaymentDetailsNP);
 router.get("/temp/:user_id", getTempTTUser);
 export default router;

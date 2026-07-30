@@ -1,5 +1,4 @@
-import mysql from "mysql2/promise";
-
+import mysql from "mysql2";
 
 // const db = mysql.createConnection({
 //   host: "localhost",
@@ -8,24 +7,22 @@ import mysql from "mysql2/promise";
 //   database: "rightshadow_db",
 // });
 
-const db = mysql.createPool({
-  host: "localhost",
-  user: "skyraantech_rightshadow_user",
-  password: "%[n6mU&iiEg~NSUZ",
-  database: "skyraantech_rightshadow_db",
-  connectionLimit: 10,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-});
-// const db = mysql.createConnection({
+// const db = mysql.createPool({
 //   host: "localhost",
-//   user: "root",
-//   password: "",
-//   database: "right_shadow",
+//   user: "skyraantech_rightshadow_user",
+//   password: "%[n6mU&iiEg~NSUZ",
+//   database: "skyraantech_rightshadow_db",
+//   connectionLimit: 10,
+//   enableKeepAlive: true,
+//   keepAliveInitialDelay: 10000,
 // });
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "right_shadow",
+});
 
 db.query("SET time_zone = '+05:30'");
 
-
-
-export default db;
+export default db.promise();

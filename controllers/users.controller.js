@@ -1509,3 +1509,14 @@ export const verifyNPStatus = async (req, res) => {
     res.status(401).json({ authenticated: false });
   }
 };
+
+
+export const getPaymentDetailsNP = async (req, res) => {
+  try {
+    const data = await AdminModel.getPaymentDetailsNP();
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
