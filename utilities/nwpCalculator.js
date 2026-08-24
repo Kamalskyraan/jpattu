@@ -182,12 +182,14 @@ export function generateNwpSchedule({
     meta: {
       totalRows: rows.length,
       totalMonths: total_months,
+      perMonthAmount : "4000",
       totalAmount: accumulatedAmount.toFixed(2),
       perDayAmount: dailyAmount.toFixed(2),
       totalDaysUsed: totalDaysUsed,
       firstMonthDays: firstMonthDays,
       remainingMonths: total_months - 1,
       remainingDays: (total_months - 1) * 30,
+
       // Add special month info
       specialMonthInfo: {
         monthIndex: 11,

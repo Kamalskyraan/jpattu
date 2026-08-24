@@ -1,6 +1,8 @@
 import db from "../configs/db.js";
 import {
   sendAdminMail,
+  sendFSAdminMail,
+  sendFSMail,
   sendMail,
   sendNPAdminMail,
   sendNPMail,
@@ -850,7 +852,7 @@ export const TempUserModel = {
     }
   },
 
-    FSpaidProof: async ({ user_id, image, txn_id }) => {
+  FSpaidProof: async ({ user_id, image, txn_id }) => {
     try {
       const [data] = await TempUserModel.getFSUser(user_id);
       if (!data) return false;
@@ -901,7 +903,7 @@ export const TempUserModel = {
     }
   },
 
-    getFSUser: async (user_id) => {
+  getFSUser: async (user_id) => {
     try {
       const query = `SELECT 
                       u.id, 
@@ -940,8 +942,7 @@ export const TempUserModel = {
     }
   },
 
-
-   getAllUsersFS: async ({ start, end }) => {
+  getAllUsersFS: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -982,8 +983,7 @@ export const TempUserModel = {
     }
   },
 
-
-    deleteFSUser: async (id) => {
+  deleteFSUser: async (id) => {
     try {
       const query =
         "UPDATE fs_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
@@ -4016,8 +4016,7 @@ export const UserModel = {
     }
   },
 
-
-    getAllUsersFS: async ({ start, end }) => {
+  getAllUsersFS: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -4045,7 +4044,7 @@ export const UserModel = {
                     FROM fs_users u
                     LEFT JOIN fs_users r ON u.referral_id = r.user_id
                     LEFT JOIN admin a ON u.referral_id = a.user_id
-                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.created_at DESC`;
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.id DESC`;
       const [data] = await db.query(query, [startTime, endTime]);
       const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
       return updatedData;
@@ -4054,7 +4053,7 @@ export const UserModel = {
     }
   },
 
-   approveUserFS: async (user_ids) => {
+  approveUserFS: async (user_ids) => {
     try {
       await db.beginTransaction();
       const ids = [];
@@ -4139,10 +4138,6 @@ export const UserModel = {
      VALUES (?, ?, 100, 'unpaid')`,
             [referrer.user_id, newId],
           );
-         
-
-          
-
 
           // Level 2–8 payout = 10
           await db.query(
@@ -4151,7 +4146,7 @@ export const UserModel = {
      FROM fs_user_relations
      WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
             [newId, newId],
-          );  
+          );
 
           // Level 9+ payout = 5
           await db.query(
@@ -4180,9 +4175,9 @@ export const UserModel = {
         if (user.email) {
           user.user_id = newId;
           user.referral_id = referrer.user_id;
-          sendNPMail(user);
+          sendFSMail(user);
         }
-        await sendNPAdminMail(user);
+        await sendFSAdminMail(user);
         ids.push({
           new_id: newId,
           user_id: temp_user_id,
@@ -4203,7 +4198,7 @@ export const UserModel = {
     }
   },
 
-    getLastUserFS: async () => {
+  getLastUserFS: async () => {
     try {
       const query = "SELECT user_id from fs_users ORDER BY id DESC LIMIT 1";
       const [id] = await db.query(query);
@@ -4217,9 +4212,7 @@ export const UserModel = {
     }
   },
 
-
-
-   getFSUserName: async (referral_id) => {
+  getFSUserName: async (referral_id) => {
     try {
       const query =
         "SELECT user_id, name, user_id, status FROM fs_users WHERE user_id = ? AND deleted_at IS NULL";
@@ -4231,7 +4224,6 @@ export const UserModel = {
     }
   },
 
-  
   updateFSUser: async (data) => {
     let column;
 
@@ -4285,9 +4277,7 @@ export const UserModel = {
     return true;
   },
 
-
-
-    getUserFS: async (user_id) => {
+  getUserFS: async (user_id) => {
     try {
       const query = `SELECT 
                       u.id, 
@@ -4321,8 +4311,7 @@ export const UserModel = {
     }
   },
 
-
-   hasFSMembers: async (user_id) => {
+  hasFSMembers: async (user_id) => {
     try {
       const query =
         "SELECT user_id from fs_users WHERE referral_id = ? LIMIT 1";
@@ -4333,9 +4322,7 @@ export const UserModel = {
     }
   },
 
-
-
-    getQueuedFSUsers: async () => {
+  getQueuedFSUsers: async () => {
     try {
       const query = `SELECT 
                       id,
@@ -4365,10 +4352,7 @@ export const UserModel = {
     }
   },
 
-
-
-
-   addQueuedFSUser: async (user_id, referral_id) => {
+  addQueuedFSUser: async (user_id, referral_id) => {
     try {
       await db.beginTransaction();
 
@@ -4427,7 +4411,6 @@ export const UserModel = {
         [referral_id, user_id],
       );
 
-
       // Level 2 - 8 payout = 10
       await db.query(
         `INSERT INTO fs_user_balance_logs
@@ -4458,7 +4441,6 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-
       await db.query(
         `INSERT INTO fs_user_balance_logs
        (user_id, related_user_id, amount, status)
@@ -4481,8 +4463,6 @@ export const UserModel = {
     }
   },
 
-
-  
   getFSSales: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
@@ -4496,9 +4476,7 @@ export const UserModel = {
     }
   },
 
-
-
-   getFSUsersCount: async (
+  getFSUsersCount: async (
     timeline = false,
     year = null,
     month = null,
@@ -4553,9 +4531,7 @@ export const UserModel = {
     }
   },
 
-
-
-   getUserFS: async (user_id) => {
+  getUserFS: async (user_id) => {
     try {
       const query = `SELECT 
                       u.id, 
@@ -4589,7 +4565,7 @@ export const UserModel = {
     }
   },
 
-    addPackageToFSUser: async ({ user_data, level }) => {
+  addPackageToFSUser: async ({ user_data, level }) => {
     try {
       await db.beginTransaction();
 
@@ -4713,6 +4689,3 @@ export const fetchTTAdminDetails = async () => {
 
   return rows.length ? rows[0] : null;
 };
-
-
-

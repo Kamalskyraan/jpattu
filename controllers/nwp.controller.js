@@ -205,6 +205,8 @@ export const PackageApproved = async (req, res) => {
         mobile,
         packageAmount: package_amount,
         countingDays: schedule.meta.totalDaysAllowed,
+        totalMonths: schedule.meta.totalMonths,
+        perMonthAmount: schedule.meta.perMonthAmount,
         dailyAmount: parseFloat(schedule.meta.perDayAmount),
         benefitAmount: parseFloat(schedule.meta.totalAmount),
         settlementAmount: parseFloat(schedule.meta.totalAmount),
