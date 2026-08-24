@@ -38,3 +38,16 @@ export const getNPLevels = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+// focus
+
+export const getFSLevels = async (req, res) => {
+  try {
+    const data = await LevelModel.getFSLevels();
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

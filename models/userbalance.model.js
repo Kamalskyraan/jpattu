@@ -503,6 +503,82 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  // fs
+
+   getFSLogs: async ({ start, end, status }) => {
+    const startTime = `${start} 00:00:00`;
+    const endTime = `${end} 23:59:59`;
+
+    let query = `
+    SELECT 
+      GROUP_CONCAT(u.id) AS id,
+      u.user_id,
+      us.name,
+      us.mobile,
+      u.status,
+      SUM(u.amount) AS amount,
+      us.created_at AS joined_date,
+      MAX(u.created_at) AS payment_date
+    FROM fs_user_balance_logs u
+    LEFT JOIN fs_users us 
+      ON u.user_id = us.user_id
+    WHERE 
+      u.created_at >= ?
+      AND u.created_at <= ?
+      AND u.deleted_at IS NULL
+  `;
+
+    const params = [startTime, endTime];
+
+    if (status) {
+      query += ` AND u.status = ? `;
+      params.push(status);
+    }
+
+    query += `
+    GROUP BY 
+      u.user_id,
+      us.name,
+      us.mobile,
+      us.created_at,
+      u.status
+    ORDER BY payment_date DESC
+  `;
+
+    const [rows] = await db.query(query, params);
+
+    return rows.map((row) => ({
+      ...row,
+      id: row.id ? row.id.split(",").map(Number) : [],
+    }));
+  },
+
+
+    updateFSBalance: async (ids) => {
+    try {
+      const query =
+        "UPDATE fs_user_balance_logs SET status = 'paid' WHERE id in (?) AND deleted_at IS NULL";
+      const [data] = await db.query(query, [ids]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+    getFSLevelIncome: async ({ user_id, start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT COUNT(*) as count, level FROM fs_user_relations WHERE ancestor_id = ? AND created_at >= ? AND created_at <= ? GROUP BY level`;
+      const [data] = await db.query(query, [user_id, startTime, endTime]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 };
 
 export default UserBalanceModel;

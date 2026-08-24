@@ -366,7 +366,6 @@ export const getRTMemberOnLevel = async (req, res) => {
   }
 };
 
-
 export const getRTMembersCount = async (req, res) => {
   try {
     const { user_id } = req.query || false;
@@ -482,7 +481,6 @@ WHERE u.user_id = ?
   }
 };
 
-
 export const getMRMemberOnLevel = async (req, res) => {
   try {
     const { level } = req.params || false;
@@ -499,7 +497,6 @@ export const getMRMemberOnLevel = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const getMRMembersCount = async (req, res) => {
   try {
@@ -533,5 +530,85 @@ export const getMRMembersCount = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Focus
+
+export const getTreeForFS = async (req, res) => {
+  try {
+    const { user_id } = req.query || false;
+
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+
+    const [data, id] = await TreeModel.getTreeFS(user_id);
+
+    if (!data) {
+      res.status(400).json({ message: "User not found" });
+    } else {
+      const tree = buildTree(data, id);
+
+      res.status(200).json({ data: tree, message: "abcd" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getTreeChartForFS = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      `
+      SELECT
+    u.user_id,
+    u.name,
+    r.level,
+    (
+      SELECT ancestor_id
+      FROM fs_user_relations pr
+      WHERE pr.descendant_id = r.descendant_id
+        AND pr.level = 1
+        AND pr.deleted_at IS NULL
+      LIMIT 1
+    ) AS parent_id
+FROM fs_user_relations r
+INNER JOIN fs_users u
+    ON u.user_id = r.descendant_id
+WHERE r.ancestor_id = ?
+  AND r.level <= 3
+  AND u.deleted_at IS NULL
+
+UNION
+
+SELECT
+    u.user_id,
+    u.name,
+    0 AS level,
+    NULL AS parent_id
+FROM fs_users u
+WHERE u.user_id = ?
+      `,
+      [id, id],
+    );
+
+    return res.status(200).json({
+      success: true,
+      root: id,
+      data: rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

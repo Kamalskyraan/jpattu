@@ -2,6 +2,7 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import { validateLogin, validateRegister } from "../validator/authValidator.js";
 import {
+  FSRegisterUser,
   LoginUser,
   LogoutUser,
   NPRegisterUser,
@@ -51,5 +52,6 @@ router.post("/update-user", UpdateUserToken);
 router.post("/tt-register", validateRegister, TTRegisterUser);
 router.post("/rt-register", validateRegister, RTRegisterUser);
 router.post("/np-register", validateRegister, NPRegisterUser);
+router.post("/fs-register", validateRegister, FSRegisterUser);
 
 export default router;

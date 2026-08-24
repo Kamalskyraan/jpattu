@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addPurchaseData,
+  addPurchaseFSData,
   addPurchaseNPData,
   addPurchaseRTData,
   addPurchaseTTData,
@@ -26,5 +27,6 @@ router.get("/:id", verifyAdmin, getSinglePurchaseReports);
 router.post("/tt", verifyAdmin, addPurchase, addPurchaseTTData);
 router.post("/rt", verifyAdmin, addPurchase, addPurchaseRTData);
 router.post("/np", verifyAdmin, addPurchase, addPurchaseNPData);
+router.post("/fs", verifyAdmin, addPurchase, addPurchaseFSData);
 
 export default router;

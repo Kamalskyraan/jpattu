@@ -1,9 +1,11 @@
 import express from "express";
 import {
+  getFSJarikaiOverall,
   getJarikaiOverall,
   getJPSalesReport,
   getJPSalesTTReport,
   getNPJarikaiOverall,
+  getOuterFSSorceReport,
   getOuterNPSorceReport,
   getOuterRTSorceReport,
   getOuterSorceReport,
@@ -11,6 +13,7 @@ import {
   getRTJarikaiOverall,
   getSalesReport,
   getShadowReport,
+  getShadowReportFS,
   getShadowReportNP,
   getShadowReportRT,
   getTTJarikaiOverall,
@@ -50,4 +53,13 @@ router.get("/jarigai-overall/np", verifyAdmin, getNPJarikaiOverall);
 router.get("/shadow-overall/np", verifyAdmin, getShadowReportNP);
 
 router.get("/outer-src-all-qty/np", verifyAdmin, getOuterNPSorceReport);
+
+
+
+// fs
+router.get("/jarigai-overall/fs", verifyAdmin, getFSJarikaiOverall);
+router.get("/shadow-overall/fs", verifyAdmin, getShadowReportFS);
+
+router.get("/outer-src-all-qty/fs", verifyAdmin, getOuterFSSorceReport);
+
 export default router;

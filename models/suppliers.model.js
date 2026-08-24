@@ -195,4 +195,50 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+
+
+  // FS
+
+  getFSSuppliers: async () => {
+    try {
+      const query = "SELECT * FROM fs_suppliers WHERE deleted_at IS NULL";
+      const [data] = await db.query(query);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
+
+
+
+   addFSSupplier: async (name) => {
+    try {
+      const query = "INSERT INTO fs_suppliers (name) VALUES (?)";
+      await db.query(query, [name]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateFSSupplier: async ({ name, id }) => {
+    try {
+      const query = "UPDATE fs_suppliers SET name = ? WHERE id = ?";
+      await db.query(query, [name, id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteFSSupplier: async (id) => {
+    try {
+      const query = "DELETE FROM fs_suppliers WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

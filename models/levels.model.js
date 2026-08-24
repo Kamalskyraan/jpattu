@@ -27,6 +27,15 @@ const LevelModel = {
     );
     return data;
   },
+
+  // focus
+
+   getFSLevels: async () => {
+    const [data] = await db.query(
+      "SELECT * FROM fs_levels ORDER BY level ASC",
+    );
+    return data;
+  },
 };
 
 export default LevelModel;

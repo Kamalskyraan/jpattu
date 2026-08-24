@@ -27,6 +27,12 @@ import {
   getNPUser,
   getTempNPUser,
   updateNPUser,
+  FSPaidProof,
+  deleteTempFSUser,
+  getTempFSUser,
+  getFSUserName,
+  updateFSUser,
+  getFSUser,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -96,4 +102,14 @@ router.get("/np", getNPUserName);
 router.get("/np/:user_id", verifyUser, getNPUser);
 router.get("/temp/np/:user_id", getTempNPUser);
 router.put("/np", verifyUser, updateValidation, updateNPUser);
+
+
+// Focus
+
+router.post("/fs-paidproof", screenshots.single("image"), FSPaidProof);
+router.delete("/fs-delete-user/:id", deleteTempFSUser);
+router.get("/temp/fs/:user_id", getTempFSUser);
+router.get("/fs", getFSUserName);
+router.put("/fs", verifyUser, updateValidation, updateFSUser);
+router.get("/fs/:user_id", verifyUser, getFSUser);
 export default router;

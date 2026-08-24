@@ -23,6 +23,11 @@ import {
   getNPQueuedUsers,
   AddQueuedNPUser,
   searchNPUser,
+  getAllFSUsers,
+  approveFSUser,
+  getFSQueuedUsers,
+  AddQueuedFSUser,
+  searchFSUser,
 } from "../controllers/admin.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 import { getAllPayouts } from "../controllers/users.controller.js";
@@ -61,4 +66,16 @@ router.get("/queued-users/np", verifyAdmin, getNPQueuedUsers);
 router.post("/add-user/np", verifyAdmin, AddQueuedNPUser);
 
 router.get("/search-np-user/:user_id", verifyAdmin, searchNPUser);
+
+// FS
+
+router.post("/approve-fs", verifyAdmin, approveFSUser);
+router.get("/fs-users", verifyAdmin, getAllFSUsers);
+
+router.get("/queued-users/fs", verifyAdmin, getFSQueuedUsers);
+
+
+router.post("/add-user/fs", verifyAdmin, AddQueuedFSUser);
+
+router.get("/search-fs-user/:user_id", verifyAdmin, searchFSUser);
 export default router;

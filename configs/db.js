@@ -16,6 +16,10 @@ const db = mysql.createConnection({
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
 });
+
+
+
+
 // const db = mysql.createConnection({
 //   host: "localhost",
 //   user: "root",

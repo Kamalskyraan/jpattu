@@ -1,18 +1,22 @@
 import express from "express";
 import {
   addSupplier,
+  addSupplierFS,
   addSupplierNP,
   addSupplierRT,
   addSupplierTT,
   deleteSupplier,
+  deleteSupplierFS,
   deleteSupplierNP,
   deleteSupplierRT,
   deleteSupplierTT,
   getSuppliers,
+  getSuppliersFS,
   getSuppliersNP,
   getSuppliersRT,
   getSuppliersTT,
   updateSupplier,
+  updateSupplierFS,
   updateSupplierNP,
   updateSupplierRT,
   updateSupplierTT,
@@ -43,5 +47,11 @@ router.get("/np", verifyAdmin, getSuppliersNP);
 router.post("/np", verifyAdmin, addSupplierNP);
 router.put("/np", verifyAdmin, updateSupplierNP);
 router.delete("/np/:id", verifyAdmin, deleteSupplierNP);
+
+// FS
+router.get("/fs", verifyAdmin, getSuppliersFS);
+router.post("/fs", verifyAdmin, addSupplierFS);
+router.put("/fs", verifyAdmin, updateSupplierFS);
+router.delete("/fs/:id", verifyAdmin, deleteSupplierFS);
 
 export default router;

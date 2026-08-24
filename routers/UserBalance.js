@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getBalanceLogs,
+  getFSLevelIncome,
   getLevelIncome,
   getNPLevelIncome,
   getPaymentHistory,
@@ -31,4 +32,6 @@ router.put("/tt", verifyAdmin, updateTTBalanceStatus);
 
 router.get("/rt-income/:user_id", verifyUser, getRTLevelIncome);
 router.get("/np-income/:user_id", verifyUser, getNPLevelIncome);
+router.get("/fs-income/:user_id", verifyUser, getFSLevelIncome);
+
 export default router;

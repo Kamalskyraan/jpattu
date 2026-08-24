@@ -75,7 +75,6 @@ export const verifyStatus = async (req, res) => {
   if (!token) return res.status(401).json({ authenticated: false });
 
   try {
-    
     const user = jwt.verify(token, process.env.TOKEN_SECRET);
     if (user.role === "admin") {
       const data = await AdminModel.getUser(user.user_id);
@@ -894,6 +893,170 @@ export const searchNPUser = async (req, res) => {
     }
 
     const data = await AdminModel.getSearchNPUser(user_id, admin);
+
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+//focus
+
+export const focusUserData = async (req, res) => {
+  try {
+    const focusUser = await AdminModel.fetchFocusUserDatas();
+
+    res.status(200).json({
+      data: focusUser,
+      message: "Focus User Data fetched successfully",
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+export const getAllFSUsers = async (req, res) => {
+  try {
+    const { start, end, type } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const users = await UserModel.getAllUsersFS({ start, end });
+    let temp_users = [];
+    if (type !== "permanent") {
+      temp_users = await TempUserModel.getAllUsersFS({ start, end });
+    }
+
+    const data = [...users, ...temp_users];
+    const updatedData = data.map((val) => {
+      if (val.screenshot)
+        return {
+          ...val,
+          // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+          screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+        };
+      else return val;
+    });
+
+    updatedData.sort((a, b) => b.created - a.created);
+
+    return res.status(200).json({
+      data: updatedData,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export const approveFSUser = async (req, res) => {
+  try {
+    const user_ids = req.body?.user_ids;
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "user_id is required and must be an array" });
+    }
+
+    const ids = await UserModel.approveUserFS(user_ids);
+
+    if (ids.length > 0) {
+      const newIds = ids.map((id) => ({
+        newId: id.newId,
+        user_id: id.user_id,
+        status: id.status,
+      }));
+
+      return res
+        .status(200)
+        .json({ newIds: newIds, message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export const getFSQueuedUsers = async (req, res) => {
+  try {
+    const data = await UserModel.getQueuedFSUsers();
+
+    return res.status(200).json({
+      data: data,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+export const AddQueuedFSUser = async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data?.referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const approved = await UserModel.addQueuedFSUser(
+      data.user_id,
+      data.referral_id,
+    );
+
+    if (approved) {
+      return res.status(200).json({ message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    if (error.message === "limit exceed") {
+      return res.status(200).json({ message: "Referral limit reached" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
+
+
+
+export const searchFSUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    let admin = false;
+    if (req.user_id.toLowerCase() === user_id.trim().toLowerCase()) {
+      admin = true;
+    }
+
+    const data = await AdminModel.getSearchFSUser(user_id, admin);
 
     if (data.length === 0) {
       res.status(200).json({ message: "User not found" });

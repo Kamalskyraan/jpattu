@@ -1,10 +1,12 @@
 import express from "express";
 import { verifyAdmin } from "../middlewares/auth.js";
 import {
+  AddPackageToFSUser,
   AddPackageToNPUser,
   AddPackageToRTUser,
   AddPackageToTTUser,
   AddPackageToUser,
+  GetFSPackages,
   GetNPPackages,
   GetPackages,
   GetRTPackages,
@@ -94,4 +96,10 @@ router.post("/np-send-mail", verifyAdmin, async (req, res) => {
   }
 });
 
+
+
+//focus
+
+router.get("/fs", verifyAdmin, GetFSPackages);
+router.post("/fs", verifyAdmin, addPackageToUser, AddPackageToFSUser);
 export default router;
