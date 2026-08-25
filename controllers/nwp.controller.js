@@ -544,3 +544,60 @@ export const getSettlementAmount = async (req, res) => {
 };
 
 //
+
+export const getTotalSettlementAmount = async () => {
+  try {
+    const sql = `
+      SELECT
+          ne.id,
+          ne.user_id,
+          ne.reward_id,
+          ne.user_package_id,
+          ne.total_amount,
+          ne.type,
+          ne.status,
+          ne.earned_date,
+          ne.received_date,
+          ne.year,
+          ne.created_at,
+          ne.updated_at,
+
+          u.name,
+          u.email,
+          u.mobile,
+
+          np.daily_amt,
+          np.approved_at,
+          np.package_id
+
+      FROM nwp_earnings ne
+
+      INNER JOIN users u
+          ON u.user_id = ne.user_id
+
+      LEFT JOIN nwp_users_package np
+          ON np.id = ne.user_package_id
+
+      WHERE ne.type = ?
+
+      ORDER BY ne.earned_date ASC, ne.id ASC
+    `;
+
+    const [rows] = await db.query(sql, ["monthly"]);
+
+    const totalAmount = rows.reduce(
+      (sum, row) => sum + Number(row.total_amount || 0),
+      0
+    );
+
+    return {
+      total_users: new Set(rows.map((x) => x.user_id)).size,
+      total_records: rows.length,
+      total_amount: totalAmount,
+      result: rows,
+    };
+  } catch (err) {
+    console.log("getTotalSettlementAmount Error:", err);
+    throw err;
+  }
+};

@@ -6,6 +6,7 @@ import {
   EarningsList,
   Earningspaid,
   getSettlementAmount,
+  getTotalSettlementAmount,
   getWithdrawEarningsForUser,
   MembersList,
   PackageApproved,
@@ -28,5 +29,6 @@ router.post("/deletemembers", DeleteMember);
 router.post("/get-earnings-fromuser", getWithdrawEarningsForUser);
 router.post("/withdraw-money", withdrawMoney);
 router.get("/settlement-amount" ,getSettlementAmount)
+router.get("/total-settlement-amount" ,getTotalSettlementAmount)
 
 export default router;

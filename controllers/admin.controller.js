@@ -14,6 +14,7 @@ import {
   nwpMembersDetailsAll,
 } from "../models/nwp.model.js";
 import db from "../configs/db.js";
+import { getTotalSettlementAmount } from "./nwp.controller.js";
 
 export const LoginAdmin = async (req, res) => {
   try {
@@ -217,18 +218,43 @@ export const getHomeDetails = async (req, res) => {
     }
 
     const quantity = await PurchaseModel.getStockQuantity();
+
     const total_user_count = await UserModel.getUsersCount(
       true,
       year,
       month,
       true,
     );
+    // target
     const tt_total_user_count = await UserModel.getTTUsersCount(
       true,
       year,
       month,
       true,
     );
+    // repeat
+    const rt_total_user_count = await UserModel.getRTUsersCount(
+      true,
+      year,
+      month,
+      true,
+    );
+    // focus
+
+    const fs_total_user_count = await UserModel.getFSUsersCount(
+      true,
+      year,
+      month,
+      true,
+    );
+    // miracle
+    const mr_total_user_count = await UserModel.getNPUsersCount(
+      true,
+      year,
+      month,
+      true,
+    );
+
     const user_count = await UserModel.getUsersCount(true, year, month, false);
 
     const stockAvailable =
@@ -240,12 +266,37 @@ export const getHomeDetails = async (req, res) => {
     const [ttActiveCount, ttInactiveCount, ttQueueCount] =
       await UserModel.getTTUserStatus(true, year, month);
 
+    const [rtActiveCount, rtInactiveCount, rtQueueCount] =
+      await UserModel.getRTUserStatus(true, year, month);
+
+    const [mrActiveCount, mrInactiveCount, mrQueueCount] =
+      await UserModel.getNPUserStatus(true, year, month);
+
+    const [fsActiveCount, fsInactiveCount, fsQueueCount] =
+      await UserModel.getFSUserStatus(true, year, month);
+
     const levelPayout = await UserBalanceModel.getTotalPayouts(
       false,
       year,
       month,
     );
+
     const levelTTPayout = await UserBalanceModel.getTotalTTPayouts(
+      false,
+      year,
+      month,
+    );
+    const levelRTPayout = await UserBalanceModel.getTotalRTPayouts(
+      false,
+      year,
+      month,
+    );
+    const levelMRPayout = await UserBalanceModel.getTotalNPPayouts(
+      false,
+      year,
+      month,
+    );
+    const levelFSPayout = await UserBalanceModel.getTotalFSPayouts(
       false,
       year,
       month,
@@ -268,6 +319,21 @@ export const getHomeDetails = async (req, res) => {
       year,
       month,
     );
+    const RTtotalCashbackPayouts = await CashbackModel.getTotalRTPayouts(
+      true,
+      year,
+      month,
+    );
+    const MRtotalCashbackPayouts = await CashbackModel.getTotalMRPayouts(
+      true,
+      year,
+      month,
+    );
+    const FStotalCashbackPayouts = await CashbackModel.getTotalFSPayouts(
+      true,
+      year,
+      month,
+    );
 
     const totalPaidLevelAmount = await UserBalanceModel.getTotalPayouts(
       true,
@@ -280,28 +346,85 @@ export const getHomeDetails = async (req, res) => {
       year,
       month,
     );
+    const totalRTPaidLevelAmount = await UserBalanceModel.getTotalRTPayouts(
+      true,
+      year,
+      month,
+    );
+
+    const totalMRPaidLevelAmount = await UserBalanceModel.getTotalNPPayouts(
+      true,
+      year,
+      month,
+    );
+    const totalFSPaidLevelAmount = await UserBalanceModel.getTotalFSPayouts(
+      true,
+      year,
+      month,
+    );
+
     const totalPaidCashbackAmount = totalCashbackPayouts;
     const TTtotalPaidCashbackAmount = TTtotalCashbackPayouts;
+    const RTtotalPaidCashbackAmount = RTtotalCashbackPayouts;
+    const MRtotalPaidCashbackAmount = MRtotalCashbackPayouts;
+    const FStotalPaidCashbackAmount = FStotalCashbackPayouts;
 
     const nwpDetails = await nwpMembersDetails(year, month);
     const nwpDetailsAll = await nwpMembersDetailsAll();
+    const settlementAMount = await getTotalSettlementAmount();
 
     res.status(200).json({
       company_income: (activeCount + queueCount) * 1000,
       tt_company_income: (ttActiveCount + ttQueueCount) * 25000,
+      rt_company_income: (rtActiveCount + rtQueueCount) * 15000,
+      mr_company_income: (mrActiveCount + mrQueueCount) * 5000,
+      fs_company_income: (fsActiveCount + fsQueueCount) * 500,
       stock_available: quantity,
+
       active_ids: activeCount,
       inactive_ids: inactiveCount,
       queued_ids: queueCount,
+      //tt
       tt_active_ids: ttActiveCount,
       tt_inactive_ids: ttInactiveCount,
       tt_queued_ids: ttQueueCount,
       tt_total_ids: ttActiveCount + ttInactiveCount + ttQueueCount,
+      // rpt
+
+      rt_active_ids: rtActiveCount,
+      rt_inactive_ids: rtInactiveCount,
+      rt_queued_ids: rtQueueCount,
+      rt_total_ids: rtActiveCount + rtInactiveCount + rtQueueCount,
+      //miracle
+      mr_active_ids: mrActiveCount,
+      mr_inactive_ids: mrInactiveCount,
+      mr_queued_ids: mrQueueCount,
+      mr_total_ids: mrActiveCount + mrInactiveCount + mrQueueCount,
+      // focus
+      fs_active_ids: fsActiveCount,
+      fs_inactive_ids: fsInactiveCount,
+      fs_queued_ids: fsQueueCount,
+      fs_total_ids: fsActiveCount + fsInactiveCount + fsQueueCount,
+
       total_ids: activeCount + inactiveCount + queueCount,
       level_amount: parseInt(levelPayout),
       tt_level_amount: parseInt(levelTTPayout),
 
       tt_total_income: parseInt(tt_total_user_count) * 25000,
+
+      // rt
+      rt_level_amount: parseInt(levelRTPayout),
+
+      rt_total_income: parseInt(rt_total_user_count) * 15000,
+      // mr
+      mr_level_amount: parseInt(levelMRPayout),
+
+      mr_total_income: parseInt(mr_total_user_count) * 5000,
+      // fs
+      fs_level_amount: parseInt(levelFSPayout),
+
+      fs_total_income: parseInt(fs_total_user_count) * 500,
+
       cashback_amount: parseInt(cashbackPayout),
       total_payouts: parseInt(cashbackPayout) + parseInt(levelPayout),
       total_income: parseInt(total_user_count) * 1000,
@@ -310,10 +433,17 @@ export const getHomeDetails = async (req, res) => {
         parseInt(totalPaidLevelAmount) + parseInt(totalPaidCashbackAmount),
       tt_total_paid_amount:
         parseInt(totalTTPaidLevelAmount) + parseInt(TTtotalPaidCashbackAmount),
+      rt_total_paid_amount:
+        parseInt(totalRTPaidLevelAmount) + parseInt(RTtotalPaidCashbackAmount),
+      mr_total_paid_amount:
+        parseInt(totalMRPaidLevelAmount) + parseInt(MRtotalPaidCashbackAmount),
+      fs_total_paid_amount:
+        parseInt(totalFSPaidLevelAmount) + parseInt(FStotalPaidCashbackAmount),
 
       user_data: userData,
       nwp_details: nwpDetails,
       nwp_details_all: nwpDetailsAll,
+      settlementAMount : settlementAMount.total_amount,
     });
   } catch (err) {
     console.log(err);
@@ -924,7 +1054,6 @@ export const focusUserData = async (req, res) => {
   }
 };
 
-
 export const getAllFSUsers = async (req, res) => {
   try {
     const { start, end, type } = req.query || false;
@@ -964,8 +1093,6 @@ export const getAllFSUsers = async (req, res) => {
   }
 };
 
-
-
 export const approveFSUser = async (req, res) => {
   try {
     const user_ids = req.body?.user_ids;
@@ -996,8 +1123,6 @@ export const approveFSUser = async (req, res) => {
   }
 };
 
-
-
 export const getFSQueuedUsers = async (req, res) => {
   try {
     const data = await UserModel.getQueuedFSUsers();
@@ -1011,7 +1136,6 @@ export const getFSQueuedUsers = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const AddQueuedFSUser = async (req, res) => {
   try {
@@ -1041,8 +1165,6 @@ export const AddQueuedFSUser = async (req, res) => {
     }
   }
 };
-
-
 
 export const searchFSUser = async (req, res) => {
   try {
