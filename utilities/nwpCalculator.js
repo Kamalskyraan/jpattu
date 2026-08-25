@@ -95,24 +95,23 @@ export function generateNwpSchedule({
   package_amount,
   start_date,
   daily_amt,
-  total_months = 12, // Changed to 12
+  total_months = 12,
 }) {
   if (!package_amount || !start_date || !daily_amt) {
     throw new Error("package_amount, start_date, and daily_amt are required");
   }
 
   const dailyAmount = Number(daily_amt);
+
   let current = dayjs(start_date);
   const rows = [];
   let accumulatedAmount = 0;
   let totalDaysUsed = 0;
 
-  // First month: calculate actual days from start_date to end of month
   const startDayOfMonth = current.date();
   const daysInMonth = current.endOf("month").date();
   const firstMonthDays = daysInMonth - startDayOfMonth + 1;
 
-  // Calculate first month amount
   const firstMonthAmount = dailyAmount * firstMonthDays;
   const firstMonthLabel = current.format("MMM YYYY");
 
@@ -182,14 +181,13 @@ export function generateNwpSchedule({
     meta: {
       totalRows: rows.length,
       totalMonths: total_months,
-      perMonthAmount : "4000",
       totalAmount: accumulatedAmount.toFixed(2),
       perDayAmount: dailyAmount.toFixed(2),
       totalDaysUsed: totalDaysUsed,
       firstMonthDays: firstMonthDays,
       remainingMonths: total_months - 1,
       remainingDays: (total_months - 1) * 30,
-
+      perMonthAmount: daily_amt * 30,
       // Add special month info
       specialMonthInfo: {
         monthIndex: 11,

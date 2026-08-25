@@ -279,8 +279,6 @@ export const sendNWPMail = async ({
   joinDate,
   mobile,
   packageAmount,
-  countingDays,
-  dailyAmount,
   benefitAmount,
   settlementAmount,
   totalAmount,
@@ -407,7 +405,7 @@ export const sendNWPMail = async ({
                   style="background: #723b03; color: #fff"
                 >
                   <tr>
-                    <td align="center">
+                    <td align="start">
                       <strong>Package Amount - ₹ ${packageAmount}</strong>
                     </td>
                   </tr>
@@ -421,7 +419,7 @@ export const sendNWPMail = async ({
                 <table width="100%" cellpadding="4">
                   <tr>
                     <td width="100"><strong>Months</strong></td>
-                    <td>: ₹ ${totalMonths}</td>
+                    <td>: ${totalMonths}</td>
                   </tr>
                   <tr>
                     <td><strong>Monthly Amt</strong></td>
@@ -748,14 +746,21 @@ export const sendAdminMail = (user) => {
   });
 };
 
+
+
+
+
+
+
+
+
+
 export const sendNWPAdminMail = async ({
   userName,
   userId,
   joinDate,
   mobile,
   packageAmount,
-  countingDays,
-  dailyAmount,
   benefitAmount,
   settlementAmount,
   totalAmount,
@@ -881,7 +886,7 @@ export const sendNWPAdminMail = async ({
                   style="background: #723b03; color: #fff"
                 >
                   <tr>
-                    <td align="center">
+                    <td align="start">
                       <strong>Package Amount - ₹ ${packageAmount}</strong>
                     </td>
                   </tr>

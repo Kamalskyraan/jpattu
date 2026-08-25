@@ -139,7 +139,6 @@ export const PackageApproved = async (req, res) => {
     const allInserts = [];
 
     for (const pkgId of user_package_ids) {
-      // 1️⃣ Get package and user info
       const [pkgRows] = await (connection
         ? connection.query(
             `SELECT 
@@ -203,15 +202,22 @@ export const PackageApproved = async (req, res) => {
         userId: user_id,
         joinDate: dayjs(created_at).format("DD MMM YYYY"),
         mobile,
+
         packageAmount: package_amount,
-        countingDays: schedule.meta.totalDaysAllowed,
+
         totalMonths: schedule.meta.totalMonths,
+
         perMonthAmount: schedule.meta.perMonthAmount,
+
         dailyAmount: parseFloat(schedule.meta.perDayAmount),
-        benefitAmount: parseFloat(schedule.meta.totalAmount),
-        settlementAmount: parseFloat(schedule.meta.totalAmount),
-        totalAmount: parseFloat(schedule.meta.totalAmount) * 2,
+
+        benefitAmount: package_amount,
+
+        settlementAmount: package_amount,
+
+        totalAmount: package_amount * 2,
       });
+
       await sendNWPAdminMail({
         email,
         userName: user_name,
@@ -219,11 +225,17 @@ export const PackageApproved = async (req, res) => {
         joinDate: dayjs(created_at).format("DD MMM YYYY"),
         mobile,
         packageAmount: package_amount,
-        countingDays: schedule.meta.totalDaysAllowed,
+
+        // countingDays: schedule.meta.totalDaysAllowed,
+
         dailyAmount: parseFloat(schedule.meta.perDayAmount),
-        benefitAmount: parseFloat(schedule.meta.totalAmount),
-        settlementAmount: parseFloat(schedule.meta.totalAmount),
-        totalAmount: parseFloat(schedule.meta.totalAmount) * 2,
+        totalMonths: schedule.meta.totalMonths,
+
+        perMonthAmount: schedule.meta.perMonthAmount,
+        benefitAmount: package_amount,
+        settlementAmount: package_amount,
+
+        totalAmount: package_amount * 2,
       });
     }
 
@@ -587,7 +599,7 @@ export const getTotalSettlementAmount = async () => {
 
     const totalAmount = rows.reduce(
       (sum, row) => sum + Number(row.total_amount || 0),
-      0
+      0,
     );
 
     return {
