@@ -2,11 +2,13 @@ import express from "express";
 import { verifyAdmin } from "../middlewares/auth.js";
 import {
   AddPackageToFSUser,
+  AddPackageToKRUser,
   AddPackageToNPUser,
   AddPackageToRTUser,
   AddPackageToTTUser,
   AddPackageToUser,
   GetFSPackages,
+  GetKRPackages,
   GetNPPackages,
   GetPackages,
   GetRTPackages,
@@ -15,10 +17,12 @@ import {
 import { addPackageToUser } from "../validator/packageValidator.js";
 import {
   sendMemberFSPackageMail,
+  sendMemberKRPackageMail,
   sendMemberNPPackageMail,
   sendMemberPackageMail,
   sendMemberRepeatPackageMail,
   sendMembersFSPackageAdminMail,
+  sendMembersKRPackageAdminMail,
   sendMembersNPPackageAdminMail,
   sendMembersPackageAdminMail,
   sendMembersRepeatPackageAdminMail,
@@ -109,6 +113,24 @@ router.post("/fs-send-mail", verifyAdmin, async (req, res) => {
 
     await sendMemberFSPackageMail({ memberData, new_ids, level });
     await sendMembersFSPackageAdminMail({ memberData, new_ids, level });
+
+    res.status(200).json({ message: "Mail Sent Successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Mail Sending Failed" });
+  }
+});
+
+// kerchief
+router.get("/kr", verifyAdmin, GetKRPackages);
+router.post("/kr", verifyAdmin, addPackageToUser, AddPackageToKRUser);
+
+router.post("/kr-send-mail", verifyAdmin, async (req, res) => {
+  try {
+    const { memberData, new_ids, level } = req.body;
+
+    await sendMemberKRPackageMail({ memberData, new_ids, level });
+    await sendMembersKRPackageAdminMail({ memberData, new_ids, level });
 
     res.status(200).json({ message: "Mail Sent Successfully" });
   } catch (error) {

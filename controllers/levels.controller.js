@@ -51,3 +51,16 @@ export const getFSLevels = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+// kerchief
+
+export const getKRLevels = async (req, res) => {
+  try {
+    const data = await LevelModel.getKRLevels();
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

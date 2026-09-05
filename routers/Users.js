@@ -33,6 +33,12 @@ import {
   getFSUserName,
   updateFSUser,
   getFSUser,
+  KRPaidProof,
+  deleteTempKRUser,
+  getKRUserName,
+  getTempKRUser,
+  updateKRUser,
+  getKRUser,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -103,7 +109,6 @@ router.get("/np/:user_id", verifyUser, getNPUser);
 router.get("/temp/np/:user_id", getTempNPUser);
 router.put("/np", verifyUser, updateValidation, updateNPUser);
 
-
 // Focus
 
 router.post("/fs-paidproof", screenshots.single("image"), FSPaidProof);
@@ -112,4 +117,13 @@ router.get("/temp/fs/:user_id", getTempFSUser);
 router.get("/fs", getFSUserName);
 router.put("/fs", verifyUser, updateValidation, updateFSUser);
 router.get("/fs/:user_id", verifyUser, getFSUser);
+
+// KR
+
+router.post("/kr-paidproof", screenshots.single("image"), KRPaidProof);
+router.delete("/kr-delete-user/:id", deleteTempKRUser);
+router.get("/kr", getKRUserName);
+router.get("/temp/kr/:user_id", getTempKRUser);
+router.put("/kr", verifyUser, updateValidation, updateKRUser);
+router.get("/kr/:user_id", verifyUser, getKRUser);
 export default router;

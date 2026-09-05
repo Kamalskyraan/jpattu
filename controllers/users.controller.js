@@ -1762,3 +1762,249 @@ export const getFSUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// Kercief
+
+export const KRRegisterUser = async (req, res) => {
+  try {
+    const data = req.body;
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({
+        message: result.array().map((val) => val.msg),
+      });
+    }
+
+    if (data.role === "user" && !data.referral_id) {
+      res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const user = await UserModel.getUserNameFromKR(data?.referral_id);
+
+    let admin = [];
+    if (user.length === 0 && data.role === "admin") {
+      admin = await AdminModel.getUserName(data.referral_id);
+    }
+
+    if (user.length === 0 && admin.length === 0) {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      const id = await TempUserModel.addKRUser(data);
+      res.status(201).json({ id: id, message: "Registered Successfully" });
+    }
+  } catch (error) {
+    if (error.message === "referrer not found") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else if (error.message === "Referrar is in Queue") {
+      return res.status(200).json({ message: "Invalid referral Id..." });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
+
+export const getKRUserName = async (req, res) => {
+  try {
+    const { referral_id } = req.query || false;
+    if (!referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const data = await UserModel.getKRUserName(referral_id);
+    if (data.length === 0) {
+      const adminData = await AdminModel.getUserName(referral_id);
+
+      if (adminData.length === 0) {
+        res.status(200).json({ message: "User not found" });
+      } else {
+        adminData[0].status = "Approved";
+        res.status(200).json({ data: adminData[0] });
+      }
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const KRPaidProof = async (req, res) => {
+  const image = req.file?.filename;
+  try {
+    const id = req.body?.id;
+    const txn_id = req.body?.txn_id;
+    if (!id) {
+      return res.status(400).json({
+        message: "Id is required",
+      });
+    }
+
+    const submitted = await TempUserModel.KRpaidProof({
+      image,
+      user_id: id,
+      txn_id,
+    });
+    if (submitted) {
+      const [result] = await TempUserModel.getKRUser(id);
+      res.status(200).json({ result, message: "Proof submitted successfully" });
+    } else {
+      if (image) {
+        const imagePath = path.join(
+          process.cwd(),
+          "public",
+          "screenshots",
+          image,
+        );
+        if (existsSync(imagePath)) {
+          rmSync(imagePath);
+        }
+      }
+      res.status(200).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.log(err);
+    if (image) {
+      const imagePath = path.join(
+        process.cwd(),
+        "public",
+        "screenshots",
+        image,
+      );
+      if (existsSync(imagePath)) {
+        rmSync(imagePath);
+      }
+    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export const deleteTempKRUser = async (req, res) => {
+  try {
+    const id = req.params?.id;
+    if (!id) {
+      return res.status(400).json({
+        message: "id is required",
+      });
+    }
+
+    const result = await TempUserModel.deleteKRUser(id);
+    if (result > 0) {
+      res.status(200).json({
+        message: "id deleted successfully",
+      });
+    } else {
+      res.status(404).json({
+        message: "id not found",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+export const getTempKRUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    const data = await TempUserModel.getKRUser(user_id);
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+export const updateKRUser = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data.user_type) {
+      return res
+        .status(400)
+        .json({ message: "user_type must be either 'users' or 'temp'" });
+    }
+
+    data.role = req.role;
+    const updated = await UserModel.updateKRUser(data);
+
+    if (updated) {
+      const [user] = await UserModel.getUserKR(data.user_id);
+      if (req.role === "user") {
+        user.role = "user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      } else if (req.role === "temp_user") {
+        user.role = "temp_user";
+        const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
+        res.cookie("auth", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          // sameSite: "Lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+        });
+      }
+
+      res
+        .status(200)
+        .json({ user: user, message: "User updated successfully" });
+    } else {
+      res.status(400).json({ message: "Atleast 1 field is required" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getKRUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    const data = await UserModel.getUserKR(user_id);
+
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      const updatedData = data.map((val) => {
+        if (val.screenshot)
+          return {
+            ...val,
+            // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+            screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+          };
+        else return val;
+      });
+
+      res.status(200).json({ data: updatedData[0] });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+

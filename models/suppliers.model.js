@@ -241,4 +241,54 @@ export const JpSuppliersModel = {
       throw error;
     }
   },
+
+
+  // KR
+
+
+  
+  getKRSuppliers: async () => {
+    try {
+      const query = "SELECT * FROM kr_suppliers WHERE deleted_at IS NULL";
+      const [data] = await db.query(query);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
+
+
+
+   addKRSupplier: async (name) => {
+    try {
+      const query = "INSERT INTO kr_suppliers (name) VALUES (?)";
+      await db.query(query, [name]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateKRSupplier: async ({ name, id }) => {
+    try {
+      const query = "UPDATE kr_suppliers SET name = ? WHERE id = ?";
+      await db.query(query, [name, id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteKRSupplier: async (id) => {
+    try {
+      const query = "DELETE FROM kr_suppliers WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
 };

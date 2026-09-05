@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getFSLevels,
+  getKRLevels,
   getLevels,
   getNPLevels,
   getRTLevels,
@@ -15,5 +16,6 @@ router.get("/tt", verifyUser, getTTLevels);
 router.get("/rt", verifyUser, getRTLevels);
 router.get("/np", verifyUser, getNPLevels);
 router.get("/fs", verifyUser, getFSLevels);
+router.get("/kr", verifyUser, getKRLevels);
 
 export default router;

@@ -339,7 +339,15 @@ export const getRTLevelIncome = async (req, res) => {
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
       const income =
-        level == 1 ? 800 : level == 2 ? 100 : level == 9 ? 1900 : 50;
+        level == 1
+          ? 1000
+          : level == 2
+            ? 500
+            : level == 9
+              ? 5650
+              : level == 3
+                ? 500
+                : 200;
       const total_income = income * entry;
       sub_total += total_income;
 
@@ -544,8 +552,115 @@ export const getFSLevelIncome = async (req, res) => {
       const members = base ** level;
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
+      const income = level == 1 ? 100 : level == 10 ? 90 : level == 9 ? 5 : 10;
+      const total_income = income * entry;
+      sub_total += total_income;
+
+      return {
+        level,
+        members,
+        entry,
+        income,
+        total_income,
+      };
+    });
+
+    res.status(200).json({ data: result, sub_total: sub_total });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Kerchief
+
+export const getKRBalanceLogs = async (req, res) => {
+  try {
+    const { start, end, status } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserBalanceModel.getKRLogs({ start, end, status });
+
+    const sortedData = data.sort((a, b) =>
+      a.user_id.localeCompare(b.user_id, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
+
+    res.status(200).json({ data: sortedData, message: "user logs fetched" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateKRBalanceStatus = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "ids is required and must be an array" });
+    }
+
+    await UserBalanceModel.updateKRBalance(ids);
+    return res.status(200).json({ message: "Status updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getKRLevelIncome = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    const { start, end } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserBalanceModel.getKRLevelIncome({
+      user_id,
+      start,
+      end,
+    });
+    data.sort((a, b) => a.level - b.level);
+
+    const maxLevel = 20;
+    const base = 2;
+    let sub_total = 0;
+    const result = Array.from({ length: maxLevel }, (_, i) => {
+      const level = i + 1;
+      const members = base ** level;
+      const record = data.find((item) => item.level === level);
+      const entry = record ? record.count : 0;
+
+      const oneValues = [2, 3, 4, 6, 7, 8, 11, 13, 14, 16, 17, 18];
+      const twoValues = [5, 9, 10, 12, 15, 19];
+
       const income =
-        level == 1 ? 100 : level == 10 ? 90 : level == 9 ? 5 : 10;
+        level === 1
+          ? 50
+          : oneValues.includes(level)
+            ? 1
+            : twoValues.includes(level)
+              ? 2
+              : level === 20
+                ? 8
+                : 50;
+
       const total_income = income * entry;
       sub_total += total_income;
 

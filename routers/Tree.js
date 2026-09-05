@@ -5,6 +5,7 @@ import {
   getTree,
   getTreeChart,
   getTreeChartForFS,
+  getTreeChartForKR,
   getTreeChartForNP,
   getTreeChartForRT,
   getTreeChartForTT,
@@ -29,5 +30,6 @@ router.get("/tree-tt/:id", getTreeChartForTT);
 router.get("/tree-rt/:id", getTreeChartForRT);
 router.get("/tree-np/:id", getTreeChartForNP);
 router.get("/tree-fs/:id", getTreeChartForFS);
+router.get("/tree-kr/:id", getTreeChartForKR);
 
 export default router;

@@ -2,21 +2,25 @@ import express from "express";
 import {
   addSupplier,
   addSupplierFS,
+  addSupplierKR,
   addSupplierNP,
   addSupplierRT,
   addSupplierTT,
   deleteSupplier,
   deleteSupplierFS,
+  deleteSupplierKR,
   deleteSupplierNP,
   deleteSupplierRT,
   deleteSupplierTT,
   getSuppliers,
   getSuppliersFS,
+  getSuppliersKR,
   getSuppliersNP,
   getSuppliersRT,
   getSuppliersTT,
   updateSupplier,
   updateSupplierFS,
+  updateSupplierKR,
   updateSupplierNP,
   updateSupplierRT,
   updateSupplierTT,
@@ -53,5 +57,13 @@ router.get("/fs", verifyAdmin, getSuppliersFS);
 router.post("/fs", verifyAdmin, addSupplierFS);
 router.put("/fs", verifyAdmin, updateSupplierFS);
 router.delete("/fs/:id", verifyAdmin, deleteSupplierFS);
+
+// KR
+
+router.get("/kr", verifyAdmin, getSuppliersKR);
+router.post("/kr", verifyAdmin, addSupplierKR);
+router.put("/kr", verifyAdmin, updateSupplierKR);
+router.delete("/kr/:id", verifyAdmin, deleteSupplierKR);
+
 
 export default router;

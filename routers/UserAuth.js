@@ -3,6 +3,7 @@ import { rateLimit } from "express-rate-limit";
 import { validateLogin, validateRegister } from "../validator/authValidator.js";
 import {
   FSRegisterUser,
+  KRRegisterUser,
   LoginUser,
   LogoutUser,
   NPRegisterUser,
@@ -41,8 +42,6 @@ router.post("/logout", LogoutUser);
 
 router.get("/verify-user", verifyStatus);
 
-
-
 router.get("/verify-tt-user", verifyTTStatus);
 router.get("/verify-rt-user", verifyRTStatus);
 router.get("/verify-np-user", verifyNPStatus);
@@ -53,5 +52,7 @@ router.post("/tt-register", validateRegister, TTRegisterUser);
 router.post("/rt-register", validateRegister, RTRegisterUser);
 router.post("/np-register", validateRegister, NPRegisterUser);
 router.post("/fs-register", validateRegister, FSRegisterUser);
+
+router.post("/kr-register", validateRegister, KRRegisterUser);
 
 export default router;

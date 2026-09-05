@@ -334,6 +334,65 @@ const CashbackModel = {
   },
 
 
+  // KR
+
+
+    getTotalKRPayouts: async (all = false, year = null, month = null) => {
+    try {
+      let query;
+      let params = [];
+
+      if (all) {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const start = dayjs(`${2024}-${targetMonth}-01`, "YYYY-M-D").format(
+          "YYYY-MM-DD HH:mm:ss",
+        );
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        query = `
+        SELECT SUM(amount) AS total
+        FROM kr_user_cashbacks
+        WHERE created_at BETWEEN ? AND ?
+          AND deleted_at IS NULL
+        `;
+
+        params = [start, endOfMonth];
+      } else {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const startOfMonth = dayjs(
+          `${targetYear}-${targetMonth}-01`,
+          "YYYY-M-D",
+        ).format("YYYY-MM-DD HH:mm:ss");
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        query = `
+        SELECT SUM(amount) AS total
+        FROM kr_user_cashbacks
+        WHERE created_at BETWEEN ? AND ?
+          AND deleted_at IS NULL
+      `;
+        params = [startOfMonth, endOfMonth];
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0]?.total || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
 };
 
 export default CashbackModel;

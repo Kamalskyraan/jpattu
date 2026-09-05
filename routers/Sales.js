@@ -4,8 +4,10 @@ import {
   getJarikaiOverall,
   getJPSalesReport,
   getJPSalesTTReport,
+  getKRJarikaiOverall,
   getNPJarikaiOverall,
   getOuterFSSorceReport,
+  getOuterKRSorceReport,
   getOuterNPSorceReport,
   getOuterRTSorceReport,
   getOuterSorceReport,
@@ -14,6 +16,7 @@ import {
   getSalesReport,
   getShadowReport,
   getShadowReportFS,
+  getShadowReportKR,
   getShadowReportNP,
   getShadowReportRT,
   getTTJarikaiOverall,
@@ -61,5 +64,14 @@ router.get("/jarigai-overall/fs", verifyAdmin, getFSJarikaiOverall);
 router.get("/shadow-overall/fs", verifyAdmin, getShadowReportFS);
 
 router.get("/outer-src-all-qty/fs", verifyAdmin, getOuterFSSorceReport);
+
+
+// kr
+
+
+router.get("/jarigai-overall/kr", verifyAdmin, getKRJarikaiOverall);
+router.get("/shadow-overall/kr", verifyAdmin, getShadowReportKR);
+router.get("/outer-src-all-qty/kr", verifyAdmin, getOuterKRSorceReport);
+
 
 export default router;

@@ -254,6 +254,14 @@ export const getHomeDetails = async (req, res) => {
       month,
       true,
     );
+    // kerchief
+
+    const kr_total_user_count = await UserModel.getKRUsersCount(
+      true,
+      year,
+      month,
+      true,
+    );
 
     const user_count = await UserModel.getUsersCount(true, year, month, false);
 
@@ -274,6 +282,9 @@ export const getHomeDetails = async (req, res) => {
 
     const [fsActiveCount, fsInactiveCount, fsQueueCount] =
       await UserModel.getFSUserStatus(true, year, month);
+
+    const [krActiveCount, krInactiveCount, krQueueCount] =
+      await UserModel.getKRUserStatus(true, year, month);
 
     const levelPayout = await UserBalanceModel.getTotalPayouts(
       false,
@@ -297,6 +308,11 @@ export const getHomeDetails = async (req, res) => {
       month,
     );
     const levelFSPayout = await UserBalanceModel.getTotalFSPayouts(
+      false,
+      year,
+      month,
+    );
+    const levelKRPayout = await UserBalanceModel.getTotalKRPayouts(
       false,
       year,
       month,
@@ -334,6 +350,11 @@ export const getHomeDetails = async (req, res) => {
       year,
       month,
     );
+    const KRtotalCashbackPayouts = await CashbackModel.getTotalKRPayouts(
+      true,
+      year,
+      month,
+    );
 
     const totalPaidLevelAmount = await UserBalanceModel.getTotalPayouts(
       true,
@@ -362,12 +383,18 @@ export const getHomeDetails = async (req, res) => {
       year,
       month,
     );
+    const totalKRPaidLevelAmount = await UserBalanceModel.getTotalKRPayouts(
+      true,
+      year,
+      month,
+    );
 
     const totalPaidCashbackAmount = totalCashbackPayouts;
     const TTtotalPaidCashbackAmount = TTtotalCashbackPayouts;
     const RTtotalPaidCashbackAmount = RTtotalCashbackPayouts;
     const MRtotalPaidCashbackAmount = MRtotalCashbackPayouts;
     const FStotalPaidCashbackAmount = FStotalCashbackPayouts;
+    const KRtotalPaidCashbackAmount = KRtotalCashbackPayouts;
 
     const nwpDetails = await nwpMembersDetails(year, month);
     const nwpDetailsAll = await nwpMembersDetailsAll();
@@ -379,6 +406,7 @@ export const getHomeDetails = async (req, res) => {
       rt_company_income: (rtActiveCount + rtQueueCount) * 15000,
       mr_company_income: (mrActiveCount + mrQueueCount) * 5000,
       fs_company_income: (fsActiveCount + fsQueueCount) * 500,
+      kr_company_income: (krActiveCount + krQueueCount) * 100,
       stock_available: quantity,
 
       active_ids: activeCount,
@@ -406,6 +434,13 @@ export const getHomeDetails = async (req, res) => {
       fs_queued_ids: fsQueueCount,
       fs_total_ids: fsActiveCount + fsInactiveCount + fsQueueCount,
 
+      // kerchief
+
+      kr_active_ids: krActiveCount,
+      kr_inactive_ids: krInactiveCount,
+      kr_queued_ids: krQueueCount,
+      kr_total_ids: krActiveCount + krInactiveCount + krQueueCount,
+
       total_ids: activeCount + inactiveCount + queueCount,
       level_amount: parseInt(levelPayout),
       tt_level_amount: parseInt(levelTTPayout),
@@ -425,12 +460,19 @@ export const getHomeDetails = async (req, res) => {
 
       fs_total_income: parseInt(fs_total_user_count) * 500,
 
+      // kr
+
+      kr_level_amount: parseInt(levelKRPayout),
+
+      kr_total_income: parseInt(kr_total_user_count) * 100,
+
       cashback_amount: parseInt(cashbackPayout),
       total_payouts: parseInt(cashbackPayout) + parseInt(levelPayout),
       total_income: parseInt(total_user_count) * 1000,
 
       total_paid_amount:
         parseInt(totalPaidLevelAmount) + parseInt(totalPaidCashbackAmount),
+
       tt_total_paid_amount:
         parseInt(totalTTPaidLevelAmount) + parseInt(TTtotalPaidCashbackAmount),
       rt_total_paid_amount:
@@ -439,11 +481,13 @@ export const getHomeDetails = async (req, res) => {
         parseInt(totalMRPaidLevelAmount) + parseInt(MRtotalPaidCashbackAmount),
       fs_total_paid_amount:
         parseInt(totalFSPaidLevelAmount) + parseInt(FStotalPaidCashbackAmount),
+      kr_total_paid_amount:
+        parseInt(totalKRPaidLevelAmount) + parseInt(KRtotalPaidCashbackAmount),
 
       user_data: userData,
       nwp_details: nwpDetails,
       nwp_details_all: nwpDetailsAll,
-      settlementAMount : settlementAMount.total_amount,
+      settlementAMount: settlementAMount.total_amount,
     });
   } catch (err) {
     console.log(err);
@@ -1179,6 +1223,160 @@ export const searchFSUser = async (req, res) => {
     }
 
     const data = await AdminModel.getSearchFSUser(user_id, admin);
+
+    if (data.length === 0) {
+      res.status(200).json({ message: "User not found" });
+    } else {
+      res.status(200).json({ data: data });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Kerchief
+
+export const kerchiefUserData = async (req, res) => {
+  try {
+    const kerchiefUser = await AdminModel.fetchKerchiefUserDatas();
+
+    res.status(200).json({
+      data: kerchiefUser,
+      message: "Kerchief User Data fetched successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const approveKRUser = async (req, res) => {
+  try {
+    const user_ids = req.body?.user_ids;
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "user_id is required and must be an array" });
+    }
+
+    const ids = await UserModel.approveUserKR(user_ids);
+
+    if (ids.length > 0) {
+      const newIds = ids.map((id) => ({
+        newId: id.newId,
+        user_id: id.user_id,
+        status: id.status,
+      }));
+
+      return res
+        .status(200)
+        .json({ newIds: newIds, message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getAllKRUsers = async (req, res) => {
+  try {
+    const { start, end, type } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const users = await UserModel.getAllUsersKR({ start, end });
+    let temp_users = [];
+    if (type !== "permanent") {
+      temp_users = await TempUserModel.getAllUsersKR({ start, end });
+    }
+
+    const data = [...users, ...temp_users];
+    const updatedData = data.map((val) => {
+      if (val.screenshot)
+        return {
+          ...val,
+          // screenshot: path.join("http://localhost:8010", "public", "screenshots", val.screenshot),
+          screenshot: `https://rightshadow.in/server/public/screenshots/${val.screenshot}`,
+        };
+      else return val;
+    });
+
+    updatedData.sort((a, b) => b.created - a.created);
+
+    return res.status(200).json({
+      data: updatedData,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getKRQueuedUsers = async (req, res) => {
+  try {
+    const data = await UserModel.getQueuedKRUsers();
+
+    return res.status(200).json({
+      data: data,
+      message: "Data fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const AddQueuedKRUser = async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (!data?.referral_id) {
+      return res.status(400).json({ message: "referral_id is required" });
+    }
+
+    const approved = await UserModel.addQueuedKRUser(
+      data.user_id,
+      data.referral_id,
+    );
+
+    if (approved) {
+      return res.status(200).json({ message: "User approved successfully" });
+    } else {
+      return res.status(200).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    if (error.message === "limit exceed") {
+      return res.status(200).json({ message: "Referral limit reached" });
+    } else {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+};
+
+export const searchKRUser = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    let admin = false;
+    if (req.user_id.toLowerCase() === user_id.trim().toLowerCase()) {
+      admin = true;
+    }
+
+    const data = await AdminModel.getSearchKRUser(user_id, admin);
 
     if (data.length === 0) {
       res.status(200).json({ message: "User not found" });

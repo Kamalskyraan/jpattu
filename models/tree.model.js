@@ -285,7 +285,7 @@ const TreeModel = {
   
                       SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
                       FROM np_users u
-                      JOIN np_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 3 AND u.status = "approved"
+                      JOIN np_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 9 AND u.status = "approved"
                       )
                       SELECT * FROM np_user_relations`;
       const [data] = await db.query(query, [id]);
@@ -361,6 +361,39 @@ const TreeModel = {
                       JOIN fs_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 10 AND u.status = "approved"
                       )
                       SELECT * FROM fs_user_relations`;
+      const [data] = await db.query(query, [id]);
+      return [data, id];
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // KR
+
+    getTreeKR: async (user_id) => {
+    try {
+      let id = user_id;
+      const [userData] = await UserModel.getUserKR(id);
+
+      if (userData === undefined) {
+        const [adminData] = await UserModel.hasKRMembers(id);
+        if (adminData === undefined) return [false];
+
+        id = adminData.user_id;
+      }
+
+      const query = `WITH RECURSIVE kr_user_relations AS (
+                      SELECT user_id, referral_id, name, mobile, 0 AS level
+                      FROM kr_users
+                      WHERE user_id = ?
+  
+                      UNION ALL
+  
+                      SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
+                      FROM kr_users u
+                      JOIN kr_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 20 AND u.status = "approved"
+                      )
+                      SELECT * FROM kr_user_relations`;
       const [data] = await db.query(query, [id]);
       return [data, id];
     } catch (err) {

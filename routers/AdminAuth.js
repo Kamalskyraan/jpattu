@@ -3,6 +3,7 @@ import { rateLimit } from "express-rate-limit";
 import { validateLogin } from "../validator/authValidator.js";
 import {
   focusUserData,
+  kerchiefUserData,
   LoginAdmin,
   LogoutAdmin,
   newUserData,
@@ -33,5 +34,6 @@ router.get("/get-target-userdata", TargetUserData);
 router.get("/get-repeat-userdata", repeatUserData);
 router.get("/get-new-userdata", newUserData);
 router.get("/get-focus-userdata", focusUserData);
+router.get("/get-kr-userdata", kerchiefUserData);
 
 export default router;

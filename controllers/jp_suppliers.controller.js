@@ -211,7 +211,7 @@ export const updateSupplierNP = async (req, res) => {
       return res.status(400).json({ message: "id is required" });
     }
 
-    await JpSuppliersModel.updateRTSupplier({ name, id });
+    await JpSuppliersModel.updateNPSupplier({ name, id });
     res.status(200).json({ message: "data updated successfully" });
   } catch (err) {
     console.log(err);
@@ -291,6 +291,74 @@ export const deleteSupplierFS = async (req, res) => {
     }
 
     await JpSuppliersModel.deleteFSSupplier(id);
+    res.status(200).json({ message: "data deleted successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+// KR
+
+
+
+
+export const getSuppliersKR = async (req, res) => {
+  try {
+    const data = await JpSuppliersModel.getKRSuppliers();
+    res.status(200).json({ data: data, message: "data fetched successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+
+
+export const addSupplierKR = async (req, res) => {
+  try {
+    const { name } = req.body || false;
+    if (!name) {
+      return res.status(400).json({ message: "name is required" });
+    }
+
+    await JpSuppliersModel.addKRSupplier(name);
+    res.status(200).json({ message: "data updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateSupplierKR = async (req, res) => {
+  try {
+    const { name, id } = req.body || false;
+    if (!name) {
+      return res.status(400).json({ message: "name is required" });
+    } else if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+
+    await JpSuppliersModel.updateKRSupplier({ name, id });
+    res.status(200).json({ message: "data updated successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteSupplierKR = async (req, res) => {
+  try {
+    const { id } = req.params || false;
+    if (!id) {
+      return res.status(400).json({ message: "id is required" });
+    }
+
+    await JpSuppliersModel.deleteKRSupplier(id);
     res.status(200).json({ message: "data deleted successfully" });
   } catch (err) {
     console.log(err);

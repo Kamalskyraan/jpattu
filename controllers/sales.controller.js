@@ -283,7 +283,6 @@ export const getNPSalesReport = async (req, res) => {
   }
 };
 
-
 export const getNPJarikaiOverall = async (req, res) => {
   try {
     const data = await PurchaseModel.getOverallNPQuantity();
@@ -315,7 +314,6 @@ export const getShadowReportNP = async (req, res) => {
   }
 };
 
-
 export const getOuterNPSorceReport = async (req, res) => {
   try {
     const data = await PurchaseModel.getOverallNPShadowQty();
@@ -327,7 +325,6 @@ export const getOuterNPSorceReport = async (req, res) => {
     res.status(500).josn({ message: "Internal Server Error" });
   }
 };
-
 
 // fs
 
@@ -342,7 +339,6 @@ export const getFSSalesReport = async (req, res) => {
     }
 
     const data = await UserModel.getFSSales({ start, end });
-
 
     const quantity = await PurchaseModel.getFSStockQuantity();
 
@@ -377,8 +373,6 @@ export const getFSJarikaiOverall = async (req, res) => {
   }
 };
 
-
-
 export const getShadowReportFS = async (req, res) => {
   try {
     const data = await PurchaseModel.getShadowQuantityFS();
@@ -391,7 +385,6 @@ export const getShadowReportFS = async (req, res) => {
   }
 };
 
-
 export const getOuterFSSorceReport = async (req, res) => {
   try {
     const data = await PurchaseModel.getOverallFSShadowQty();
@@ -401,5 +394,82 @@ export const getOuterFSSorceReport = async (req, res) => {
     });
   } catch (err) {
     res.status(500).josn({ message: "Internal Server Error" });
+  }
+};
+
+// kr
+
+export const getKRSalesReport = async (req, res) => {
+  try {
+    const { start, end } = req.query || false;
+
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserModel.getKRSales({ start, end });
+
+    const quantity = await PurchaseModel.getKRStockQuantity();
+
+    const user_count = await UserModel.getKRUsersCount();
+    
+    const available_quantity =
+      quantity - user_count < 0 ? 0 : quantity - user_count;
+    res
+      .status(200)
+      .json({ data: data, available_quantity: available_quantity });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+export const getShadowReportKR = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getShadowQuantityKR();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export const getOuterKRSorceReport = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallKRShadowQty();
+    return res.status(200).json({
+      data,
+      message: "Shadow Stocks Fetched Successfully",
+    });
+  } catch (err) {
+    res.status(500).josn({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export const getKRJarikaiOverall = async (req, res) => {
+  try {
+    const data = await PurchaseModel.getOverallKRQuantity();
+
+    return res.status(200).json({
+      data: {
+        over_all_sales: data.sales_quantity,
+        over_all_stock: data.stock_quantity,
+        start: data.start,
+        end: data.end,
+      },
+      message: "Jarikai Overall Stocks Fetched successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

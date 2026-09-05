@@ -504,7 +504,7 @@ const UserBalanceModel = {
     }
   },
 
- getTotalNPPayouts: async (all = false, year = null, month = null) => {
+  getTotalNPPayouts: async (all = false, year = null, month = null) => {
     try {
       let query = "";
       let params = [];
@@ -561,7 +561,7 @@ const UserBalanceModel = {
     }
   },
 
-    getTotalRTPayouts: async (all = false, year = null, month = null) => {
+  getTotalRTPayouts: async (all = false, year = null, month = null) => {
     try {
       let query = "";
       let params = [];
@@ -620,7 +620,7 @@ const UserBalanceModel = {
 
   // fs
 
-   getFSLogs: async ({ start, end, status }) => {
+  getFSLogs: async ({ start, end, status }) => {
     const startTime = `${start} 00:00:00`;
     const endTime = `${end} 23:59:59`;
 
@@ -668,8 +668,7 @@ const UserBalanceModel = {
     }));
   },
 
-
-    updateFSBalance: async (ids) => {
+  updateFSBalance: async (ids) => {
     try {
       const query =
         "UPDATE fs_user_balance_logs SET status = 'paid' WHERE id in (?) AND deleted_at IS NULL";
@@ -680,9 +679,7 @@ const UserBalanceModel = {
     }
   },
 
-
-
-    getFSLevelIncome: async ({ user_id, start, end }) => {
+  getFSLevelIncome: async ({ user_id, start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -694,8 +691,7 @@ const UserBalanceModel = {
     }
   },
 
-
-   getTotalFSPayouts: async (all = false, year = null, month = null) => {
+  getTotalFSPayouts: async (all = false, year = null, month = null) => {
     try {
       let query = "";
       let params = [];
@@ -751,6 +747,145 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  // Kerchief\
+
+  getKRLogs: async ({ start, end, status }) => {
+    const startTime = `${start} 00:00:00`;
+    const endTime = `${end} 23:59:59`;
+
+    let query = `
+    SELECT 
+      GROUP_CONCAT(u.id) AS id,
+      u.user_id,
+      us.name,
+      us.mobile,
+      u.status,
+      SUM(u.amount) AS amount,
+      us.created_at AS joined_date,
+      MAX(u.created_at) AS payment_date
+    FROM kr_user_balance_logs u
+    LEFT JOIN kr_users us 
+      ON u.user_id = us.user_id
+    WHERE 
+      u.created_at >= ?
+      AND u.created_at <= ?
+      AND u.deleted_at IS NULL
+  `;
+
+    const params = [startTime, endTime];
+
+    if (status) {
+      query += ` AND u.status = ? `;
+      params.push(status);
+    }
+
+    query += `
+    GROUP BY 
+      u.user_id,
+      us.name,
+      us.mobile,
+      us.created_at,
+      u.status
+    ORDER BY payment_date DESC
+  `;
+
+    const [rows] = await db.query(query, params);
+
+    return rows.map((row) => ({
+      ...row,
+      id: row.id ? row.id.split(",").map(Number) : [],
+    }));
+  },
+
+  updateKRBalance: async (ids) => {
+    try {
+      const query =
+        "UPDATE kr_user_balance_logs SET status = 'paid' WHERE id in (?) AND deleted_at IS NULL";
+      const [data] = await db.query(query, [ids]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+    getKRLevelIncome: async ({ user_id, start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT COUNT(*) as count, level FROM kr_user_relations WHERE ancestor_id = ? AND created_at >= ? AND created_at <= ? GROUP BY level`;
+      const [data] = await db.query(query, [user_id, startTime, endTime]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+    getTotalKRPayouts: async (all = false, year = null, month = null) => {
+    try {
+      let query = "";
+      let params = [];
+
+      if (all) {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const start = dayjs(`${2024}-${targetMonth}-01`, "YYYY-M-D").format(
+          "YYYY-MM-DD HH:mm:ss",
+        );
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        query = `
+        SELECT SUM(amount) AS total
+        FROM kr_user_balance_logs
+        WHERE
+          created_at >= ? AND created_at  <= ?
+          AND deleted_at IS NULL
+      `;
+        params = [start, endOfMonth];
+      } else {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const startOfMonth = dayjs(
+          `${targetYear}-${targetMonth}-01`,
+          "YYYY-M-D",
+        ).format("YYYY-MM-DD HH:mm:ss");
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        query = `
+        SELECT SUM(amount) AS total
+        FROM kr_user_balance_logs
+        WHERE
+          created_at BETWEEN ? AND ?
+          AND deleted_at IS NULL
+      `;
+        params = [startOfMonth, endOfMonth];
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0]?.total || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+
+ 
+
 };
 
 export default UserBalanceModel;

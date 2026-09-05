@@ -57,4 +57,19 @@ export const PackageModel = {
       throw err;
     }
   },
+
+
+  // 
+
+
+   getKRPackages: async (req, res) => {
+    try {
+      const query =
+        "SELECT id, name, amount, description, created_at from kr_packages ORDER BY id";
+      const [result] = await db.query(query);
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  },
 };

@@ -446,7 +446,7 @@ export const PurchaseModel = {
       throw err;
     }
   },
- 
+
   getShadowQuantityRT: async () => {
     try {
       const query = `
@@ -648,7 +648,7 @@ export const PurchaseModel = {
 
   (SELECT SUM(quantity)
    FROM np_purchase_report
-  
+   WHERE deleted_at IS NULL
   ) AS stock_count;
 
     `;
@@ -669,7 +669,8 @@ export const PurchaseModel = {
     try {
       const query = `
       SELECT SUM(quantity) AS all_qty 
-      FROM np_purchase_report
+      FROM np_purchase_report 
+       WHERE deleted_at IS NULL
     `;
 
       const [rows] = await db.query(query);
@@ -685,7 +686,7 @@ export const PurchaseModel = {
 
   // focus
 
-   getFSStockQuantity: async (timeline = false, year = null, month = null) => {
+  getFSStockQuantity: async (timeline = false, year = null, month = null) => {
     try {
       let startOfMonth, endOfMonth;
 
@@ -743,9 +744,7 @@ export const PurchaseModel = {
     }
   },
 
-
-
-   getOverallFSQuantity: async () => {
+  getOverallFSQuantity: async () => {
     try {
       const query = `
       SELECT
@@ -771,9 +770,7 @@ export const PurchaseModel = {
     }
   },
 
-
-
-   getFSStockQuantity: async (timeline = false, year = null, month = null) => {
+  getFSStockQuantity: async (timeline = false, year = null, month = null) => {
     try {
       let startOfMonth, endOfMonth;
 
@@ -831,10 +828,7 @@ export const PurchaseModel = {
     }
   },
 
-
-
-
-    getShadowQuantityFS: async () => {
+  getShadowQuantityFS: async () => {
     try {
       const query = `
       SELECT
@@ -863,8 +857,7 @@ export const PurchaseModel = {
     }
   },
 
-
-   getOverallFSShadowQty: async () => {
+  getOverallFSShadowQty: async () => {
     try {
       const query = `
       SELECT SUM(quantity) AS all_qty 
@@ -878,6 +871,197 @@ export const PurchaseModel = {
       };
     } catch (err) {
       console.log(err);
+      throw err;
+    }
+  },
+
+  // kr
+
+  getKRStockQuantity: async (timeline = false, year = null, month = null) => {
+    try {
+      let startOfMonth, endOfMonth;
+
+      if (typeof year === "number" && typeof month === "number") {
+        startOfMonth = new Date(year, month - 1, 1);
+        endOfMonth = new Date(year, month, 0, 23, 59, 59);
+      } else {
+        const now = new Date();
+        startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        endOfMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+        );
+      }
+
+      const startDateString = startOfMonth
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+      const endDateString = endOfMonth
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+
+      let query = "",
+        params = [];
+
+      if (timeline) {
+        query = `
+        SELECT sum(quantity) as quantity
+        FROM kr_purchase_report
+        WHERE deleted_at IS NULL
+          AND created_at BETWEEN ? AND ?
+      `;
+
+        params = [startDateString, endDateString];
+      } else {
+        query = `
+        SELECT sum(quantity) as quantity
+        FROM kr_purchase_report
+
+
+        WHERE  deleted_at IS NULL
+      `;
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0].quantity < 0 ? 0 : data[0].quantity || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getKRStockQuantity: async (timeline = false, year = null, month = null) => {
+    try {
+      let startOfMonth, endOfMonth;
+
+      if (typeof year === "number" && typeof month === "number") {
+        startOfMonth = new Date(year, month - 1, 1);
+        endOfMonth = new Date(year, month, 0, 23, 59, 59);
+      } else {
+        const now = new Date();
+        startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        endOfMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+        );
+      }
+
+      const startDateString = startOfMonth
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+      const endDateString = endOfMonth
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+
+      let query = "",
+        params = [];
+
+      if (timeline) {
+        query = `
+        SELECT sum(quantity) as quantity
+        FROM kr_purchase_report
+        WHERE deleted_at IS NULL
+          AND created_at BETWEEN ? AND ?
+      `;
+
+        params = [startDateString, endDateString];
+      } else {
+        query = `
+        SELECT sum(quantity) as quantity
+        FROM kr_purchase_report
+
+
+        WHERE  deleted_at IS NULL
+      `;
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0].quantity < 0 ? 0 : data[0].quantity || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getShadowQuantityKR: async () => {
+    try {
+      const query = `
+      SELECT
+  (SELECT COUNT(id)
+   FROM kr_users
+   WHERE deleted_at IS NULL
+     AND status IN ('approved','queued') 
+  ) AS sales_quantity,
+
+  (SELECT SUM(quantity)
+   FROM kr_purchase_report
+  
+  ) AS stock_count;
+
+    `;
+
+      const [data] = await db.query(query);
+
+      return {
+        sales_quantity: data?.[0]?.sales_quantity || 0,
+        stock_count: data?.[0]?.stock_count || 0,
+      };
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
+
+  getOverallKRShadowQty: async () => {
+    try {
+      const query = `
+      SELECT SUM(quantity) AS all_qty 
+      FROM kr_purchase_report WHERE deleted_at IS NULL
+    `;
+
+      const [rows] = await db.query(query);
+
+      return {
+        all_quantity: rows?.[0]?.all_qty || 0,
+      };
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
+
+  getOverallKRQuantity: async () => {
+    try {
+      const query = `
+      SELECT
+        (SELECT COUNT(*)
+         FROM kr_users
+         WHERE deleted_at IS NULL
+        ) AS sales_quantity,
+
+        (SELECT SUM(quantity)
+         FROM kr_purchase_report
+         WHERE deleted_at IS NULL
+        ) AS stock_quantity
+    `;
+
+      const [data] = await db.query(query);
+
+      return {
+        sales_quantity: data?.[0]?.sales_quantity || 0,
+        stock_quantity: data?.[0]?.stock_quantity || 0,
+      };
+    } catch (err) {
       throw err;
     }
   },
@@ -1548,7 +1732,7 @@ export const JpPurchaseModel = {
     }
   },
 
-    getSingleNPPurchaseData: async (id) => {
+  getSingleNPPurchaseData: async (id) => {
     try {
       const query =
         "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM np_purchase_report WHERE id = ? AND deleted_at IS NULL";
@@ -1559,7 +1743,6 @@ export const JpPurchaseModel = {
     }
   },
 
-  
   editNPPurchaseData: async (data) => {
     try {
       const columns = [
@@ -1594,12 +1777,9 @@ export const JpPurchaseModel = {
     }
   },
 
-
-
-
   // FS
 
-   getPurchaseFSData: async ({ start, end }) => {
+  getPurchaseFSData: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -1614,8 +1794,7 @@ export const JpPurchaseModel = {
     }
   },
 
-
-    getPurchaseFSDataForTotal: async ({ start, end }) => {
+  getPurchaseFSDataForTotal: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -1630,8 +1809,7 @@ export const JpPurchaseModel = {
     }
   },
 
-
-   getFSStockQuantity: async (timeline = false) => {
+  getFSStockQuantity: async (timeline = false) => {
     try {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1656,8 +1834,6 @@ export const JpPurchaseModel = {
       throw err;
     }
   },
-
-
 
   addPurchaseFSData: async ({
     purchase_date,
@@ -1686,8 +1862,7 @@ export const JpPurchaseModel = {
     }
   },
 
-
-   editFSPurchaseData: async (data) => {
+  editFSPurchaseData: async (data) => {
     try {
       const columns = [
         "purchase_date",
@@ -1721,8 +1896,6 @@ export const JpPurchaseModel = {
     }
   },
 
-
-
   deleteFSPurchaseData: async (id) => {
     try {
       const query =
@@ -1734,13 +1907,153 @@ export const JpPurchaseModel = {
     }
   },
 
-
-    getSingleFSPurchaseData: async (id) => {
+  getSingleFSPurchaseData: async (id) => {
     try {
       const query =
         "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM fs_purchase_report WHERE id = ? AND deleted_at IS NULL";
       const [data] = await db.query(query, [id]);
       return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // kr
+
+  addPurchaseKRData: async ({
+    purchase_date,
+    gst_number,
+    hsn_code,
+    purchase_id,
+    supplier,
+    quantity,
+    amount,
+  }) => {
+    try {
+      const query =
+        "INSERT INTO kr_purchase_report (purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        purchase_date,
+        gst_number,
+        hsn_code,
+        purchase_id,
+        supplier,
+        quantity,
+        amount,
+      ]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getPurchaseKRData: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query =
+        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM kr_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getPurchaseKRDataForTotal: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query =
+        "SELECT SUM(quantity) as quntity, amount FROM kr_purchase_report WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY purchase_date DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getKRStockQuantity: async (timeline = false) => {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startDateString = startOfMonth
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+
+      let query = "",
+        params = [];
+      if (timeline) {
+        query =
+          "SELECT sum(quantity) as quantity FROM kr_purchase_report WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= NOW()";
+        params = [startDateString];
+      } else {
+        query =
+          "SELECT sum(quantity) as quantity FROM kr_purchase_report WHERE deleted_at IS NULL";
+      }
+      const [data] = await db.query(query, params);
+      return data[0].quantity || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  deleteKRPurchaseData: async (id) => {
+    try {
+      const query =
+        "UPDATE kr_purchase_report SET deleted_at = NOW() WHERE id = ?";
+      await db.query(query, [id]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getSingleKRPurchaseData: async (id) => {
+    try {
+      const query =
+        "SELECT id, purchase_date, gst_number, hsn_code, purchase_id, supplier, quantity, amount FROM kr_purchase_report WHERE id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  editKRPurchaseData: async (data) => {
+    try {
+      const columns = [
+        "purchase_date",
+        "gst_number",
+        "hsn_code",
+        "purchase_id",
+        "supplier",
+        "quantity",
+        "amount",
+      ];
+      let keys = [],
+        values = [];
+
+      columns.forEach((val) => {
+        if (data[val]) {
+          keys.push(`${val} = ?`);
+          values.push(data[val]);
+        }
+      });
+
+      if (keys.length === 0) {
+        throw new Error("no data");
+      }
+
+      const fields = keys.join(", ");
+      const query = `UPDATE kr_purchase_report SET ${fields} WHERE id = ?`;
+      await db.query(query, [...values, data.id]);
+      return true;
     } catch (err) {
       throw err;
     }

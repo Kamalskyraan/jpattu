@@ -2,6 +2,7 @@ import express from "express";
 import {
   addPurchaseData,
   addPurchaseFSData,
+  addPurchaseKRData,
   addPurchaseNPData,
   addPurchaseRTData,
   addPurchaseTTData,
@@ -28,5 +29,6 @@ router.post("/tt", verifyAdmin, addPurchase, addPurchaseTTData);
 router.post("/rt", verifyAdmin, addPurchase, addPurchaseRTData);
 router.post("/np", verifyAdmin, addPurchase, addPurchaseNPData);
 router.post("/fs", verifyAdmin, addPurchase, addPurchaseFSData);
+router.post("/kr", verifyAdmin, addPurchase, addPurchaseKRData);
 
 export default router;

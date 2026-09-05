@@ -151,7 +151,7 @@ export async function nwpMembersList(status, start, end, order) {
   }
 
   // ORDER BY (must be ASC or DESC)
-  sql += ` ORDER BY nwp.created_at ${order === "ASC" ? "ASC" : "DESC"}`;
+  sql += ` ORDER BY nwp.user_id ${order === "ASC" ? "ASC" : "DESC"}`;
 
   const [result] = await db.query(sql, params);
   return { result };

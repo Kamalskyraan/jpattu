@@ -36,6 +36,15 @@ const LevelModel = {
     );
     return data;
   },
+
+  // kerchief
+
+   getKRLevels: async () => {
+    const [data] = await db.query(
+      "SELECT * FROM kr_levels ORDER BY level ASC",
+    );
+    return data;
+  },
 };
 
 export default LevelModel;

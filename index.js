@@ -9,6 +9,7 @@ import adminRoutes from "./routers/Admin.js";
 import userRoutes from "./routers/Users.js";
 import userTTRoutes from "./routers/TTusers.js";
 import userRTRoutes from "./routers/RTUsers.js";
+import userKRRoutes from "./routers/KRUser.js";
 import userNPRoutes from "./routers/NPUser.js";
 import userFSRoutes from "./routers/FSUser.js";
 import levelRoutes from "./routers/Levels.js";
@@ -19,18 +20,21 @@ import treeTTRoutes from "./routers/TargetTree.js";
 import treeRTRoutes from "./routers/RepeatTree.js";
 import treeNPRoutes from "./routers/NPTree.js";
 import treeFSRoutes from "./routers/FSTree.js";
+import treeKRRoutes from "./routers/KRTree.js";
 import cashbackRoutes from "./routers/Cashbacks.js";
 import userBalanceRoutes from "./routers/UserBalance.js";
 import userTTBalanceRoutes from "./routers/UserTTBalance.js";
 import userRTBalanceRoutes from "./routers/UserRTBalance.js";
 import userNPBalanceRoutes from "./routers/UserNPBalance.js";
 import userFSBalanceRoutes from "./routers/UserFSBalance.js";
+import userKRBalanceRoutes from "./routers/UserKRBalance.js";
 import purchaseRoutes from "./routers/Purchase.js";
 import suppliersRoutes from "./routers/Suppliers.js";
 import jppurchaseRoutes from "./routers/JpPurchase.js";
 import ttpurchaseRoutes from "./routers/TtPurchases.js";
 import rtpurchaseRoutes from "./routers/RTPurchases.js";
 import fspurchaseRoutes from "./routers/FSPurchase.js";
+import krpurchaseRoutes from "./routers/KRPurchases.js";
 import npPurchaseRoutes from "./routers/NPPurchases.js";
 import jpsuppliersRoutes from "./routers/JpSuppliers.js";
 import salesRoutes from "./routers/Sales.js";
@@ -40,12 +44,12 @@ import NwpRoutes from "./routers/Nwp.js";
 import rtSalesRoutes from "./routers/RTSales.js";
 import npSalesRoutes from "./routers/NPSales.js";
 import fsSalesRoutes from "./routers/FSSales.js";
+import krSalesRoutes from "./routers/KRSales.js";
 import "./cron/monthEndSettlement.js";
 import {
   getAdminData,
   getTTAdminData,
 } from "./controllers/users.controller.js";
-
 
 const app = express();
 configDotenv();
@@ -88,6 +92,9 @@ app.use("/admin", adminRoutes);
 app.use("/users", userRoutes);
 app.use("/tt-users", userTTRoutes);
 app.use("/rt-users", userRTRoutes);
+
+app.use("/kr-users", userKRRoutes);
+
 app.use("/np-users", userNPRoutes);
 app.use("/fs-users", userFSRoutes);
 
@@ -97,9 +104,10 @@ app.use("/products", productRoutes);
 app.use("/treeview", treeRoutes);
 app.use("/treeview-tt", treeTTRoutes);
 app.use("/treeview-rt", treeRTRoutes);
+
 app.use("/treeview-np", treeNPRoutes);
 app.use("/treeview-fs", treeFSRoutes);
-
+app.use("/treeview-kr", treeKRRoutes);
 
 app.use("/cashbacks", cashbackRoutes);
 app.use("/balance", userBalanceRoutes);
@@ -107,6 +115,7 @@ app.use("/balance-tt", userTTBalanceRoutes);
 app.use("/balance-rt", userRTBalanceRoutes);
 app.use("/balance-np", userNPBalanceRoutes);
 app.use("/balance-fs", userFSBalanceRoutes);
+app.use("/balance-kr", userKRBalanceRoutes);
 
 app.use("/purchases", purchaseRoutes);
 app.use("/suppliers", suppliersRoutes);
@@ -114,25 +123,21 @@ app.use("/tt/purchases", ttpurchaseRoutes);
 app.use("/rt/purchases", rtpurchaseRoutes);
 app.use("/np/purchases", npPurchaseRoutes);
 app.use("/fs/purchases", fspurchaseRoutes);
-
+app.use("/kr/purchases", krpurchaseRoutes);
 
 app.use("/jp/purchases", jppurchaseRoutes);
 
-
-
 app.use("/jp/suppliers", jpsuppliersRoutes);
-
-
 
 app.use("/sales", salesRoutes);
 app.use("/tt-sales", ttSalesRoutes);
 app.use("/rt-sales", rtSalesRoutes);
 app.use("/np-sales", npSalesRoutes);
 app.use("/fs-sales", fsSalesRoutes);
+app.use("/kr-sales", krSalesRoutes);
 app.use("/packages", PackageRoutes);
 app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
-
 app.get("/get-tt-admin-data", getTTAdminData);
 
 app.listen(process.env.PORT, () => {

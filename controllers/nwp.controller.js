@@ -521,7 +521,7 @@ export const getSettlementAmount = async (req, res) => {
       WHERE DATE(ne.earned_date) BETWEEN ? AND ?
       AND ne.type = ?
 
-      ORDER BY ne.earned_date ASC, ne.id ASC
+      ORDER BY ne.earned_date ASC, ne.id DESC
     `;
 
     const [rows] = await db.query(sql, [start, end, "monthly"]);

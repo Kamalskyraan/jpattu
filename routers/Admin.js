@@ -28,6 +28,11 @@ import {
   getFSQueuedUsers,
   AddQueuedFSUser,
   searchFSUser,
+  approveKRUser,
+  getAllKRUsers,
+  getKRQueuedUsers,
+  AddQueuedKRUser,
+  searchKRUser,
 } from "../controllers/admin.controller.js";
 import { verifyAdmin } from "../middlewares/auth.js";
 import { getAllPayouts } from "../controllers/users.controller.js";
@@ -78,4 +83,16 @@ router.get("/queued-users/fs", verifyAdmin, getFSQueuedUsers);
 router.post("/add-user/fs", verifyAdmin, AddQueuedFSUser);
 
 router.get("/search-fs-user/:user_id", verifyAdmin, searchFSUser);
+
+
+// kr
+router.post("/approve-kr", verifyAdmin, approveKRUser);
+router.get("/kr-users", verifyAdmin, getAllKRUsers);
+router.get("/queued-users/kr", verifyAdmin, getKRQueuedUsers);
+
+router.post("/add-user/kr", verifyAdmin, AddQueuedKRUser);
+
+
+router.get("/search-kr-user/:user_id", verifyAdmin, searchKRUser);
+
 export default router;

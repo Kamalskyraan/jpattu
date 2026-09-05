@@ -3,6 +3,8 @@ import {
   sendAdminMail,
   sendFSAdminMail,
   sendFSMail,
+  sendKRAdminMail,
+  sendKRMail,
   sendMail,
   sendNPAdminMail,
   sendNPMail,
@@ -987,6 +989,207 @@ export const TempUserModel = {
     try {
       const query =
         "UPDATE fs_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
+      const [result] = await db.query(query, [id]);
+      return result.affectedRows;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  // KR
+
+  addKRUser: async (data) => {
+    try {
+      const lastId = await TempUserModel.getLastKRUser();
+      const value = lastId.length > 0 ? lastId.split("TKR")[1] : 0;
+      const newValue = ((parseInt(value) || 0) + 1).toString();
+      const newId = "TKR" + newValue;
+
+      const referrarQuery =
+        "SELECT * FROM kr_users WHERE user_id = ? AND deleted_at IS NULL";
+
+      let [referrar] = await db.query(referrarQuery, [data.referral_id]);
+      if (referrar.length === 0) {
+        const referrarQuery =
+          "SELECT * FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+        [referrar] = await db.query(referrarQuery, [data.referral_id]);
+        if (!referrar[0]?.id) {
+          throw new Error("referrer not found");
+        } else if (referrar[0].status === "Queued") {
+          throw new Error("Referrar is in Queue");
+        }
+      }
+
+      const query =
+        "INSERT INTO kr_temp_users (referral_id, user_id, name, mobile, email, password, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        data.referral_id,
+        newId,
+        data.name,
+        data.mobile,
+        data.email || "",
+        data.password,
+        data.txn_id,
+      ]);
+
+      return newId;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getLastKRUser: async () => {
+    try {
+      const query =
+        "SELECT user_id from kr_temp_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "TEF";
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  KRpaidProof: async ({ user_id, image, txn_id }) => {
+    try {
+      const [data] = await TempUserModel.getKRUser(user_id);
+      if (!data) return false;
+
+      if (!image) {
+        const updateQuery = `
+        UPDATE kr_temp_users 
+        SET txn_id = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [txn_id, user_id]);
+      } else if (!txn_id) {
+        const updateQuery = `
+        UPDATE kr_temp_users 
+        SET screenshot = ?
+        WHERE user_id = ?;
+        `;
+        await db.query(updateQuery, [image, user_id]);
+      }
+
+      const checkQuery = `
+        SELECT user_id 
+        FROM kr_temp_users 
+        WHERE txn_id = ? AND user_id != ? 
+        UNION 
+        SELECT user_id 
+        FROM kr_users 
+        WHERE txn_id = ?;`;
+      const [duplicates] = await db.query(checkQuery, [
+        txn_id,
+        user_id,
+        txn_id,
+      ]);
+
+      if (duplicates.length > 0) {
+        const markDupesQuery = `
+          UPDATE kr_temp_users 
+          SET duplicate_txn_id = TRUE 
+          WHERE txn_id = ?;
+        `;
+        await db.query(markDupesQuery, [txn_id]);
+      }
+
+      return true;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  },
+
+  getKRUser: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.email,
+                      u.referral_id,
+                      u.approved,
+                      u.pancard,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM kr_temp_users u
+                    LEFT JOIN kr_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL`;
+      const [data] = await db.query(query, [user_id]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+   getAllUsersKR: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id, 
+                      u.name, 
+                      u.mobile, 
+                      u.screenshot,
+                      u.password,
+                      u.email,
+                      u.txn_id,
+                      u.duplicate_txn_id,
+                      u.approved,
+                      IFNULL(r.user_id, a.user_id) AS referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM kr_temp_users u
+                    LEFT JOIN kr_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at is NULL AND u.approved = 0 ORDER BY u.created_at DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+
+      const updatedData = data.map((val) => ({
+        ...val,
+        address: "",
+        account_number: "",
+        holder_name: "",
+        ifsc_code: "",
+        branch: "",
+        status: "Pending",
+      }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+   deleteKRUser: async (id) => {
+    try {
+      const query =
+        "UPDATE kr_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
       const [result] = await db.query(query, [id]);
       return result.affectedRows;
     } catch (err) {
@@ -4937,6 +5140,802 @@ export const UserModel = {
       throw err;
     }
   },
+
+  // KR
+
+  getUserNameFromKR: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM kr_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  addKRUser: async (data) => {
+    try {
+      const lastId = await TempUserModel.getLastFSUser();
+      const value = lastId.length > 0 ? lastId.split("TEF")[1] : 0;
+      const newValue = ((parseInt(value) || 0) + 1).toString();
+      const newId = "TEF" + newValue;
+
+      const referrarQuery =
+        "SELECT * FROM fs_users WHERE user_id = ? AND deleted_at IS NULL";
+
+      let [referrar] = await db.query(referrarQuery, [data.referral_id]);
+      if (referrar.length === 0) {
+        const referrarQuery =
+          "SELECT * FROM admin WHERE user_id = ? AND deleted_at IS NULL";
+        [referrar] = await db.query(referrarQuery, [data.referral_id]);
+        if (!referrar[0]?.id) {
+          throw new Error("referrer not found");
+        } else if (referrar[0].status === "Queued") {
+          throw new Error("Referrar is in Queue");
+        }
+      }
+
+      const query =
+        "INSERT INTO fs_temp_users (referral_id, user_id, name, mobile, email, password, txn_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      await db.query(query, [
+        data.referral_id,
+        newId,
+        data.name,
+        data.mobile,
+        data.email || "",
+        data.password,
+        data.txn_id,
+      ]);
+
+      return newId;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  getKRUserName: async (referral_id) => {
+    try {
+      const query =
+        "SELECT user_id, name, user_id, status FROM kr_users WHERE user_id = ? AND deleted_at IS NULL";
+      const [data] = await db.query(query, [referral_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  approveUserKR: async (user_ids) => {
+    try {
+      await db.beginTransaction();
+      const ids = [];
+
+      const lastId = await UserModel.getLastUserKR();
+      let baseId = lastId.length > 0 ? parseInt(lastId.split("KR")[1]) : 0;
+      user_ids.sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+      );
+
+      for (const temp_user_id of user_ids) {
+        const [[user]] = await db.query(
+          "SELECT * FROM kr_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
+          [temp_user_id],
+        );
+
+        if (!user) continue;
+
+        const [[referrer]] = await db.query(
+          `SELECT user_id, 'user' as role FROM kr_users WHERE user_id = ?
+         UNION
+         SELECT user_id, role FROM admin WHERE user_id = ?`,
+          [user.referral_id, user.referral_id],
+        );
+
+        let status = "Approved";
+
+        const [[{ count }]] = await db.query(
+          "SELECT COUNT(*) as count FROM kr_users WHERE referral_id = ?",
+          [referrer.user_id],
+        );
+        if (referrer?.role === "admin" && count !== 0) {
+          status = "Queued";
+        } else if (referrer?.role !== "admin" && count >= 2) status = "Queued";
+
+        baseId += 1;
+        const newId = "KR" + baseId.toString();
+
+        await db.query(
+          `INSERT INTO kr_users 
+        (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            referrer?.user_id,
+            newId,
+            user.name,
+            user.mobile,
+            user.email,
+            user.address,
+            user.password,
+            status,
+            user.txn_id,
+            user.screenshot,
+          ],
+        );
+
+        await db.query(
+          "INSERT INTO kr_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
+          [newId, 0, "paid"],
+        );
+
+        if (status === "Approved" && referrer?.role === "user") {
+          // Add direct relation
+          await db.query(
+            "INSERT INTO kr_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+            [referrer.user_id, newId],
+          );
+
+          // Add upper relations
+          await db.query(
+            `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+     SELECT ancestor_id, ?, level + 1
+     FROM kr_user_relations
+     WHERE descendant_id = ? AND ancestor_id IS NOT NULL`,
+            [newId, referrer.user_id],
+          );
+
+          // Level 1 payout = 800
+          await db.query(
+            `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     VALUES (?, ?, 50, 'unpaid')`,
+            [referrer.user_id, newId],
+          );
+          // level 2 = 100
+
+          await db.query(
+            `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 1, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND (
+       level BETWEEN 2 AND 4
+       OR level = 11
+       OR level BETWEEN 6 AND 8
+       OR level BETWEEN 13 AND 14
+       OR level BETWEEN 16 AND 18
+     )`,
+            [newId, newId],
+          );
+          // Level 5 = 2
+          await db.query(
+            `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 2, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level IN (5, 9, 10, 12, 15, 19)`,
+            [newId, newId],
+          );
+
+          // Level 9+ payout = 100
+          await db.query(
+            `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 8, 'unpaid'
+     FROM rpt_user_relations
+     WHERE descendant_id = ? AND level = 20`,
+            [newId, newId],
+          );
+        }
+
+        await db.query(
+          "UPDATE kr_temp_users SET approved = 1 WHERE user_id = ?",
+          [temp_user_id],
+        );
+
+        if (user.email) {
+          user.user_id = newId;
+          user.referral_id = referrer.user_id;
+          sendKRMail(user);
+        }
+
+        await sendKRAdminMail(user);
+
+        ids.push({
+          new_id: newId,
+          user_id: temp_user_id,
+          mobile: user.mobile,
+          name: user.name,
+          sponsor_id: referrer.user_id,
+          password: user.password,
+          status,
+        });
+      }
+
+      await db.commit();
+      return ids;
+    } catch (err) {
+      console.error("approveUser error:", err);
+      await db.rollback();
+      throw err;
+    }
+  },
+
+  getLastUserKR: async () => {
+    try {
+      const query = "SELECT user_id from kr_users ORDER BY id DESC LIMIT 1";
+      const [id] = await db.query(query);
+      if (id[0]?.user_id) {
+        return id[0].user_id;
+      } else {
+        return "KR0";
+      }
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+   getAllUsersKR: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.referral_id,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.txn_id,
+                      u.branch,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM kr_users u
+                    LEFT JOIN kr_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.created_at >= ? AND u.created_at <= ? AND u.deleted_at IS NULL ORDER BY u.id DESC`;
+      const [data] = await db.query(query, [startTime, endTime]);
+      const updatedData = data.map((val) => ({ ...val, duplicate_txn_id: 0 }));
+      return updatedData;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+   updateKRUser: async (data) => {
+    let column;
+
+    if (data.user_type === "users") {
+      column = [
+        "name",
+        "mobile",
+        "email",
+        "status",
+        "address",
+        "pancard",
+        "bank_name",
+        "holder_name",
+        "account_number",
+        "ifsc_code",
+        "branch",
+      ];
+    } else {
+      column = ["name", "mobile", "email", "address", "pancard"];
+    }
+
+    let keys = [];
+    let values = [];
+
+    column.forEach((val) => {
+      if (data[val]) {
+        keys.push(`${val} = ?`);
+        values.push(data[val].trim());
+      }
+    });
+
+    if (data.referral_id && data.role === "admin") {
+      keys.push("referral_id = ?");
+      values.push(data.referral_id);
+    }
+
+    if (data.password && data.role === "admin") {
+      keys.push("password = ?");
+      values.push(data.password);
+    }
+
+    if (keys.length === 0) {
+      return false;
+    }
+
+    const list = keys.join(", ");
+    const query = `UPDATE ${
+      data.user_type === "users" ? "kr_users" : "kr_temp_users"
+    } SET ${list} WHERE user_id = ?`;
+    await db.query(query, [...values, data.user_id]);
+    return true;
+  },
+
+
+    getUserKR: async (user_id) => {
+    try {
+      const query = `SELECT 
+                      u.id, 
+                      u.user_id,
+                      u.name, 
+                      u.mobile, 
+                      u.status,
+                      u.email, 
+                      u.pancard,
+                      u.screenshot,
+                      u.password,
+                      u.address,
+                      u.account_number,
+                      u.bank_name,
+                      u.holder_name,
+                      u.ifsc_code,
+                      u.branch,
+                      u.txn_id,
+                      u.referral_id,
+                      IFNULL(r.name, a.name) AS referral_name,
+                      UNIX_TIMESTAMP(u.created_at) as created,
+                      u.created_at
+                    FROM kr_users u
+                    LEFT JOIN kr_users r ON u.referral_id = r.user_id
+                    LEFT JOIN admin a ON u.referral_id = a.user_id
+                    WHERE u.user_id = ? AND u.deleted_at IS NULL;`;
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+    hasKRMembers: async (user_id) => {
+    try {
+      const query =
+        "SELECT user_id from kr_users WHERE referral_id = ? LIMIT 1";
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+
+    getQueuedKRUsers: async () => {
+    try {
+      const query = `SELECT 
+                      id,
+                      user_id,
+                      name, 
+                      mobile, 
+                      status,
+                      email,
+                      password,
+                      screenshot,
+                      address,
+                      referral_id,
+                      account_number,
+                      bank_name,
+                      holder_name,
+                      ifsc_code,
+                      txn_id,
+                      branch,
+                      UNIX_TIMESTAMP(created_at) as created,
+                      created_at
+                      FROM kr_users
+                    WHERE status = "Queued" AND deleted_at IS NULL`;
+      const [data] = await db.query(query);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+  
+  addQueuedKRUser: async (user_id, referral_id) => {
+    try {
+      await db.beginTransaction();
+
+      const [data] = await db.query(
+        "SELECT * FROM kr_users WHERE user_id = ? AND deleted_at IS NULL",
+        [user_id],
+      );
+
+      if (data.length === 0) {
+        await db.rollback();
+        return false;
+      }
+
+      const [referrar_data] = await db.query(
+        "SELECT * FROM kr_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
+        [referral_id],
+      );
+
+      if (referrar_data.length === 0) {
+        await db.rollback();
+        return false;
+      }
+
+      // Update queued user
+      await db.query(
+        "UPDATE kr_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
+        [referral_id, user_id],
+      );
+
+      // Level 1 relation
+      await db.query(
+        `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+       VALUES (?, ?, 1)`,
+        [referral_id, user_id],
+      );
+
+      // Level 2 - 9 relations
+      await db.query(
+        `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+       SELECT
+         ancestor_id,
+         ?,
+         level + 1
+       FROM kr_user_relations
+       WHERE descendant_id = ?
+       AND level <= 20
+       AND ancestor_id IS NOT NULL`,
+        [user_id, referral_id],
+      );
+
+      // Level 1 payout = 100
+      await db.query(
+        `INSERT INTO kr_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       VALUES (?, ?, 50, 'unpaid')`,
+        [referral_id, user_id],
+      );
+
+      // Level 2 - 8 payout = 10
+      await db.query(
+        `INSERT INTO kr_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         1,
+         'unpaid'
+       FROM kr_user_relations
+       WHERE descendant_id = ?
+       AND (
+        
+       level BETWEEN 2 AND 4
+       OR level BETWEEN 6 AND 8
+       OR level = 11
+       OR level BETWEEN 13 AND 14
+       OR level BETWEEN 16 AND 18
+     )`,
+        [user_id, user_id],
+      );
+
+      
+      await db.query(
+        `INSERT INTO kr_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         8,
+         'unpaid'
+       FROM kr_user_relations
+       WHERE descendant_id = ?
+       AND level = 20`,
+        [user_id, user_id],
+      );
+
+      await db.query(
+        `INSERT INTO kr_user_balance_logs
+       (user_id, related_user_id, amount, status)
+       SELECT
+         ancestor_id,
+         ?,
+         2,
+         'unpaid'
+       FROM kr_user_relations
+       WHERE descendant_id = ?
+       AND (
+       level BETWEEN 9 AND 10 OR level = 5 OR level = 12 OR level = 15 OR level = 19 )`,
+        [user_id, user_id],
+      );
+
+      await db.commit();
+      return true;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
+
+
+
+    getKRSales: async ({ start, end }) => {
+    try {
+      const startTime = `${start} 00:00:00`;
+      const endTime = `${end} 23:59:59`;
+      const query =
+        "SELECT id, referral_id, user_id, name, mobile, 100 as amount, created_at as purchase_date FROM kr_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+      const [data] = await db.query(query, [startTime, endTime]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+
+    getKRUsersCount: async (
+    timeline = false,
+    year = null,
+    month = null,
+    all = false,
+  ) => {
+    try {
+      let startOfMonth, endOfMonth;
+
+      if (all && typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${2025}-1-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else if (typeof year === "number" && typeof month === "number") {
+        startOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = dayjs(`${year}-${month}-01`, "YYYY-M-D")
+          .endOf("month")
+          .format("YYYY-MM-DD HH:mm:ss");
+      } else {
+        const now = dayjs();
+        startOfMonth = now.startOf("month").format("YYYY-MM-DD HH:mm:ss");
+        endOfMonth = now.endOf("month").format("YYYY-MM-DD HH:mm:ss");
+      }
+
+      let query = "",
+        params = [];
+
+      if (timeline) {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+          AND created_at >= ? AND created_at <= ?
+      `;
+        params = [startOfMonth, endOfMonth];
+      } else {
+        query = `
+        SELECT COUNT(*) as user_count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+      `;
+      }
+
+      const [data] = await db.query(query, params);
+      return data[0].user_count || 0;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+ getKRUserStatus: async (timeline = false, year = null, month = null) => {
+    try {
+      let activeQuery = "",
+        inActiveQuery = "",
+        queuedQuery = "",
+        activeParams = [],
+        inactiveParams = [],
+        queuedParams = [];
+
+      if (timeline) {
+        const now = dayjs();
+        const targetYear = typeof year === "number" ? year : now.year();
+        const targetMonth = typeof month === "number" ? month : now.month();
+
+        const startOfMonth = dayjs(
+          `${targetYear}-${targetMonth}-01`,
+          "YYYY-M-D",
+        )
+          //   .subtract(5, "hour")
+          //   .subtract(30, "minute")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        const endOfMonth = dayjs(`${targetYear}-${targetMonth}-01`, "YYYY-M-D")
+          .endOf("month")
+          //   .subtract(5, "hour")
+          //   .subtract(30, "minute")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        // Queries for specific month
+        activeQuery = `
+        SELECT COUNT(*) AS count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+          AND status = 'Approved'
+          AND created_at BETWEEN ? AND ?
+      `;
+        activeParams = [startOfMonth, endOfMonth];
+
+        inActiveQuery = `
+        SELECT COUNT(*) AS count
+        FROM fs_temp_users
+        WHERE deleted_at IS NULL
+          AND approved = 0
+          AND created_at BETWEEN ? AND ?
+      `;
+        inactiveParams = [startOfMonth, endOfMonth];
+
+        queuedQuery = `
+        SELECT COUNT(*) AS count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+          AND status = 'Queued'
+          AND created_at BETWEEN ? AND ?
+      `;
+        queuedParams = [startOfMonth, endOfMonth];
+      } else {
+        // All-time queries
+        activeQuery = `
+        SELECT COUNT(*) AS count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+          AND status = 'Approved'
+      `;
+        inActiveQuery = `
+        SELECT COUNT(*) AS count
+        FROM kr_temp_users
+        WHERE deleted_at IS NULL
+          AND approved = 0
+      `;
+        queuedQuery = `
+        SELECT COUNT(*) AS count
+        FROM kr_users
+        WHERE deleted_at IS NULL
+          AND status = 'Queued'
+      `;
+      }
+
+      const [activeData] = await db.query(activeQuery, activeParams);
+      const [inActiveData] = await db.query(inActiveQuery, inactiveParams);
+      const [queueData] = await db.query(queuedQuery, queuedParams);
+
+      return [
+        activeData[0]?.count || 0,
+        inActiveData[0]?.count || 0,
+        queueData[0]?.count || 0,
+      ];
+    } catch (err) {
+      throw err;
+    }
+  },
+  
+
+
+
+   addPackageToKRUser: async ({ user_data, level }) => {
+    try {
+      await db.beginTransaction();
+
+      let currentLevel = [user_data.user_id];
+      let new_ids = [];
+      console.log("level", level);
+      const status = "Approved";
+      const cashbackStatus = "paid";
+      const amount = 0;
+
+      const lastId = await UserModel.getLastUserKR();
+      let value = lastId.length > 0 ? parseInt(lastId.split("KR")[1]) : 0;
+
+      for (let i = 1; i <= level; i++) {
+        const nextLevel = [];
+
+        for (const referrer_id of currentLevel) {
+          for (let j = 0; j < 2; j++) {
+            value += 1;
+            const newId = "KR" + value.toString();
+
+            const userQuery = `INSERT INTO kr_users
+              (referral_id, user_id, name, mobile, email, address, password, status, bank_name, holder_name, account_number, ifsc_code, branch)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            `;
+
+            await db.query(userQuery, [
+              referrer_id,
+              newId,
+              user_data.name,
+              user_data.mobile,
+              user_data.email,
+              user_data.address,
+              user_data.password,
+              status,
+              user_data.bank_name,
+              user_data.holder_name,
+              user_data.account_number,
+              user_data.ifsc_code,
+              user_data.branch,
+            ]);
+
+            const cashbackQuery = `INSERT INTO kr_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
+            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+
+            nextLevel.push(newId);
+            new_ids.push(newId);
+
+            await db.query(
+              "INSERT INTO kr_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
+              [referrer_id, newId],
+            );
+
+            await db.query(
+              `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+             SELECT ancestor_id, ?, level + 1
+             FROM kr_user_relations
+             WHERE descendant_id = ? AND level <= 20 AND ancestor_id IS NOT NULL`,
+              [newId, referrer_id],
+            );
+
+            await db.query(
+              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+             VALUES (?, ?, 50, 'unpaid')`,
+              [referrer_id, newId],
+            );
+            await db.query(
+              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+              SELECT ancestor_id, ?, 10, 'unpaid'
+              FROM fs_user_relations
+              WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+              [newId, newId],
+            );
+
+            await db.query(
+              `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 5, 'unpaid'
+                FROM fs_user_relations
+                WHERE descendant_id = ? AND level = 9`,
+              [newId, newId],
+            );
+
+            await db.query(
+              `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
+                SELECT ancestor_id, ?, 90, 'unpaid'
+                FROM fs_user_relations
+                WHERE descendant_id = ? AND level = 10`,
+              [newId, newId],
+            );
+          }
+        }
+        currentLevel = nextLevel;
+      }
+      await db.commit();
+      return new_ids;
+    } catch (err) {
+      await db.rollback();
+      throw err;
+    }
+  },
 };
 
 export const getUserFullDetails = async (user_id) => {
@@ -4960,3 +5959,5 @@ export const fetchTTAdminDetails = async () => {
 
   return rows.length ? rows[0] : null;
 };
+
+
