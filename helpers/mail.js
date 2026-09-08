@@ -21,8 +21,8 @@ const configOptions = {
   port: 465,
   secure: true,
   auth: {
-    user: "support@skyraantech.com",
-    pass: "xnfgp6HO=*Dx^U~t",
+    user: "rightshadow@skyraantech.com",
+    pass: "BHVBo1sb}M?DzhQI",
   },
   pool: true,
   maxConnections: 3,
