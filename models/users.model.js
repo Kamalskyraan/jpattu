@@ -1143,8 +1143,7 @@ export const TempUserModel = {
     }
   },
 
-
-   getAllUsersKR: async ({ start, end }) => {
+  getAllUsersKR: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -1185,8 +1184,7 @@ export const TempUserModel = {
     }
   },
 
-
-   deleteKRUser: async (id) => {
+  deleteKRUser: async (id) => {
     try {
       const query =
         "UPDATE kr_temp_users SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL";
@@ -5296,21 +5294,15 @@ export const UserModel = {
           await db.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1, 'unpaid'
-     FROM rpt_user_relations
-     WHERE descendant_id = ? AND (
-       level BETWEEN 2 AND 4
-       OR level = 11
-       OR level BETWEEN 6 AND 8
-       OR level BETWEEN 13 AND 14
-       OR level BETWEEN 16 AND 18
-     )`,
+     FROM kr_user_relations
+     WHERE descendant_id = ? AND level IN(2,3,4,11,6,7,8,13,14,16,17,18)`,
             [newId, newId],
           );
           // Level 5 = 2
           await db.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 2, 'unpaid'
-     FROM rpt_user_relations
+     FROM kr_user_relations
      WHERE descendant_id = ? AND level IN (5, 9, 10, 12, 15, 19)`,
             [newId, newId],
           );
@@ -5319,7 +5311,7 @@ export const UserModel = {
           await db.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 8, 'unpaid'
-     FROM rpt_user_relations
+     FROM kr_user_relations
      WHERE descendant_id = ? AND level = 20`,
             [newId, newId],
           );
@@ -5372,9 +5364,7 @@ export const UserModel = {
     }
   },
 
-
-
-   getAllUsersKR: async ({ start, end }) => {
+  getAllUsersKR: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -5411,9 +5401,7 @@ export const UserModel = {
     }
   },
 
-
-
-   updateKRUser: async (data) => {
+  updateKRUser: async (data) => {
     let column;
 
     if (data.user_type === "users") {
@@ -5466,8 +5454,7 @@ export const UserModel = {
     return true;
   },
 
-
-    getUserKR: async (user_id) => {
+  getUserKR: async (user_id) => {
     try {
       const query = `SELECT 
                       u.id, 
@@ -5501,8 +5488,7 @@ export const UserModel = {
     }
   },
 
-
-    hasKRMembers: async (user_id) => {
+  hasKRMembers: async (user_id) => {
     try {
       const query =
         "SELECT user_id from kr_users WHERE referral_id = ? LIMIT 1";
@@ -5513,10 +5499,7 @@ export const UserModel = {
     }
   },
 
-
-
-
-    getQueuedKRUsers: async () => {
+  getQueuedKRUsers: async () => {
     try {
       const query = `SELECT 
                       id,
@@ -5546,9 +5529,6 @@ export const UserModel = {
     }
   },
 
-
-
-  
   addQueuedKRUser: async (user_id, referral_id) => {
     try {
       await db.beginTransaction();
@@ -5630,7 +5610,6 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      
       await db.query(
         `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
@@ -5668,9 +5647,7 @@ export const UserModel = {
     }
   },
 
-
-
-    getKRSales: async ({ start, end }) => {
+  getKRSales: async ({ start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -5683,9 +5660,7 @@ export const UserModel = {
     }
   },
 
-
-
-    getKRUsersCount: async (
+  getKRUsersCount: async (
     timeline = false,
     year = null,
     month = null,
@@ -5740,8 +5715,7 @@ export const UserModel = {
     }
   },
 
-
- getKRUserStatus: async (timeline = false, year = null, month = null) => {
+  getKRUserStatus: async (timeline = false, year = null, month = null) => {
     try {
       let activeQuery = "",
         inActiveQuery = "",
@@ -5831,11 +5805,8 @@ export const UserModel = {
       throw err;
     }
   },
-  
 
-
-
-   addPackageToKRUser: async ({ user_data, level }) => {
+  addPackageToKRUser: async ({ user_data, level }) => {
     try {
       await db.beginTransaction();
 
@@ -5959,5 +5930,3 @@ export const fetchTTAdminDetails = async () => {
 
   return rows.length ? rows[0] : null;
 };
-
-
