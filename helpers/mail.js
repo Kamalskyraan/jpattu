@@ -18,8 +18,8 @@ configDotenv();
 // };
 const configOptions = {
   host: "mail.skyraantech.com",
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
 
   auth: {
     user: process.env.SENDER_MAIL,
@@ -5221,8 +5221,6 @@ export const sendKRAdminMail = (user) => {
     }
   });
 };
-
-
 
 export const sendMemberKRPackageMail = async ({
   memberData,
