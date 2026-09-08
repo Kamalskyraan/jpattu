@@ -20,10 +20,9 @@ const configOptions = {
   host: "mail.skyraantech.com",
   port: 465,
   secure: true,
-
   auth: {
-    user: process.env.SENDER_MAIL,
-    pass: process.env.SENDER_PASSWORD,
+    user: "support@skyraantech.com",
+    pass: "xnfgp6HO=*Dx^U~t",
   },
   pool: true,
   maxConnections: 3,
