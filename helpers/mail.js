@@ -3,8 +3,21 @@ import { configDotenv } from "dotenv";
 import dayjs from "dayjs";
 configDotenv();
 
+// const configOptions = {
+//   host: "mail.rightshadow.in",
+//   port: 587,
+//   secure: false,
+
+//   auth: {
+//     user: process.env.SENDER_MAIL,
+//     pass: process.env.SENDER_PASSWORD,
+//   },
+//   pool: true,
+//   maxConnections: 3,
+//   maxMessages: 20,
+// };
 const configOptions = {
-  host: "mail.rightshadow.in",
+  host: "mail.rightshadow.skyraantech.com",
   port: 587,
   secure: false,
 

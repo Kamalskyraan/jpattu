@@ -150,62 +150,156 @@ export const LogoutUser = async (req, res) => {
   res.status(200).json({ message: "Logout Successful" });
 };
 
+// export const verifyStatus = async (req, res) => {
+//   const token = req.cookies.auth;
+//   if (!token) return res.status(401).json({ authenticated: false });
+//   const user = jwt.verify(token, process.env.TOKEN_SECRET);
+
+//   try {
+//     if (user.role === "user") {
+//       const [data] = await UserModel.getUser(user.user_id);
+//       if (!data.id) {
+//         res.cookie(
+//           "auth",
+//           {},
+//           {
+//             httpOnly: true,
+//             secure: true,
+//             // sameSite: "Lax",
+//             sameSite: "None",
+//             maxAge: 0,
+//           },
+//         );
+//       }
+//       res.status(200).json({ authenticated: true, user: data });
+//     } else if (user.role === "temp_user") {
+//       const [data] = await TempUserModel.getUser(user.user_id);
+//       if (!data.id) {
+//         res.cookie(
+//           "auth",
+//           {},
+//           {
+//             httpOnly: true,
+//             secure: true,
+//             // sameSite: "Lax",
+//             sameSite: "None",
+//             maxAge: 0,
+//           },
+//         );
+//       }
+//       res.status(200).json({ authenticated: true, user: data });
+//     } else {
+//       res.cookie(
+//         "auth",
+//         {},
+//         {
+//           httpOnly: true,
+//           secure: true,
+//           // sameSite: "Lax",
+//           sameSite: "None",
+//           maxAge: 0,
+//         },
+//       );
+//       res.status(403).json({ message: "Unable to login" });
+//     }
+//   } catch (err) {
+//     console.log(err);
+//     console.log(11);
+//     res.status(401).json({ authenticated: false });
+//   }
+// };
+
 export const verifyStatus = async (req, res) => {
   const token = req.cookies.auth;
-  if (!token) return res.status(401).json({ authenticated: false });
-  const user = jwt.verify(token, process.env.TOKEN_SECRET);
+
+  if (!token) {
+    return res.status(401).json({
+      authenticated: false,
+    });
+  }
 
   try {
-    if (user.role === "user") {
-      const [data] = await UserModel.getUser(user.user_id);
-      if (!data.id) {
-        res.cookie(
-          "auth",
-          {},
-          {
-            httpOnly: true,
-            secure: true,
-            // sameSite: "Lax",
-            sameSite: "None",
-            maxAge: 0,
-          },
-        );
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+
+    const { user_id, role } = decoded;
+
+    let data;
+
+    switch (String(role).toLowerCase()) {
+      case "user": {
+        const [result] = await UserModel.getUser(user_id);
+        data = result;
+        break;
       }
-      res.status(200).json({ authenticated: true, user: data });
-    } else if (user.role === "temp_user") {
-      const [data] = await TempUserModel.getUser(user.user_id);
-      if (!data.id) {
-        res.cookie(
-          "auth",
-          {},
-          {
-            httpOnly: true,
-            secure: true,
-            // sameSite: "Lax",
-            sameSite: "None",
-            maxAge: 0,
-          },
-        );
+
+      case "tt": {
+        const [result] = await UserModel.getUserTT(user_id);
+        data = result;
+        break;
       }
-      res.status(200).json({ authenticated: true, user: data });
-    } else {
-      res.cookie(
-        "auth",
-        {},
-        {
-          httpOnly: true,
-          secure: true,
-          // sameSite: "Lax",
-          sameSite: "None",
-          maxAge: 0,
-        },
-      );
-      res.status(403).json({ message: "Unable to login" });
+
+      case "rp": {
+        const [result] = await UserModel.getUserRT(user_id);
+        data = result;
+        break;
+      }
+
+      case "mr": {
+        const [result] = await UserModel.getUserNP(user_id);
+        data = result;
+        break;
+      }
+
+      case "fs": {
+        const [result] = await UserModel.getUserFS(user_id);
+        data = result;
+        break;
+      }
+
+      case "kr": {
+        const [result] = await UserModel.getUserKR(user_id);
+        data = result;
+        break;
+      }
+
+      default:
+        return res.status(403).json({
+          authenticated: false,
+          message: "Invalid user type",
+        });
     }
+
+    if (!data || !data.id) {
+      res.cookie("auth", "", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 0,
+      });
+
+      return res.status(401).json({
+        authenticated: false,
+      });
+    }
+
+    return res.status(200).json({
+      authenticated: true,
+      user: data,
+      role: String(role).toLowerCase(),
+    });
   } catch (err) {
-    console.log(err);
-    console.log(11);
-    res.status(401).json({ authenticated: false });
+    console.error("Verify Status Error:", err);
+
+    res.cookie("auth", "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 0,
+    });
+
+    return res.status(401).json({
+      authenticated: false,
+    });
   }
 };
 
@@ -1879,8 +1973,6 @@ export const KRPaidProof = async (req, res) => {
   }
 };
 
-
-
 export const deleteTempKRUser = async (req, res) => {
   try {
     const id = req.params?.id;
@@ -1908,7 +2000,6 @@ export const deleteTempKRUser = async (req, res) => {
   }
 };
 
-
 export const getTempKRUser = async (req, res) => {
   try {
     const { user_id } = req.params || false;
@@ -1924,7 +2015,6 @@ export const getTempKRUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const updateKRUser = async (req, res) => {
   try {
@@ -2006,5 +2096,3 @@ export const getKRUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-

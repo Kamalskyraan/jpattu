@@ -52,7 +52,6 @@ router.post("/tt-register", validateRegister, TTRegisterUser);
 router.post("/rt-register", validateRegister, RTRegisterUser);
 router.post("/np-register", validateRegister, NPRegisterUser);
 router.post("/fs-register", validateRegister, FSRegisterUser);
-
 router.post("/kr-register", validateRegister, KRRegisterUser);
 
 export default router;

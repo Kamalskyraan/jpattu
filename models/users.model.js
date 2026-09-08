@@ -5581,14 +5581,14 @@ export const UserModel = {
 
       // Level 1 relation
       await db.query(
-        `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+        `INSERT IGNORE  INTO kr_user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
       await db.query(
-        `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
+        `INSERT IGNORE INTO kr_user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
          ?,
@@ -5602,7 +5602,7 @@ export const UserModel = {
 
       // Level 1 payout = 100
       await db.query(
-        `INSERT INTO kr_user_balance_logs
+        `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 50, 'unpaid')`,
         [referral_id, user_id],
@@ -5610,7 +5610,7 @@ export const UserModel = {
 
       // Level 2 - 8 payout = 10
       await db.query(
-        `INSERT INTO kr_user_balance_logs
+        `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
          ancestor_id,
@@ -5632,7 +5632,7 @@ export const UserModel = {
 
       
       await db.query(
-        `INSERT INTO kr_user_balance_logs
+        `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
          ancestor_id,
@@ -5646,7 +5646,7 @@ export const UserModel = {
       );
 
       await db.query(
-        `INSERT INTO kr_user_balance_logs
+        `INSERT IGNORE INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
          ancestor_id,
