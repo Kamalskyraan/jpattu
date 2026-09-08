@@ -17,7 +17,7 @@ configDotenv();
 //   maxMessages: 20,
 // };
 const configOptions = {
-  host: "mail.rightshadow.skyraantech.com",
+  host: "mail.skyraantech.com",
   port: 587,
   secure: false,
 
