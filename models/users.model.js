@@ -5870,7 +5870,7 @@ export const UserModel = {
 
             await db.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
-             VALUES (?, ?, 100, 'unpaid')`,
+             VALUES (?, ?, 50, 'unpaid')`,
               [referrer_id, newId],
             );
             await db.query(
