@@ -3,31 +3,31 @@ import { configDotenv } from "dotenv";
 import dayjs from "dayjs";
 configDotenv();
 
-// const configOptions = {
-//   host: "mail.rightshadow.in",
-//   port: 587,
-//   secure: false,
-
-//   auth: {
-//     user: process.env.SENDER_MAIL,
-//     pass: process.env.SENDER_PASSWORD,
-//   },
-//   pool: true,
-//   maxConnections: 3,
-//   maxMessages: 20,
-// };
 const configOptions = {
-  host: "mail.skyraantech.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "rightshadow@skyraantech.com",
-    pass: "BHVBo1sb}M?DzhQI",
-  },
+  host: "mail.rightshadow.in",
+  port: 587,
+  secure: false,
 
+  auth: {
+    user: process.env.SENDER_MAIL,
+    pass: process.env.SENDER_PASSWORD,
+  },
+  pool: true,
   maxConnections: 3,
   maxMessages: 20,
 };
+// const configOptions = {
+//   host: "mail.skyraantech.com",
+//   port: 465,
+//   secure: true,
+//   auth: {
+//     user: "rightshadow@skyraantech.com",
+//     pass: "BHVBo1sb}M?DzhQI",
+//   },
+
+//   maxConnections: 3,
+//   maxMessages: 20,
+// };
 
 const transporter = nodemailer.createTransport(configOptions);
 
