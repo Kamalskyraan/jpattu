@@ -5870,30 +5870,31 @@ export const UserModel = {
 
             await db.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
-             VALUES (?, ?, 50, 'unpaid')`,
+             VALUES (?, ?, 100, 'unpaid')`,
               [referrer_id, newId],
             );
             await db.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
-              SELECT ancestor_id, ?, 10, 'unpaid'
-              FROM fs_user_relations
-              WHERE descendant_id = ? AND level BETWEEN 2 AND 8`,
+     SELECT ancestor_id, ?, 1, 'unpaid'
+     FROM kr_user_relations
+     WHERE descendant_id = ? AND level IN(2,3,4,11,6,7,8,13,14,16,17,18)`,
+              [newId, newId],
+            );
+            // Level 5 = 2
+            await db.query(
+              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 2, 'unpaid'
+     FROM kr_user_relations
+     WHERE descendant_id = ? AND level IN (5, 9, 10, 12, 15, 19)`,
               [newId, newId],
             );
 
+            // Level 9+ payout = 100
             await db.query(
-              `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
-                SELECT ancestor_id, ?, 5, 'unpaid'
-                FROM fs_user_relations
-                WHERE descendant_id = ? AND level = 9`,
-              [newId, newId],
-            );
-
-            await db.query(
-              `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
-                SELECT ancestor_id, ?, 90, 'unpaid'
-                FROM fs_user_relations
-                WHERE descendant_id = ? AND level = 10`,
+              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+     SELECT ancestor_id, ?, 8, 'unpaid'
+     FROM kr_user_relations
+     WHERE descendant_id = ? AND level = 20`,
               [newId, newId],
             );
           }
