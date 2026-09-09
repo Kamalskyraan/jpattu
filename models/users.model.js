@@ -5652,7 +5652,7 @@ export const UserModel = {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
       const query =
-        "SELECT id, referral_id, user_id, name, mobile, 100 as amount, created_at as purchase_date FROM kr_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        "SELECT id, referral_id, user_id, name, mobile, 100 as amount, created_at as purchase_date FROM kr_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY id DESC";
       const [data] = await db.query(query, [startTime, endTime]);
       return data;
     } catch (err) {
