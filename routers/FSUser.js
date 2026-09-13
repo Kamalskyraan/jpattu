@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getFSUser,
+  getFSUserName,
   getHomeDetails,
   getNPUser,
   getNPUserName,
@@ -19,7 +20,7 @@ import { updateValidation } from "../validator/authValidator.js";
 
 const router = express.Router();
 
-router.get("/", getNPUserName);
+router.get("/", getFSUserName);
 
 router.get("/:user_id", verifyUser, getFSUser);
 

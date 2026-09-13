@@ -2734,7 +2734,7 @@ export const UserModel = {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
       const query =
-        "SELECT id, referral_id, user_id, name, mobile, 25000 as amount, created_at as purchase_date FROM tt_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        "SELECT id, referral_id, user_id, name, mobile, 25000 as amount, created_at as purchase_date FROM tt_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY id DESC";
       const [data] = await db.query(query, [startTime, endTime]);
       return data;
     } catch (err) {
@@ -2749,7 +2749,7 @@ export const UserModel = {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
       const query =
-        "SELECT id, referral_id, user_id, name, mobile, 15000 as amount, created_at as purchase_date FROM rpt_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        "SELECT id, referral_id, user_id, name, mobile, 15000 as amount, created_at as purchase_date FROM rpt_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY id DESC";
       const [data] = await db.query(query, [startTime, endTime]);
       return data;
     } catch (err) {
@@ -4084,7 +4084,7 @@ export const UserModel = {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
       const query =
-        "SELECT id, referral_id, user_id, name, mobile, 5000 as amount, created_at as purchase_date FROM np_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        "SELECT id, referral_id, user_id, name, mobile, 5000 as amount, created_at as purchase_date FROM np_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY id DESC";
       const [data] = await db.query(query, [startTime, endTime]);
       return data;
     } catch (err) {
@@ -4849,7 +4849,7 @@ export const UserModel = {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
       const query =
-        "SELECT id, referral_id, user_id, name, mobile, 500 as amount, created_at as purchase_date FROM fs_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        "SELECT id, referral_id, user_id, name, mobile, 500 as amount, created_at as purchase_date FROM fs_users WHERE created_at >= ? AND created_at <= ? AND deleted_at IS NULL ORDER BY id DESC";
       const [data] = await db.query(query, [startTime, endTime]);
       return data;
     } catch (err) {

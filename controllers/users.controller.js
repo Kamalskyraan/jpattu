@@ -73,6 +73,10 @@ export const LoginUser = async (req, res) => {
       [user] = await UserModel.getUserRT(user_id);
     } else if (/^MR/i.test(user_id)) {
       [user] = await UserModel.getUserNP(user_id);
+    } else if (/^KR/i.test(user_id)) {
+      [user] = await UserModel.getUserKR(user_id);
+    }else if (/^FS/i.test(user_id)) {
+      [user] = await UserModel.getUserFS(user_id);
     }
     if (user?.id) {
       const verified = password === user.password;
@@ -150,83 +154,34 @@ export const LogoutUser = async (req, res) => {
   res.status(200).json({ message: "Logout Successful" });
 };
 
-// export const verifyStatus = async (req, res) => {
-//   const token = req.cookies.auth;
-//   if (!token) return res.status(401).json({ authenticated: false });
-//   const user = jwt.verify(token, process.env.TOKEN_SECRET);
-
-//   try {
-//     if (user.role === "user") {
-//       const [data] = await UserModel.getUser(user.user_id);
-//       if (!data.id) {
-//         res.cookie(
-//           "auth",
-//           {},
-//           {
-//             httpOnly: true,
-//             secure: true,
-//             // sameSite: "Lax",
-//             sameSite: "None",
-//             maxAge: 0,
-//           },
-//         );
-//       }
-//       res.status(200).json({ authenticated: true, user: data });
-//     } else if (user.role === "temp_user") {
-//       const [data] = await TempUserModel.getUser(user.user_id);
-//       if (!data.id) {
-//         res.cookie(
-//           "auth",
-//           {},
-//           {
-//             httpOnly: true,
-//             secure: true,
-//             // sameSite: "Lax",
-//             sameSite: "None",
-//             maxAge: 0,
-//           },
-//         );
-//       }
-//       res.status(200).json({ authenticated: true, user: data });
-//     } else {
-//       res.cookie(
-//         "auth",
-//         {},
-//         {
-//           httpOnly: true,
-//           secure: true,
-//           // sameSite: "Lax",
-//           sameSite: "None",
-//           maxAge: 0,
-//         },
-//       );
-//       res.status(403).json({ message: "Unable to login" });
-//     }
-//   } catch (err) {
-//     console.log(err);
-//     console.log(11);
-//     res.status(401).json({ authenticated: false });
-//   }
-// };
-
 export const verifyStatus = async (req, res) => {
-  const token = req.cookies.auth;
-
-  if (!token) {
-    return res.status(401).json({
-      authenticated: false,
-    });
-  }
-
   try {
+    const token = req.cookies?.auth;
+
+    if (!token) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "Authentication required",
+      });
+    }
+
+    // Decode + verify JWT
     const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
 
-    const { user_id, role } = decoded;
+    const { user_id } = decoded;
+
+    const role = String(user_id).substring(0, 2).toLowerCase();
+    if (!user_id || !role) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "Invalid token",
+      });
+    }
 
     let data;
 
     switch (String(role).toLowerCase()) {
-      case "user": {
+      case "ds": {
         const [result] = await UserModel.getUser(user_id);
         data = result;
         break;
@@ -263,22 +218,29 @@ export const verifyStatus = async (req, res) => {
       }
 
       default:
+        res.clearCookie("auth", {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+        });
+
         return res.status(403).json({
           authenticated: false,
           message: "Invalid user type",
         });
     }
 
-    if (!data || !data.id) {
-      res.cookie("auth", "", {
+    // User DB-la illai
+    if (!data) {
+      res.clearCookie("auth", {
         httpOnly: true,
         secure: true,
         sameSite: "None",
-        maxAge: 0,
       });
 
       return res.status(401).json({
         authenticated: false,
+        message: "User not found",
       });
     }
 
@@ -287,18 +249,18 @@ export const verifyStatus = async (req, res) => {
       user: data,
       role: String(role).toLowerCase(),
     });
-  } catch (err) {
-    console.error("Verify Status Error:", err);
+  } catch (error) {
+    console.error("Verify Status Error:", error);
 
-    res.cookie("auth", "", {
+    res.clearCookie("auth", {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 0,
     });
 
     return res.status(401).json({
       authenticated: false,
+      message: "Invalid or expired token",
     });
   }
 };
@@ -1830,6 +1792,7 @@ export const updateFSUser = async (req, res) => {
 export const getFSUser = async (req, res) => {
   try {
     const { user_id } = req.params || false;
+
     if (user_id !== req.user_id && req.role !== "admin") {
       return res.status(403).json({ message: "Action cannot be done!" });
     }
