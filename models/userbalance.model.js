@@ -351,6 +351,30 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  totalKRPayment: async (user_id) => {
+    try {
+      const startTime = dayjs().startOf("month").valueOf();
+      const endTime = dayjs().endOf("month").valueOf();
+
+      const received_amount_query =
+        "SELECT SUM(amount) as amount, status, UNIX_TIMESTAMP(created_at) * 100 as created_at FROM kr_user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY status, created_at";
+
+      const [data] = await db.query(received_amount_query, [user_id]);
+      const level_amount = data
+        .filter(
+          (val) => val.created_at >= startTime && val.created_at <= endTime,
+        )
+        .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
+      const received_amount = data
+        .filter((val) => val.status === "paid")
+        .reduce((total, val) => total + Number(val.amount), 0);
+
+      return [parseInt(level_amount), parseInt(received_amount)];
+    } catch (err) {
+      throw err;
+    }
+  },
   // RT
 
   getRTLogs: async ({ start, end, status }) => {
@@ -809,9 +833,18 @@ const UserBalanceModel = {
     }
   },
 
+  getReceivedKRAmount: async (user_id) => {
+    try {
+      const query =
+        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total_amount, COUNT(*) AS total_records FROM kr_user_balance_logs WHERE user_id = ? AND status = 'paid' AND deleted_at IS NULL GROUP BY month ORDER BY month DESC;";
+      const [data] = await db.query(query, [user_id]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
 
-
-    getKRLevelIncome: async ({ user_id, start, end }) => {
+  getKRLevelIncome: async ({ user_id, start, end }) => {
     try {
       const startTime = `${start} 00:00:00`;
       const endTime = `${end} 23:59:59`;
@@ -823,8 +856,7 @@ const UserBalanceModel = {
     }
   },
 
-
-    getTotalKRPayouts: async (all = false, year = null, month = null) => {
+  getTotalKRPayouts: async (all = false, year = null, month = null) => {
     try {
       let query = "";
       let params = [];
@@ -880,12 +912,6 @@ const UserBalanceModel = {
       throw err;
     }
   },
-
-
-
-
- 
-
 };
 
 export default UserBalanceModel;

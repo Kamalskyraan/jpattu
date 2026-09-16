@@ -1,5 +1,7 @@
 import express from "express";
 import {
+  getKRMemberOnLevel,
+  getKRMembersCount,
   getMembersCount,
   getMRMemberOnLevel,
   getMRMembersCount,
@@ -18,8 +20,7 @@ const router = express.Router();
 
 router.get("/", verifyUser, getTreeForKR);
 
+router.get("/member-count", verifyUser, getKRMembersCount);
 
-router.get("/member-count", verifyUser, getMRMembersCount);
-
-router.get("/:level", verifyUser, getMRMemberOnLevel);
+router.get("/:level", verifyUser, getKRMemberOnLevel);
 export default router;

@@ -9,6 +9,7 @@ import {
   getTTBalanceLogs,
   getTTLevelIncome,
   receivedAmount,
+  receivedKRAmount,
   receivedTTAmount,
   updateFSBalanceStatus,
   updateKRBalanceStatus,
@@ -26,5 +27,5 @@ router.put("/", verifyAdmin, updateKRBalanceStatus);
 
 router.get("/income/:user_id", verifyUser, getKRLevelIncome);
 
-router.get("/:user_id", verifyUser, receivedTTAmount);
+router.get("/:user_id", verifyUser, receivedKRAmount);
 export default router;

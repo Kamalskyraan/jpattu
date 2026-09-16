@@ -13,6 +13,7 @@ import {
   getTempTTUser,
   getTempUser,
   getTTHomeDetails,
+  updateFSUser,
   updateTTUser,
 } from "../controllers/users.controller.js";
 import { verifyUser } from "../middlewares/auth.js";
@@ -24,9 +25,7 @@ router.get("/", getFSUserName);
 
 router.get("/:user_id", verifyUser, getFSUser);
 
-
-
-router.put("/", verifyUser, updateValidation, updateTTUser);
+router.put("/", verifyUser, updateValidation, updateFSUser);
 router.get("/data/:user_id", verifyUser, getTTHomeDetails);
 router.get("/payment-details", getPaymentDetailsNP);
 router.get("/temp/:user_id", getTempTTUser);

@@ -679,3 +679,21 @@ export const getKRLevelIncome = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+export const receivedKRAmount = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+    const data = await UserBalanceModel.getReceivedKRAmount(user_id);
+    res.status(200).json({ data: data, message: "user logs fetched" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};

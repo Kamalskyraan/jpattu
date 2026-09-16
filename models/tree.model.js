@@ -337,7 +337,7 @@ const TreeModel = {
 
   // Focus
 
-    getTreeFS: async (user_id) => {
+  getTreeFS: async (user_id) => {
     try {
       let id = user_id;
       const [userData] = await UserModel.getUserFS(id);
@@ -368,9 +368,28 @@ const TreeModel = {
     }
   },
 
+  getFSMembersCount: async (user_id) => {
+    try {
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM fs_user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3 , 4,5,6,7,8,9,10)
+      GROUP BY level
+      ORDER BY level
+    `;
+
+      const [data] = await db.query(query, [user_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
   // KR
 
-    getTreeKR: async (user_id) => {
+  getTreeKR: async (user_id) => {
     try {
       let id = user_id;
       const [userData] = await UserModel.getUserKR(id);
@@ -400,6 +419,49 @@ const TreeModel = {
       throw err;
     }
   },
+
+    getKRMemberOnLevel: async ({ user_id, level = 1 }) => {
+    try {
+      const query = `WITH RECURSIVE kr_user_relations AS (
+                        SELECT user_id, referral_id, name, mobile, created_at, 0 AS level
+                        FROM kr_users
+                        WHERE user_id = ?
+
+                        UNION ALL
+
+                        SELECT u.user_id, u.referral_id, u.name, u.mobile, u.created_at, ut.level + 1
+                        FROM kr_users u
+                        JOIN kr_user_relations ut ON u.referral_id = ut.user_id AND status = "approved"
+                        )
+                        SELECT * FROM kr_user_relations WHERE level = ?`;
+      const [data] = await db.query(query, [user_id, level]);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+    getKRMembersCount: async (user_id) => {
+    try {
+      const query = `
+      SELECT COUNT(*) AS count, level
+      FROM kr_user_relations
+      WHERE ancestor_id = ?
+        AND level IN (1, 2, 3 , 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
+      GROUP BY level
+      ORDER BY level
+    `;
+
+      const [data] = await db.query(query, [user_id]);
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  },
+
+
+  
 };
 
 export default TreeModel;

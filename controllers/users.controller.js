@@ -75,7 +75,7 @@ export const LoginUser = async (req, res) => {
       [user] = await UserModel.getUserNP(user_id);
     } else if (/^KR/i.test(user_id)) {
       [user] = await UserModel.getUserKR(user_id);
-    }else if (/^FS/i.test(user_id)) {
+    } else if (/^FS/i.test(user_id)) {
       [user] = await UserModel.getUserFS(user_id);
     }
     if (user?.id) {
@@ -1754,7 +1754,7 @@ export const updateFSUser = async (req, res) => {
     const updated = await UserModel.updateFSUser(data);
 
     if (updated) {
-      const [user] = await UserModel.getUserNP(data.user_id);
+      const [user] = await UserModel.getUserFS(data.user_id);
       if (req.role === "user") {
         user.role = "user";
         const token = jwt.sign(JSON.stringify(user), process.env.TOKEN_SECRET);
@@ -2056,6 +2056,50 @@ export const getKRUser = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getPaymentDetailsKR = async (req, res) => {
+  try {
+    const data = await AdminModel.getPaymentDetailsKR();
+    res.status(200).json({ data: data });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getKRHomeDetails = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+
+    const [levelAmount, receivedAmount] =
+      await UserBalanceModel.totalKRPayment(user_id);
+
+    const membersCount = await TreeModel.getKRMembersCount(user_id);
+
+    const levelOne = membersCount?.filter((val) => val.level === 1)[0];
+
+    const direct_id = levelOne?.count || 0;
+    const totalCount = membersCount.reduce(
+      (total, current) => total + current.count,
+      0,
+    );
+
+    const currentDate = dayjs().startOf("day");
+
+    res.status(200).json({
+      level_amount: levelAmount,
+      received_amount: receivedAmount,
+      direct_id: direct_id,
+      total_ids: totalCount,
+    });
+  } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
