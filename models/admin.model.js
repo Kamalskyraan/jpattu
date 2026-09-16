@@ -582,7 +582,7 @@ const AdminModel = {
                     FROM kr_users u
                     LEFT JOIN kr_users r ON u.referral_id = r.user_id
                     LEFT JOIN admin a ON u.referral_id = a.user_id
-                    WHERE u.referral_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL;`;
+                    WHERE u.referral_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL LIMIT 1;`;
       } else {
         query = `SELECT 
                       u.id, 
@@ -607,7 +607,7 @@ const AdminModel = {
                     FROM kr_users u
                     LEFT JOIN kr_users r ON u.referral_id = r.user_id
                     LEFT JOIN admin a ON u.referral_id = a.user_id
-                    WHERE u.user_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL;`;
+                    WHERE u.user_id LIKE ? AND u.status = "Approved" AND u.deleted_at IS NULL LIMIT 1;`;
       }
       const [data] = await db.query(query, [`%${user_id}%`]);
       return data;
