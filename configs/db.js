@@ -1,10 +1,18 @@
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "localhost",
   user: "rightshadow_user",
   password: "Nm^VOyCZ!@e9S8Yq",
   database: "rightshadow_db",
+
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  timezone: "+05:30",
 });
 
 // const db = mysql.createConnection({
@@ -24,6 +32,4 @@ const db = mysql.createConnection({
 //   database: "right_shadow",
 // });
 
-db.query("SET time_zone = '+05:30'");
-
-export default db.promise();
+export default db;
