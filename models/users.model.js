@@ -5428,6 +5428,8 @@ export const UserModel = {
       console.error("approveUser error:", err);
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
@@ -5995,7 +5997,7 @@ export const UserModel = {
       await connection.commit();
       return new_ids;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       await connection.rollback();
       throw err;
     } finally {
