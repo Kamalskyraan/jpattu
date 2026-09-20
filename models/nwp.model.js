@@ -508,8 +508,9 @@ export const getWithdrawEarnings = async (user_id) => {
 export const withdrawEarningsAfterDate = async (
   user_id,
   windup_earned_date,
+  connection = db,
 ) => {
-  const [result] = await db.query(
+  const [result] = await connection.query(
     `
     UPDATE nwp_earnings
     SET status = 'deleted'
@@ -524,8 +525,12 @@ export const withdrawEarningsAfterDate = async (
   return result.affectedRows;
 };
 
-export const withdrawExactDate = async (user_id, earned_date) => {
-  const [result] = await db.query(
+export const withdrawExactDate = async (
+  user_id,
+  earned_date,
+  connection = db,
+) => {
+  const [result] = await connection.query(
     `
     UPDATE nwp_earnings
     SET status = 'withdraw'

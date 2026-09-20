@@ -437,28 +437,30 @@ export const getWithdrawEarningsForUser = async (req, res) => {
 // };
 
 export const withdrawMoney = async (req, res) => {
+  const connection = await db.getConnection();
   try {
     const { user_id, confirm, windup_earned_date } = req.body;
 
     if (!user_id || !confirm) {
+      connection.release();
       return res.status(400).json({
         success: false,
         message: "Invalid request",
       });
     }
-
-    await db.beginTransaction();
+    await connection.beginTransaction();
 
     // SAME DATE → withdrawn
-    await withdrawExactDate(user_id, windup_earned_date);
+    await withdrawExactDate(user_id, windup_earned_date, connection);
 
     // AFTER DATE → withdraw
     const affectedRows = await withdrawEarningsAfterDate(
       user_id,
       windup_earned_date,
+      connection,
     );
 
-    await db.commit();
+    await connection.commit();
 
     return res.status(200).json({
       success: true,
@@ -466,12 +468,17 @@ export const withdrawMoney = async (req, res) => {
       withdrawn_count: affectedRows,
     });
   } catch (err) {
-    await db.rollback();
-    console.log(err);
+    try {
+      await connection.rollback();
+    } catch (rollbackErr) {
+      console.error("Rollback error:", rollbackErr);
+    }
     return res.status(500).json({
       success: false,
       message: err.message,
     });
+  } finally {
+    connection.release();
   }
 };
 

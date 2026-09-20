@@ -1310,10 +1310,10 @@ export const UserModel = {
     }
   },
 
-  getLastUser: async () => {
+  getLastUser: async (connection = db) => {
     try {
       const query = "SELECT user_id from users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
@@ -1378,25 +1378,26 @@ export const UserModel = {
   },
 
   approveUser: async (user_ids) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUser();
+      const lastId = await UserModel.getLastUser(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("DS")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -1405,7 +1406,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -1416,7 +1417,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "DS" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1434,20 +1435,20 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM user_relations
@@ -1456,14 +1457,14 @@ export const UserModel = {
           );
 
           // Level 1 payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 100, 'unpaid')`,
             [referrer.user_id, newId],
           );
 
           // Level 2–8 payout = 10
-          await db.query(
+          await connection.query(
             `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 10, 'unpaid'
      FROM user_relations
@@ -1472,7 +1473,7 @@ export const UserModel = {
           );
 
           // Level 9+ payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 185, 'unpaid'
      FROM user_relations
@@ -1481,9 +1482,10 @@ export const UserModel = {
           );
         }
 
-        await db.query("UPDATE temp_users SET approved = 1 WHERE user_id = ?", [
-          temp_user_id,
-        ]);
+        await connection.query(
+          "UPDATE temp_users SET approved = 1 WHERE user_id = ?",
+          [temp_user_id],
+        );
 
         if (user.email) {
           user.user_id = newId;
@@ -1502,12 +1504,14 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
@@ -1744,44 +1748,45 @@ export const UserModel = {
   // },
 
   addQueuedUser: async (user_id, referral_id) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
-      const [data] = await db.query(
+      const [data] = await connection.query(
         "SELECT * FROM users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT INTO user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
-      await db.query(
+      await connection.query(
         `INSERT INTO user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
@@ -1795,7 +1800,7 @@ export const UserModel = {
       );
 
       // Level 1 payout = 100
-      await db.query(
+      await connection.query(
         `INSERT INTO user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 100, 'unpaid')`,
@@ -1803,7 +1808,7 @@ export const UserModel = {
       );
 
       // Level 2 - 8 payout = 10
-      await db.query(
+      await connection.query(
         `INSERT INTO user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -1818,7 +1823,7 @@ export const UserModel = {
       );
 
       // Level 9 payout = 185
-      await db.query(
+      await connection.query(
         `INSERT INTO user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -1832,11 +1837,13 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
   allUserPayouts: async ({ start, end }) => {
@@ -1904,17 +1911,18 @@ export const UserModel = {
   },
 
   addPackageToUser: async ({ user_data, level }) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUser();
+      const lastId = await UserModel.getLastUser(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("DS")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -1930,7 +1938,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -1947,17 +1955,21 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM user_relations
@@ -1965,12 +1977,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 100, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 10, 'unpaid'
               FROM user_relations
@@ -1978,7 +1990,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 185, 'unpaid'
                 FROM user_relations
@@ -1989,11 +2001,13 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
@@ -2102,25 +2116,26 @@ export const UserModel = {
   },
 
   approveUserTT: async (user_ids) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUserTT();
+      const lastId = await UserModel.getLastUserTT(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM tt_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM tt_users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -2129,7 +2144,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM tt_users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -2140,7 +2155,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "TT" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO tt_users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -2158,20 +2173,20 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO tt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO tt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM tt_user_relations
@@ -2180,14 +2195,14 @@ export const UserModel = {
           );
 
           // Level 1 payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 2000, 'unpaid')`,
             [referrer.user_id, newId],
           );
 
           // Level 2–8 payout = 10
-          await db.query(
+          await connection.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1000, 'unpaid'
      FROM tt_user_relations
@@ -2196,7 +2211,7 @@ export const UserModel = {
           );
 
           // Level 9+ payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 11500, 'unpaid'
      FROM tt_user_relations
@@ -2205,7 +2220,7 @@ export const UserModel = {
           );
         }
 
-        await db.query(
+        await connection.query(
           "UPDATE tt_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
@@ -2227,19 +2242,21 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
-  getLastUserTT: async () => {
+  getLastUserTT: async (connection = db) => {
     try {
       const query = "SELECT user_id from tt_users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
@@ -2296,8 +2313,9 @@ export const UserModel = {
   },
 
   addPackageToTTUser: async ({ user_data, level }) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
@@ -2306,7 +2324,7 @@ export const UserModel = {
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserTT();
+      const lastId = await UserModel.getLastUserTT(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("TT")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -2322,7 +2340,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -2339,17 +2357,21 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO tt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO tt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO tt_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM tt_user_relations
@@ -2357,12 +2379,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 2000, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 1000, 'unpaid'
               FROM tt_user_relations
@@ -2370,7 +2392,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO tt_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 11500, 'unpaid'
                 FROM tt_user_relations
@@ -2381,11 +2403,13 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
@@ -2487,37 +2511,38 @@ export const UserModel = {
   },
 
   addQueuedTTUser: async (user_id, referral_id) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
-      const [data] = await db.query(
+      const [data] = await connection.query(
         "SELECT * FROM tt_users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM tt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE tt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT INTO tt_user_relations
        (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
@@ -2525,7 +2550,7 @@ export const UserModel = {
       );
 
       // Level 2 & 3 relations only
-      await db.query(
+      await connection.query(
         `INSERT INTO tt_user_relations
        (ancestor_id, descendant_id, level)
        SELECT
@@ -2540,7 +2565,7 @@ export const UserModel = {
       );
 
       // Level 1 payout
-      await db.query(
+      await connection.query(
         `INSERT INTO tt_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 2000, 'unpaid')`,
@@ -2548,7 +2573,7 @@ export const UserModel = {
       );
 
       // Level 2 payout
-      await db.query(
+      await connection.query(
         `INSERT INTO tt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -2563,7 +2588,7 @@ export const UserModel = {
       );
 
       // Level 3 payout
-      await db.query(
+      await connection.query(
         `INSERT INTO tt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -2577,13 +2602,16 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
+
   getTTUserStatus: async (timeline = false, year = null, month = null) => {
     try {
       let activeQuery = "",
@@ -2906,10 +2934,10 @@ export const UserModel = {
     }
   },
 
-  getLastUserRT: async () => {
+  getLastUserRT: async (connection = db) => {
     try {
       const query = "SELECT user_id from rpt_users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
@@ -2921,25 +2949,26 @@ export const UserModel = {
   },
 
   approveUserRT: async (user_ids) => {
+    const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUserRT();
+      const lastId = await UserModel.getLastUserRT(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("RP")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM rpt_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM rpt_users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -2948,7 +2977,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM rpt_users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -2959,7 +2988,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "RP" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO rpt_users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -2977,20 +3006,20 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM rpt_user_relations
@@ -2999,7 +3028,7 @@ export const UserModel = {
           );
 
           // Level 1 payout = 1000
-          await db.query(
+          await connection.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 1000, 'unpaid')`,
             [referrer.user_id, newId],
@@ -3007,7 +3036,7 @@ export const UserModel = {
 
           // Level 2–3 payout = 500
 
-          await db.query(
+          await connection.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 500, 'unpaid'
      FROM rpt_user_relations
@@ -3017,7 +3046,7 @@ export const UserModel = {
 
           // Level 4–8 payout = 200
 
-          await db.query(
+          await connection.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 200, 'unpaid'
      FROM rpt_user_relations
@@ -3026,7 +3055,7 @@ export const UserModel = {
           );
 
           // Level 9+ payout = 5650
-          await db.query(
+          await connection.query(
             `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 5650, 'unpaid'
      FROM rpt_user_relations
@@ -3035,7 +3064,7 @@ export const UserModel = {
           );
         }
 
-        await db.query(
+        await connection.query(
           "UPDATE rpt_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
@@ -3057,12 +3086,14 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
   },
 
@@ -3159,44 +3190,45 @@ export const UserModel = {
     }
   },
   addQueuedRTUser: async (user_id, referral_id) => {
+     const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
-      const [data] = await db.query(
+      const [data] = await connection.query(
         "SELECT * FROM rpt_users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM rpt_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE rpt_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
@@ -3210,7 +3242,7 @@ export const UserModel = {
       );
 
       // Level 1 payout = 1000
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 1000, 'unpaid')`,
@@ -3218,7 +3250,7 @@ export const UserModel = {
       );
 
       // Level 2 - 3 payout = 500
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -3233,7 +3265,7 @@ export const UserModel = {
       );
 
       // level 4 to 8 --200
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -3248,7 +3280,7 @@ export const UserModel = {
       );
 
       // Level 9 payout = 185
-      await db.query(
+      await connection.query(
         `INSERT INTO rpt_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -3262,12 +3294,15 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally {
+    connection.release();
+  }
   },
 
   getUserRT: async (user_id) => {
@@ -3305,17 +3340,18 @@ export const UserModel = {
   },
 
   addPackageToRTUser: async ({ user_data, level }) => {
+     const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+     
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserRT();
+      const lastId = await UserModel.getLastUserRT(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("RT")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -3331,7 +3367,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -3348,17 +3384,17 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM rpt_user_relations
@@ -3366,12 +3402,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 800, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 50, 'unpaid'
               FROM rpt_user_relations
@@ -3379,7 +3415,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 1900, 'unpaid'
                 FROM rpt_user_relations
@@ -3387,7 +3423,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 100, 'unpaid'
                 FROM rpt_user_relations
@@ -3398,13 +3434,16 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
-    }
+    }finally {
+    connection.release();
+  }
   },
+
 
   getRTUserStatus: async (timeline = false, year = null, month = null) => {
     try {
@@ -3613,25 +3652,26 @@ export const UserModel = {
   },
 
   approveUserNP: async (user_ids) => {
+     const connection = await db.getConnection();
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUserNP();
+      const lastId = await UserModel.getLastUserNP(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("MR")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM np_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM np_users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -3640,7 +3680,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM np_users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -3651,7 +3691,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "MR" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO np_users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -3669,62 +3709,62 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO np_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO np_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
-     FROM rpt_user_relations
+     FROM np_user_relations
      WHERE descendant_id = ? AND ancestor_id IS NOT NULL`,
             [newId, referrer.user_id],
           );
 
           // Level 1 payout = 800
-          await db.query(
+          await connection.query(
             `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 800, 'unpaid')`,
             [referrer.user_id, newId],
           );
           // level 2 = 100
 
-          await db.query(
+          await connection.query(
             `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 100, 'unpaid'
-     FROM rpt_user_relations
+     FROM np_user_relations
      WHERE descendant_id = ? AND level = 2`,
             [newId, newId],
           );
           // Level 3–8 payout = 50
-          await db.query(
+          await connection.query(
             `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 50, 'unpaid'
-     FROM rpt_user_relations
+     FROM np_user_relations
      WHERE descendant_id = ? AND level BETWEEN 3 AND 8`,
             [newId, newId],
           );
 
           // Level 9+ payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1900, 'unpaid'
-     FROM rpt_user_relations
+     FROM np_user_relations
      WHERE descendant_id = ? AND level = 9`,
             [newId, newId],
           );
         }
 
-        await db.query(
+        await connection.query(
           "UPDATE np_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
@@ -3746,19 +3786,22 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally {
+    connection.release();
+  }
   },
 
-  getLastUserNP: async () => {
+  getLastUserNP: async (connection=db) => {
     try {
       const query = "SELECT user_id from np_users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
@@ -3969,44 +4012,46 @@ export const UserModel = {
   },
 
   addQueuedNPUser: async (user_id, referral_id) => {
-    try {
-      await db.beginTransaction();
+         const connection = await db.getConnection();
 
-      const [data] = await db.query(
+    try {
+      await connection.beginTransaction();
+
+      const [data] = await connection.query(
         "SELECT * FROM np_users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM np_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE np_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
@@ -4020,14 +4065,14 @@ export const UserModel = {
       );
 
       // Level 1 payout = 100
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 800, 'unpaid')`,
         [referral_id, user_id],
       );
 
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4042,7 +4087,7 @@ export const UserModel = {
       );
 
       // Level 3 - 8 payout = 10
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4057,7 +4102,7 @@ export const UserModel = {
       );
 
       // Level 9 payout = 185
-      await db.query(
+      await connection.query(
         `INSERT INTO np_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4071,13 +4116,17 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally {
+    connection.release();
+  }
   },
+
 
   getNPSales: async ({ start, end }) => {
     try {
@@ -4148,17 +4197,19 @@ export const UserModel = {
   },
 
   addPackageToRTUser: async ({ user_data, level }) => {
+         const connection = await db.getConnection();
+
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+      
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserRT();
+      const lastId = await UserModel.getLastUserRT(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("RP")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -4174,7 +4225,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -4191,17 +4242,17 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM rpt_user_relations
@@ -4209,19 +4260,19 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 1000, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 500, 'unpaid'
               FROM rpt_user_relations
               WHERE descendant_id = ? AND level BETWEEN 2 AND 3`,
               [newId, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 200, 'unpaid'
               FROM rpt_user_relations
@@ -4229,7 +4280,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO rpt_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 5650, 'unpaid'
                 FROM rpt_user_relations
@@ -4240,25 +4291,30 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally {
+    connection.release();
+  }
   },
   addPackageToNPUser: async ({ user_data, level }) => {
+         const connection = await db.getConnection();
+
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+      
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserNP();
+      const lastId = await UserModel.getLastUserNP(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("MR")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -4274,7 +4330,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -4291,17 +4347,17 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO np_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO np_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO np_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM np_user_relations
@@ -4309,12 +4365,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 800, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 50, 'unpaid'
               FROM np_user_relations
@@ -4322,7 +4378,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 1900, 'unpaid'
                 FROM np_user_relations
@@ -4330,7 +4386,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO np_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 100, 'unpaid'
                 FROM np_user_relations
@@ -4341,12 +4397,15 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally {
+    connection.release();
+  }
   },
 
   getUserRT: async (user_id) => {
@@ -4435,11 +4494,13 @@ export const UserModel = {
   },
 
   approveUserFS: async (user_ids) => {
+         const connection = await db.getConnection();
+
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUserFS();
+      const lastId = await UserModel.getLastUserFS(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("FS")[1]) : 0;
 
       user_ids?.sort((a, b) =>
@@ -4447,14 +4508,14 @@ export const UserModel = {
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM fs_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM fs_users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -4463,7 +4524,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM fs_users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -4474,7 +4535,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "FS" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO fs_users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -4492,20 +4553,20 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO fs_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO fs_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO fs_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM fs_user_relations
@@ -4514,14 +4575,14 @@ export const UserModel = {
           );
 
           // Level 1 payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 100, 'unpaid')`,
             [referrer.user_id, newId],
           );
 
           // Level 2–8 payout = 10
-          await db.query(
+          await connection.query(
             `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 10, 'unpaid'
      FROM fs_user_relations
@@ -4530,7 +4591,7 @@ export const UserModel = {
           );
 
           // Level 9+ payout = 5
-          await db.query(
+          await connection.query(
             `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 5, 'unpaid'
      FROM fs_user_relations
@@ -4539,7 +4600,7 @@ export const UserModel = {
           );
 
           // level 10
-          await db.query(
+          await connection.query(
             `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 90, 'unpaid'
      FROM fs_user_relations
@@ -4548,7 +4609,7 @@ export const UserModel = {
           );
         }
 
-        await db.query(
+        await connection.query(
           "UPDATE fs_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
@@ -4570,19 +4631,22 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
+    }
+    finally{
+      connection.release()
     }
   },
 
-  getLastUserFS: async () => {
+  getLastUserFS: async (connection = db) => {
     try {
       const query = "SELECT user_id from fs_users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
@@ -4734,44 +4798,46 @@ export const UserModel = {
   },
 
   addQueuedFSUser: async (user_id, referral_id) => {
-    try {
-      await db.beginTransaction();
+         const connection = await db.getConnection();
 
-      const [data] = await db.query(
+    try {
+      await connection.beginTransaction();
+
+      const [data] = await connection.query(
         "SELECT * FROM fs_users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM fs_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE fs_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
@@ -4779,13 +4845,13 @@ export const UserModel = {
          level + 1
        FROM fs_user_relations
        WHERE descendant_id = ?
-       AND level <= 10
+       AND level < 10
        AND ancestor_id IS NOT NULL`,
         [user_id, referral_id],
       );
 
       // Level 1 payout = 100
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 100, 'unpaid')`,
@@ -4793,7 +4859,7 @@ export const UserModel = {
       );
 
       // Level 2 - 8 payout = 10
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4808,7 +4874,7 @@ export const UserModel = {
       );
 
       // Level 9 payout = 5
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4822,7 +4888,7 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.query(
+      await connection.query(
         `INSERT INTO fs_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -4836,12 +4902,13 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally{ connection.release() }
   },
 
   getFSSales: async ({ start, end }) => {
@@ -4947,17 +5014,19 @@ export const UserModel = {
   },
 
   addPackageToFSUser: async ({ user_data, level }) => {
+         const connection = await db.getConnection();
+
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+      
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserFS();
+      const lastId = await UserModel.getLastUserFS(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("FS")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -4973,7 +5042,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -4990,17 +5059,17 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO fs_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO fs_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO fs_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM fs_user_relations
@@ -5008,12 +5077,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 100, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
               SELECT ancestor_id, ?, 10, 'unpaid'
               FROM fs_user_relations
@@ -5021,7 +5090,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 5, 'unpaid'
                 FROM fs_user_relations
@@ -5029,7 +5098,7 @@ export const UserModel = {
               [newId, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO fs_user_balance_logs (user_id, related_user_id, amount, status)
                 SELECT ancestor_id, ?, 90, 'unpaid'
                 FROM fs_user_relations
@@ -5040,12 +5109,13 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally{ connection.release() }
   },
 
   getFSUserStatus: async (timeline = false, year = null, month = null) => {
@@ -5531,44 +5601,46 @@ export const UserModel = {
   },
 
   addQueuedKRUser: async (user_id, referral_id) => {
-    try {
-      await db.beginTransaction();
+         const connection = await db.getConnection();
 
-      const [data] = await db.query(
+    try {
+      await connection.beginTransaction();
+
+      const [data] = await connection.query(
         "SELECT * FROM kr_users WHERE user_id = ? AND deleted_at IS NULL",
         [user_id],
       );
 
       if (data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
-      const [referrar_data] = await db.query(
+      const [referrar_data] = await connection.query(
         "SELECT * FROM kr_users WHERE user_id = ? AND status = 'Approved' AND deleted_at IS NULL",
         [referral_id],
       );
 
       if (referrar_data.length === 0) {
-        await db.rollback();
+        await connection.rollback();
         return false;
       }
 
       // Update queued user
-      await db.query(
+      await connection.query(
         "UPDATE kr_users SET referral_id = ?, status = 'Approved' WHERE user_id = ?",
         [referral_id, user_id],
       );
 
       // Level 1 relation
-      await db.query(
+      await connection.query(
         `INSERT IGNORE  INTO kr_user_relations (ancestor_id, descendant_id, level)
        VALUES (?, ?, 1)`,
         [referral_id, user_id],
       );
 
       // Level 2 - 9 relations
-      await db.query(
+      await connection.query(
         `INSERT IGNORE INTO kr_user_relations (ancestor_id, descendant_id, level)
        SELECT
          ancestor_id,
@@ -5582,7 +5654,7 @@ export const UserModel = {
       );
 
       // Level 1 payout = 100
-      await db.query(
+      await connection.query(
         `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        VALUES (?, ?, 50, 'unpaid')`,
@@ -5590,7 +5662,7 @@ export const UserModel = {
       );
 
       // Level 2 - 8 payout = 10
-      await db.query(
+      await connection.query(
         `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -5611,7 +5683,7 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.query(
+      await connection.query(
         `INSERT IGNORE  INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -5625,7 +5697,7 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.query(
+      await connection.query(
         `INSERT IGNORE INTO kr_user_balance_logs
        (user_id, related_user_id, amount, status)
        SELECT
@@ -5640,12 +5712,13 @@ export const UserModel = {
         [user_id, user_id],
       );
 
-      await db.commit();
+      await connection.commit();
       return true;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally{ connection.release() }
   },
 
   getKRSales: async ({ start, end }) => {
@@ -5808,17 +5881,19 @@ export const UserModel = {
   },
 
   addPackageToKRUser: async ({ user_data, level }) => {
+         const connection = await db.getConnection();
+
     try {
-      await db.beginTransaction();
+      await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      console.log("level", level);
+     
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
 
-      const lastId = await UserModel.getLastUserKR();
+      const lastId = await UserModel.getLastUserKR(connection);
       let value = lastId.length > 0 ? parseInt(lastId.split("KR")[1]) : 0;
 
       for (let i = 1; i <= level; i++) {
@@ -5834,7 +5909,7 @@ export const UserModel = {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             `;
 
-            await db.query(userQuery, [
+            await connection.query(userQuery, [
               referrer_id,
               newId,
               user_data.name,
@@ -5851,17 +5926,17 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO kr_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await db.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
 
-            await db.query(
+            await connection.query(
               "INSERT INTO kr_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
               [referrer_id, newId],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
              SELECT ancestor_id, ?, level + 1
              FROM kr_user_relations
@@ -5869,12 +5944,12 @@ export const UserModel = {
               [newId, referrer_id],
             );
 
-            await db.query(
+            await connection.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 50, 'unpaid')`,
               [referrer_id, newId],
             );
-            await db.query(
+            await connection.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1, 'unpaid'
      FROM kr_user_relations
@@ -5882,7 +5957,7 @@ export const UserModel = {
               [newId, newId],
             );
             // Level 5 = 2
-            await db.query(
+            await connection.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 2, 'unpaid'
      FROM kr_user_relations
@@ -5891,7 +5966,7 @@ export const UserModel = {
             );
 
             // Level 9+ payout = 100
-            await db.query(
+            await connection.query(
               `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 8, 'unpaid'
      FROM kr_user_relations
@@ -5902,12 +5977,13 @@ export const UserModel = {
         }
         currentLevel = nextLevel;
       }
-      await db.commit();
+      await connection.commit();
       return new_ids;
     } catch (err) {
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
+    finally{ connection.release() }
   },
 };
 
