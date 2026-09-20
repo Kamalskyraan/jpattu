@@ -5381,7 +5381,7 @@ export const UserModel = {
           );
           // Level 5 = 2
           await connection.query(
-            `INSERTIGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+            `INSERT IGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 2, 'unpaid'
      FROM kr_user_relations
      WHERE descendant_id = ? AND level IN (5, 9, 10, 12, 15, 19)`,
