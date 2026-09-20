@@ -5207,24 +5207,25 @@ export const UserModel = {
 
   approveUserKR: async (user_ids) => {
     try {
-      await db.beginTransaction();
+      const connection = await db.getConnection();
+      await connection.beginTransaction();
       const ids = [];
 
-      const lastId = await UserModel.getLastUserKR();
+      const lastId = await UserModel.getLastUserKR(connection);
       let baseId = lastId.length > 0 ? parseInt(lastId.split("KR")[1]) : 0;
       user_ids.sort((a, b) =>
         a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
       );
 
       for (const temp_user_id of user_ids) {
-        const [[user]] = await db.query(
+        const [[user]] = await connection.query(
           "SELECT * FROM kr_temp_users WHERE user_id = ? AND approved = 0 AND deleted_at IS NULL",
           [temp_user_id],
         );
 
         if (!user) continue;
 
-        const [[referrer]] = await db.query(
+        const [[referrer]] = await connection.query(
           `SELECT user_id, 'user' as role FROM kr_users WHERE user_id = ?
          UNION
          SELECT user_id, role FROM admin WHERE user_id = ?`,
@@ -5233,7 +5234,7 @@ export const UserModel = {
 
         let status = "Approved";
 
-        const [[{ count }]] = await db.query(
+        const [[{ count }]] = await connection.query(
           "SELECT COUNT(*) as count FROM kr_users WHERE referral_id = ?",
           [referrer.user_id],
         );
@@ -5244,7 +5245,7 @@ export const UserModel = {
         baseId += 1;
         const newId = "KR" + baseId.toString();
 
-        await db.query(
+        await connection.query(
           `INSERT INTO kr_users 
         (referral_id, user_id, name, mobile, email, address, password, status, txn_id, screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -5262,20 +5263,20 @@ export const UserModel = {
           ],
         );
 
-        await db.query(
+        await connection.query(
           "INSERT INTO kr_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)",
           [newId, 0, "paid"],
         );
 
         if (status === "Approved" && referrer?.role === "user") {
           // Add direct relation
-          await db.query(
+          await connection.query(
             "INSERT INTO kr_user_relations (ancestor_id, descendant_id, level) VALUES (?, ?, 1)",
             [referrer.user_id, newId],
           );
 
           // Add upper relations
-          await db.query(
+          await connection.query(
             `INSERT INTO kr_user_relations (ancestor_id, descendant_id, level)
      SELECT ancestor_id, ?, level + 1
      FROM kr_user_relations
@@ -5284,14 +5285,14 @@ export const UserModel = {
           );
 
           // Level 1 payout = 800
-          await db.query(
+          await connection.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      VALUES (?, ?, 50, 'unpaid')`,
             [referrer.user_id, newId],
           );
           // level 2 = 100
 
-          await db.query(
+          await connection.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1, 'unpaid'
      FROM kr_user_relations
@@ -5299,7 +5300,7 @@ export const UserModel = {
             [newId, newId],
           );
           // Level 5 = 2
-          await db.query(
+          await connection.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 2, 'unpaid'
      FROM kr_user_relations
@@ -5308,7 +5309,7 @@ export const UserModel = {
           );
 
           // Level 9+ payout = 100
-          await db.query(
+          await connection.query(
             `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 8, 'unpaid'
      FROM kr_user_relations
@@ -5317,7 +5318,7 @@ export const UserModel = {
           );
         }
 
-        await db.query(
+        await connection.query(
           "UPDATE kr_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
@@ -5341,19 +5342,19 @@ export const UserModel = {
         });
       }
 
-      await db.commit();
+      await connection.commit();
       return ids;
     } catch (err) {
       console.error("approveUser error:", err);
-      await db.rollback();
+      await connection.rollback();
       throw err;
     }
   },
 
-  getLastUserKR: async () => {
+  getLastUserKR: async (connection = db) => {
     try {
       const query = "SELECT user_id from kr_users ORDER BY id DESC LIMIT 1";
-      const [id] = await db.query(query);
+      const [id] = await connection.query(query);
       if (id[0]?.user_id) {
         return id[0].user_id;
       } else {
