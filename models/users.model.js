@@ -3190,7 +3190,7 @@ export const UserModel = {
     }
   },
   addQueuedRTUser: async (user_id, referral_id) => {
-     const connection = await db.getConnection();
+    const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
 
@@ -3299,10 +3299,9 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally {
-    connection.release();
-  }
   },
 
   getUserRT: async (user_id) => {
@@ -3340,13 +3339,13 @@ export const UserModel = {
   },
 
   addPackageToRTUser: async ({ user_data, level }) => {
-     const connection = await db.getConnection();
+    const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-     
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
@@ -3384,7 +3383,11 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
@@ -3439,11 +3442,10 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
-    }finally {
-    connection.release();
-  }
+    } finally {
+      connection.release();
+    }
   },
-
 
   getRTUserStatus: async (timeline = false, year = null, month = null) => {
     try {
@@ -3652,7 +3654,7 @@ export const UserModel = {
   },
 
   approveUserNP: async (user_ids) => {
-     const connection = await db.getConnection();
+    const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
       const ids = [];
@@ -3792,13 +3794,12 @@ export const UserModel = {
       console.error("approveUser error:", err);
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally {
-    connection.release();
-  }
   },
 
-  getLastUserNP: async (connection=db) => {
+  getLastUserNP: async (connection = db) => {
     try {
       const query = "SELECT user_id from np_users ORDER BY id DESC LIMIT 1";
       const [id] = await connection.query(query);
@@ -4012,7 +4013,7 @@ export const UserModel = {
   },
 
   addQueuedNPUser: async (user_id, referral_id) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -4121,12 +4122,10 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally {
-    connection.release();
-  }
   },
-
 
   getNPSales: async ({ start, end }) => {
     try {
@@ -4197,14 +4196,14 @@ export const UserModel = {
   },
 
   addPackageToRTUser: async ({ user_data, level }) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
@@ -4242,7 +4241,11 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO rpt_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
@@ -4296,20 +4299,19 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally {
-    connection.release();
-  }
   },
   addPackageToNPUser: async ({ user_data, level }) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
@@ -4347,7 +4349,11 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO np_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
@@ -4402,10 +4408,9 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally {
-    connection.release();
-  }
   },
 
   getUserRT: async (user_id) => {
@@ -4494,7 +4499,7 @@ export const UserModel = {
   },
 
   approveUserFS: async (user_ids) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -4637,9 +4642,8 @@ export const UserModel = {
       console.error("approveUser error:", err);
       await connection.rollback();
       throw err;
-    }
-    finally{
-      connection.release()
+    } finally {
+      connection.release();
     }
   },
 
@@ -4798,7 +4802,7 @@ export const UserModel = {
   },
 
   addQueuedFSUser: async (user_id, referral_id) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -4907,8 +4911,9 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally{ connection.release() }
   },
 
   getFSSales: async ({ start, end }) => {
@@ -5014,14 +5019,14 @@ export const UserModel = {
   },
 
   addPackageToFSUser: async ({ user_data, level }) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-      
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
@@ -5059,7 +5064,11 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO fs_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
@@ -5114,8 +5123,9 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally{ connection.release() }
   },
 
   getFSUserStatus: async (timeline = false, year = null, month = null) => {
@@ -5601,7 +5611,7 @@ export const UserModel = {
   },
 
   addQueuedKRUser: async (user_id, referral_id) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -5717,8 +5727,9 @@ export const UserModel = {
     } catch (err) {
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally{ connection.release() }
   },
 
   getKRSales: async ({ start, end }) => {
@@ -5881,14 +5892,14 @@ export const UserModel = {
   },
 
   addPackageToKRUser: async ({ user_data, level }) => {
-         const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
       await connection.beginTransaction();
 
       let currentLevel = [user_data.user_id];
       let new_ids = [];
-     
+
       const status = "Approved";
       const cashbackStatus = "paid";
       const amount = 0;
@@ -5926,7 +5937,11 @@ export const UserModel = {
             ]);
 
             const cashbackQuery = `INSERT INTO kr_user_cashbacks (user_id, amount, status) VALUES (?, ?, ?)`;
-            await connection.query(cashbackQuery, [newId, amount, cashbackStatus]);
+            await connection.query(cashbackQuery, [
+              newId,
+              amount,
+              cashbackStatus,
+            ]);
 
             nextLevel.push(newId);
             new_ids.push(newId);
@@ -5980,10 +5995,12 @@ export const UserModel = {
       await connection.commit();
       return new_ids;
     } catch (err) {
+      console.log(err)
       await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
-    finally{ connection.release() }
   },
 };
 
