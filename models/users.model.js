@@ -5286,8 +5286,8 @@ export const UserModel = {
   },
 
   approveUserKR: async (user_ids) => {
+    const connection = await db.getConnection();
     try {
-      const connection = await db.getConnection();
       await connection.beginTransaction();
       const ids = [];
 
