@@ -5960,12 +5960,12 @@ export const UserModel = {
             );
 
             await connection.query(
-              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+              `INSERT IGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
              VALUES (?, ?, 50, 'unpaid')`,
               [referrer_id, newId],
             );
             await connection.query(
-              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+              `INSERT IGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 1, 'unpaid'
      FROM kr_user_relations
      WHERE descendant_id = ? AND level IN(2,3,4,11,6,7,8,13,14,16,17,18)`,
@@ -5973,7 +5973,7 @@ export const UserModel = {
             );
             // Level 5 = 2
             await connection.query(
-              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+              `INSERT IGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 2, 'unpaid'
      FROM kr_user_relations
      WHERE descendant_id = ? AND level IN (5, 9, 10, 12, 15, 19)`,
@@ -5982,7 +5982,7 @@ export const UserModel = {
 
             // Level 9+ payout = 100
             await connection.query(
-              `INSERT INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
+              `INSERT IGNORE  INTO kr_user_balance_logs (user_id, related_user_id, amount, status)
      SELECT ancestor_id, ?, 8, 'unpaid'
      FROM kr_user_relations
      WHERE descendant_id = ? AND level = 20`,
