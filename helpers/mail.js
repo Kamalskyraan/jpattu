@@ -202,7 +202,7 @@ export const sendMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Jarikai Pattu Team
                     </td>
                   </tr>
@@ -231,6 +231,18 @@ export const sendMail = (user) => {
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web :
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -243,17 +255,7 @@ export const sendMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web :
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -463,8 +465,8 @@ export const sendNWPMail = async ({
                 "
               >
                 mobile : ${planDetails.mobile}<br />
-                mail : ${planDetails.email}<br />
                 Website : ${planDetails.website}
+                mail : ${planDetails.email}<br />
               </td>
             </tr>
            </div>
@@ -672,7 +674,7 @@ export const sendAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Jarikai Pattu Team
                     </td>
                   </tr>
@@ -700,6 +702,17 @@ export const sendAdminMail = (user) => {
                       </a>
                     </td>
                   </tr>
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
 
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
@@ -713,17 +726,7 @@ export const sendAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -935,7 +938,7 @@ export const sendNWPAdminMail = async ({
                 "
               >
               
-                <strong>Customer Service</strong><br />
+                
                 <strong>Jarikai Pattu Team</strong>
               </td>
             </tr>
@@ -950,8 +953,8 @@ export const sendNWPAdminMail = async ({
                 "
               >
                 mobile : ${planDetails.customerCare}<br />
-                mail : ${planDetails.email}<br />
                 Website : ${planDetails.website}
+                mail : ${planDetails.email}<br />
               </td>
             </tr>
 
@@ -1083,7 +1086,7 @@ export const sendMemberPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Jarikai Pattu Team
                     </td>
                   </tr>
@@ -1112,6 +1115,19 @@ export const sendMemberPackageMail = async ({
                     </td>
                   </tr>
 
+                  
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -1124,17 +1140,6 @@ export const sendMemberPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
                 </table>
               </td>
             </tr>
@@ -1251,7 +1256,7 @@ export const sendMembersPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Jarikai Pattu Team
                     </td>
                   </tr>
@@ -1280,6 +1285,17 @@ export const sendMembersPackageAdminMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -1292,17 +1308,7 @@ export const sendMembersPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -1494,7 +1500,7 @@ export const sendTargetMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                      Right Shadow Team
                     </td>
                   </tr>
@@ -1523,6 +1529,18 @@ export const sendTargetMail = (user) => {
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -1535,17 +1553,7 @@ export const sendTargetMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -1743,7 +1751,7 @@ export const sendTargetAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -1771,6 +1779,17 @@ export const sendTargetAdminMail = (user) => {
                       </a>
                     </td>
                   </tr>
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
 
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
@@ -1784,17 +1803,7 @@ export const sendTargetAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -1925,7 +1934,7 @@ export const sendMemberTargetPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -1954,6 +1963,18 @@ export const sendMemberTargetPackageMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -1966,17 +1987,7 @@ export const sendMemberTargetPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -2093,7 +2104,7 @@ export const sendMembersTargetPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -2122,6 +2133,18 @@ export const sendMembersTargetPackageAdminMail = async ({
                     </td>
                   </tr>
 
+
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -2134,17 +2157,7 @@ export const sendMembersTargetPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -2336,7 +2349,7 @@ export const sendRepeatMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -2364,7 +2377,17 @@ export const sendRepeatMail = (user) => {
                       </a>
                     </td>
                   </tr>
-
+ <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -2377,17 +2400,7 @@ export const sendRepeatMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -2585,7 +2598,7 @@ export const sendRepeatAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -2615,6 +2628,18 @@ export const sendRepeatAdminMail = (user) => {
                   </tr>
 
                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
                       <a
@@ -2626,17 +2651,7 @@ export const sendRepeatAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                  
                 </table>
               </td>
             </tr>
@@ -2770,7 +2785,7 @@ export const sendMemberRepeatPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -2798,6 +2813,17 @@ export const sendMemberRepeatPackageMail = async ({
                       </a>
                     </td>
                   </tr>
+                  <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
 
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
@@ -2811,17 +2837,7 @@ export const sendMemberRepeatPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                  
                 </table>
               </td>
             </tr>
@@ -2940,7 +2956,7 @@ export const sendMembersRepeatPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -2969,19 +2985,7 @@ export const sendMembersRepeatPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 5px; font-size: 14px">
-                      Mail:
-                      <a
-                        href="mailto:rightshadow.in@gmail.com"
-                        style="text-decoration: none; color: #000"
-                      >
-                        rightshadow.in@gmail.com
-                      </a>
-                    </td>
-                  </tr>
-
-                  <tr>
+                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
                       Web:
                       <a
@@ -2995,6 +2999,20 @@ export const sendMembersRepeatPackageAdminMail = async ({
                 </table>
               </td>
             </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                 
          
 
           </table>
@@ -3183,7 +3201,7 @@ export const sendNPMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -3212,6 +3230,17 @@ export const sendNPMail = (user) => {
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -3224,17 +3253,7 @@ export const sendNPMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -3434,7 +3453,7 @@ export const sendNPAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -3462,6 +3481,17 @@ export const sendNPAdminMail = (user) => {
                       </a>
                     </td>
                   </tr>
+                    <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
 
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
@@ -3475,17 +3505,7 @@ export const sendNPAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                
                 </table>
               </td>
             </tr>
@@ -3618,7 +3638,7 @@ export const sendMemberNPPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -3647,6 +3667,18 @@ export const sendMemberNPPackageMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -3659,17 +3691,7 @@ export const sendMemberNPPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -3789,7 +3811,7 @@ export const sendMembersNPPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -3818,18 +3840,7 @@ export const sendMembersNPPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 5px; font-size: 14px">
-                      Mail:
-                      <a
-                        href="mailto:rightshadow.in@gmail.com"
-                        style="text-decoration: none; color: #000"
-                      >
-                        rightshadow.in@gmail.com
-                      </a>
-                    </td>
-                  </tr>
-
+                  
                   <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
                       Web:
@@ -3844,6 +3855,19 @@ export const sendMembersNPPackageAdminMail = async ({
                 </table>
               </td>
             </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
          
 
           </table>
@@ -4032,7 +4056,7 @@ export const sendFSMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -4060,7 +4084,17 @@ export const sendFSMail = (user) => {
                       </a>
                     </td>
                   </tr>
-
+<tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -4073,17 +4107,7 @@ export const sendFSMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                  
                 </table>
               </td>
             </tr>
@@ -4283,7 +4307,7 @@ export const sendFSAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -4312,6 +4336,18 @@ export const sendFSAdminMail = (user) => {
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -4324,17 +4360,7 @@ export const sendFSAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -4466,7 +4492,7 @@ export const sendMemberFSPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -4495,6 +4521,17 @@ export const sendMemberFSPackageMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -4507,17 +4544,7 @@ export const sendMemberFSPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -4638,7 +4665,7 @@ export const sendMembersFSPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -4667,19 +4694,7 @@ export const sendMembersFSPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 5px; font-size: 14px">
-                      Mail:
-                      <a
-                        href="mailto:rightshadow.in@gmail.com"
-                        style="text-decoration: none; color: #000"
-                      >
-                        rightshadow.in@gmail.com
-                      </a>
-                    </td>
-                  </tr>
-
-                  <tr>
+                    <tr>
                     <td style="padding-bottom: 6px; font-size: 14px">
                       Web:
                       <a
@@ -4693,6 +4708,20 @@ export const sendMembersFSPackageAdminMail = async ({
                 </table>
               </td>
             </tr>
+
+                  <tr>
+                    <td style="padding-bottom: 5px; font-size: 14px">
+                      Mail:
+                      <a
+                        href="mailto:rightshadow.in@gmail.com"
+                        style="text-decoration: none; color: #000"
+                      >
+                        rightshadow.in@gmail.com
+                      </a>
+                    </td>
+                  </tr>
+
+                
          
 
           </table>
@@ -4884,7 +4913,7 @@ export const sendKRMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                    
                       Right Shadow Team
                     </td>
                   </tr>
@@ -4914,6 +4943,17 @@ export const sendKRMail = (user) => {
                   </tr>
 
                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
                       <a
@@ -4925,17 +4965,7 @@ export const sendKRMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                  
                 </table>
               </td>
             </tr>
@@ -5135,7 +5165,7 @@ export const sendKRAdminMail = (user) => {
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                      
                       Right Shadow Team
                     </td>
                   </tr>
@@ -5165,6 +5195,18 @@ export const sendKRAdminMail = (user) => {
                   </tr>
 
                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
+                  <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
                       <a
@@ -5176,17 +5218,7 @@ export const sendKRAdminMail = (user) => {
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                  
                 </table>
               </td>
             </tr>
@@ -5319,7 +5351,7 @@ export const sendMemberKRPackageMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -5348,6 +5380,18 @@ export const sendMemberKRPackageMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -5360,17 +5404,7 @@ export const sendMemberKRPackageMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
@@ -5492,7 +5526,7 @@ export const sendMembersKRPackageAdminMail = async ({
                         font-weight: bold;
                       "
                     >
-                      <strong>Customer Care</strong><br />
+                     
                       Right Shadow Team
                     </td>
                   </tr>
@@ -5521,6 +5555,18 @@ export const sendMembersKRPackageAdminMail = async ({
                     </td>
                   </tr>
 
+                   <tr>
+                    <td style="padding-bottom: 6px; font-size: 14px">
+                      Web:
+                      <a
+                        href="https://www.rightshadow.in"
+                        style="text-decoration: none; color: #000"
+                      >
+                        www.rightshadow.in
+                      </a>
+                    </td>
+                  </tr>
+
                   <tr>
                     <td style="padding-bottom: 5px; font-size: 14px">
                       Mail:
@@ -5533,17 +5579,7 @@ export const sendMembersKRPackageAdminMail = async ({
                     </td>
                   </tr>
 
-                  <tr>
-                    <td style="padding-bottom: 6px; font-size: 14px">
-                      Web:
-                      <a
-                        href="https://www.rightshadow.in"
-                        style="text-decoration: none; color: #000"
-                      >
-                        www.rightshadow.in
-                      </a>
-                    </td>
-                  </tr>
+                 
                 </table>
               </td>
             </tr>
