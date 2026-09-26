@@ -2103,3 +2103,36 @@ export const getKRHomeDetails = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const searchMembers = async (req, res) => {
+  try {
+    const {
+      type = "KR",
+      search = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const result = await AdminModel.searchMembers({
+      type: String(type).toUpperCase(),
+      search: String(search).trim(),
+      page: Number(page),
+      limit: Number(limit),
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      total: result.total,
+      page: Number(page),
+      limit: Number(limit),
+    });
+  } catch (error) {
+    console.error("Search members error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to fetch members",
+    });
+  }
+};

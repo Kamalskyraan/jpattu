@@ -23,7 +23,7 @@ const TreeModel = {
   
                       SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
                       FROM users u
-                      JOIN user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 9 AND status = "approved"
+                      JOIN user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 18 AND status = "approved"
                       )
                       SELECT * FROM user_relations`;
       const [data] = await db.query(query, [id]);
@@ -60,7 +60,7 @@ const TreeModel = {
       SELECT COUNT(*) AS count, level
       FROM user_relations
       WHERE ancestor_id = ?
-        AND level IN (1, 2, 3 , 4 , 5,6, 7, 8, 9)
+        AND level IN (1, 2, 3 , 4 , 5,6, 7, 8, 9 , 10,11,12,13,14,15,16,17,18)
       GROUP BY level
       ORDER BY level
     `;
@@ -410,7 +410,7 @@ const TreeModel = {
   
                       SELECT u.user_id, u.referral_id, u.name, u.mobile, ut.level + 1
                       FROM kr_users u
-                      JOIN kr_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 20 AND u.status = "approved"
+                      JOIN kr_user_relations ut ON u.referral_id = ut.user_id WHERE ut.level < 18 AND u.status = "approved"
                       )
                       SELECT * FROM kr_user_relations`;
       const [data] = await db.query(query, [id]);
@@ -447,7 +447,7 @@ const TreeModel = {
       SELECT COUNT(*) AS count, level
       FROM kr_user_relations
       WHERE ancestor_id = ?
-        AND level IN (1, 2, 3 , 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
+        AND level IN (1, 2, 3 , 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)
       GROUP BY level
       ORDER BY level
     `;

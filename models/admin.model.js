@@ -687,6 +687,148 @@ const AdminModel = {
       throw err;
     }
   },
+
+
+  // 
+
+
+
+searchMembers: async (data) => {
+  const {
+    type,
+    search = "",
+    page = 1,
+    limit = 10,
+  } = data;
+
+  const config = {
+    KR: {
+      memberTable: "kr_users",
+      balanceTable: "kr_user_balance_logs",
+      multiplier: 100,
+    },
+
+    DS: {
+      memberTable: "users",
+      balanceTable: "user_balance_logs",
+      multiplier: 1000,
+    },
+  };
+
+  const selectedConfig = config[type];
+
+  if (!selectedConfig) {
+    throw new Error("Invalid member type");
+  }
+
+  const {
+    memberTable,
+    balanceTable,
+    multiplier,
+  } = selectedConfig;
+
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const currentLimit = Math.max(Number(limit) || 10, 1);
+  const offset = (currentPage - 1) * currentLimit;
+
+  
+
+  const params = [];
+  let where = `WHERE 1 = 1`;
+
+  if (search) {
+    where += `
+      AND (
+        m.name LIKE ?
+        OR m.mobile LIKE ?
+        OR m.user_id LIKE ?
+      )
+    `;
+
+    const searchValue = `%${search}%`;
+
+    params.push(
+      searchValue,
+      searchValue,
+      searchValue,
+    );
+  }
+
+  // ===============================
+  // GET MEMBERS WITH BALANCE
+  // ===============================
+
+ const [rows] = await db.query(
+  `
+    SELECT
+      m.id,
+      m.user_id,
+      m.name,
+      m.mobile,
+      m.referral_id,
+      m.created_at,
+
+      COALESCE(SUM(bl.amount), 0) AS cumulative_amount,
+
+      (
+        COALESCE(SUM(bl.amount), 0) * ?
+      ) AS received_amount
+
+    FROM ${memberTable} AS m
+
+    INNER JOIN ${balanceTable} AS bl
+      ON bl.user_id = m.user_id
+
+    ${where}
+
+    GROUP BY
+      m.id,
+      m.user_id,
+      m.name,
+      m.mobile,
+      m.referral_id,
+      m.created_at
+
+    ORDER BY m.id DESC
+
+    LIMIT ? OFFSET ?
+  `,
+  [
+    multiplier,
+    ...params,
+    currentLimit,
+    offset,
+  ],
+);
+
+  // ===============================
+  // TOTAL MEMBERS
+  // ===============================
+
+const [countResult] = await db.query(
+  `
+    SELECT COUNT(*) AS total
+    FROM (
+      SELECT m.id
+
+      FROM ${memberTable} AS m
+
+      INNER JOIN ${balanceTable} AS bl
+        ON bl.user_id = m.user_id
+
+      ${where}
+
+      GROUP BY m.id
+    ) AS grouped_members
+  `,
+  params,
+);
+
+  return {
+    data: rows,
+    total: Number(countResult[0]?.total || 0),
+  };
+},
 };
 
 export default AdminModel;

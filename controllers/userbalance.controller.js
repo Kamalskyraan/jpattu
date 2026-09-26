@@ -108,7 +108,7 @@ export const getLevelIncome = async (req, res) => {
     const data = await UserBalanceModel.getLevelIncome({ user_id, start, end });
     data.sort((a, b) => a.level - b.level);
 
-    const maxLevel = 9;
+    const maxLevel = 18;
     const base = 2;
     let sub_total = 0;
     const result = Array.from({ length: maxLevel }, (_, i) => {
@@ -116,7 +116,21 @@ export const getLevelIncome = async (req, res) => {
       const members = base ** level;
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
-      const income = level === 1 ? 100 : level == 9 ? 185 : 10;
+      const income =
+        level === 1
+          ? 100
+          : [2, 3, 4, 7, 8, 9, 10].includes(level)
+            ? 10
+            : [5, 6].includes(level)
+              ? 11
+              : [11, 14, 17].includes(level)
+                ? 4
+                : [12, 13, 15, 16].includes(level)
+                  ? 5
+                  : level === 18
+                    ? 377
+                    : 0;
+
       const total_income = income * entry;
       sub_total += total_income;
 
@@ -638,7 +652,7 @@ export const getKRLevelIncome = async (req, res) => {
     });
     data.sort((a, b) => a.level - b.level);
 
-    const maxLevel = 20;
+    const maxLevel = 18;
     const base = 2;
     let sub_total = 0;
     const result = Array.from({ length: maxLevel }, (_, i) => {
@@ -647,8 +661,8 @@ export const getKRLevelIncome = async (req, res) => {
       const record = data.find((item) => item.level === level);
       const entry = record ? record.count : 0;
 
-      const oneValues = [2, 3, 4, 6, 7, 8, 11, 13, 14, 16, 17, 18];
-      const twoValues = [5, 9, 10, 12, 15, 19];
+      const oneValues = [2, 3, 4, 6, 7, 8, 11, 13, 14, 16, 17];
+      const twoValues = [5, 9, 10, 12, 15];
 
       const income =
         level === 1
@@ -657,8 +671,8 @@ export const getKRLevelIncome = async (req, res) => {
             ? 1
             : twoValues.includes(level)
               ? 2
-              : level === 20
-                ? 8
+              : level === 18
+                ? 37
                 : 50;
 
       const total_income = income * entry;
@@ -679,7 +693,6 @@ export const getKRLevelIncome = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const receivedKRAmount = async (req, res) => {
   try {
