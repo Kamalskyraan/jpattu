@@ -40,6 +40,8 @@ import {
   updateKRUser,
   getKRUser,
   searchMembers,
+  getUserByMobile,
+  getAllMembersForExport,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -75,14 +77,12 @@ const screenshots = multer({
   },
 });
 
-
-
-
 router.delete("/delete-user/:id", deleteTempUser);
-router.get(
-  "/search-members",
-  searchMembers,
-);
+router.get("/search-members", searchMembers);
+router.get("/get-userbymobile", getUserByMobile);
+
+router.get("/search-members-export", getAllMembersForExport);
+
 router.post("/paidProof", screenshots.single("image"), paidProof);
 router.put("/", verifyUser, updateValidation, updateUser);
 router.get("/", getUserName);
@@ -133,4 +133,5 @@ router.get("/kr", getKRUserName);
 router.get("/temp/kr/:user_id", getTempKRUser);
 router.put("/kr", verifyUser, updateValidation, updateKRUser);
 router.get("/kr/:user_id", verifyUser, getKRUser);
+
 export default router;

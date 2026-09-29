@@ -688,147 +688,227 @@ const AdminModel = {
     }
   },
 
+  //
 
-  // 
+  searchMembers: async (data) => {
+    const { type, name = "", mobile = "", page = 1, limit = 10 } = data;
 
+    const config = {
+      KR: {
+        memberTable: "kr_users",
+        balanceTable: "kr_user_balance_logs",
+      },
 
+      DS: {
+        memberTable: "users",
+        balanceTable: "user_balance_logs",
+      },
+    };
 
-searchMembers: async (data) => {
-  const {
-    type,
-    search = "",
-    page = 1,
-    limit = 10,
-  } = data;
+    const selectedConfig = config[type];
 
-  const config = {
-    KR: {
-      memberTable: "kr_users",
-      balanceTable: "kr_user_balance_logs",
-      multiplier: 100,
-    },
+    if (!selectedConfig) {
+      throw new Error("Invalid member type");
+    }
 
-    DS: {
-      memberTable: "users",
-      balanceTable: "user_balance_logs",
-      multiplier: 1000,
-    },
-  };
+    const { memberTable, balanceTable } = selectedConfig;
 
-  const selectedConfig = config[type];
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
 
-  if (!selectedConfig) {
-    throw new Error("Invalid member type");
-  }
+    if (!cleanName || !cleanMobile) {
+      return {
+        rows: [],
+        total: 0,
+        total_received_amount: 0,
+      };
+    }
 
-  const {
-    memberTable,
-    balanceTable,
-    multiplier,
-  } = selectedConfig;
+    const currentPage = Math.max(Number(page) || 1, 1);
+    const currentLimit = Math.max(Number(limit) || 10, 1);
+    const offset = (currentPage - 1) * currentLimit;
 
-  const currentPage = Math.max(Number(page) || 1, 1);
-  const currentLimit = Math.max(Number(limit) || 10, 1);
-  const offset = (currentPage - 1) * currentLimit;
+    // ----------------------------------------
+    // TOTAL USERS
+    // ----------------------------------------
+    const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM ${memberTable} AS m
+    WHERE m.name = ?
+      AND m.mobile = ?
+  `;
 
-  
+    const [countRows] = await db.query(countQuery, [cleanName, cleanMobile]);
 
-  const params = [];
-  let where = `WHERE 1 = 1`;
+    const total = Number(countRows?.[0]?.total || 0);
 
-  if (search) {
-    where += `
-      AND (
-        m.name LIKE ?
-        OR m.mobile LIKE ?
-        OR m.user_id LIKE ?
-      )
-    `;
-
-    const searchValue = `%${search}%`;
-
-    params.push(
-      searchValue,
-      searchValue,
-      searchValue,
-    );
-  }
-
-  // ===============================
-  // GET MEMBERS WITH BALANCE
-  // ===============================
-
- const [rows] = await db.query(
-  `
+    // ----------------------------------------
+    // TOTAL RECEIVED AMOUNT
+    // ALL MATCHING USERS
+    // ----------------------------------------
+    const totalAmountQuery = `
     SELECT
-      m.id,
+      COALESCE(SUM(bl.amount), 0) AS total_received_amount
+
+    FROM ${memberTable} AS m
+
+    LEFT JOIN ${balanceTable} AS bl
+      ON bl.user_id = m.user_id
+
+    WHERE m.name = ?
+      AND m.mobile = ?
+  `;
+
+    const [totalAmountRows] = await db.query(totalAmountQuery, [
+      cleanName,
+      cleanMobile,
+    ]);
+
+    const totalReceivedAmount = Number(
+      totalAmountRows?.[0]?.total_received_amount || 0,
+    );
+
+    if (total === 0) {
+      return {
+        rows: [],
+        total: 0,
+        total_received_amount: 0,
+      };
+    }
+
+    // ----------------------------------------
+    // PAGINATED DATA
+    // ----------------------------------------
+    const query = `
+    SELECT
       m.user_id,
       m.name,
       m.mobile,
       m.referral_id,
-      m.created_at,
 
-      COALESCE(SUM(bl.amount), 0) AS cumulative_amount,
-
-      (
-        COALESCE(SUM(bl.amount), 0) * ?
+      COALESCE(
+        SUM(bl.amount),
+        0
       ) AS received_amount
 
     FROM ${memberTable} AS m
 
-    INNER JOIN ${balanceTable} AS bl
+    LEFT JOIN ${balanceTable} AS bl
       ON bl.user_id = m.user_id
 
-    ${where}
+    WHERE m.name = ?
+      AND m.mobile = ?
 
     GROUP BY
-      m.id,
+      m.user_id,
+      m.name,
+      m.mobile,
+      m.referral_id
+
+    ORDER BY m.user_id ASC
+
+    LIMIT ? OFFSET ?
+  `;
+
+    const [rows] = await db.query(query, [
+      cleanName,
+      cleanMobile,
+      currentLimit,
+      offset,
+    ]);
+
+    return {
+      rows,
+      total,
+      total_received_amount: totalReceivedAmount,
+    };
+  },
+
+  getUserByMobile: async (mobile, user_type) => {
+    const tableName =
+      user_type === "KR" ? "kr_users" : user_type === "DS" ? "users" : null;
+
+    if (!tableName) {
+      throw new Error("Invalid user type");
+    }
+
+    const query = `
+    SELECT
+      MIN(user_id) AS user_id,
+      name,
+      MIN(mobile) AS mobile
+    FROM ${tableName}
+    WHERE mobile = ?
+    GROUP BY name
+    ORDER BY name ASC
+    LIMIT 15
+  `;
+
+    const [result] = await db.query(query, [mobile]);
+
+    console.log(result);
+
+    return result;
+  },
+
+  getAllMembersForExport: async (data) => {
+    const { type, name = "", mobile = "" } = data;
+
+    const config = {
+      KR: {
+        memberTable: "kr_users",
+        balanceTable: "kr_user_balance_logs",
+      },
+
+      DS: {
+        memberTable: "users",
+        balanceTable: "user_balance_logs",
+      },
+    };
+
+    const selectedConfig = config[type];
+
+    if (!selectedConfig) {
+      throw new Error("Invalid member type");
+    }
+
+    const { memberTable, balanceTable } = selectedConfig;
+
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
+
+    if (!cleanName || !cleanMobile) {
+      return [];
+    }
+
+    const query = `
+    SELECT
       m.user_id,
       m.name,
       m.mobile,
       m.referral_id,
-      m.created_at
+      COALESCE(SUM(bl.amount), 0) AS received_amount
+    FROM ${memberTable} AS m
 
-    ORDER BY m.id DESC
+    LEFT JOIN ${balanceTable} AS bl
+      ON bl.user_id = m.user_id
 
-    LIMIT ? OFFSET ?
-  `,
-  [
-    multiplier,
-    ...params,
-    currentLimit,
-    offset,
-  ],
-);
+    WHERE m.name = ?
+      AND m.mobile = ?
 
-  // ===============================
-  // TOTAL MEMBERS
-  // ===============================
+    GROUP BY
+      m.user_id,
+      m.name,
+      m.mobile,
+      m.referral_id
 
-const [countResult] = await db.query(
-  `
-    SELECT COUNT(*) AS total
-    FROM (
-      SELECT m.id
+    ORDER BY m.user_id ASC
+  `;
 
-      FROM ${memberTable} AS m
+    const [rows] = await db.query(query, [cleanName, cleanMobile]);
 
-      INNER JOIN ${balanceTable} AS bl
-        ON bl.user_id = m.user_id
-
-      ${where}
-
-      GROUP BY m.id
-    ) AS grouped_members
-  `,
-  params,
-);
-
-  return {
-    data: rows,
-    total: Number(countResult[0]?.total || 0),
-  };
-},
+    return rows;
+  },
 };
 
 export default AdminModel;

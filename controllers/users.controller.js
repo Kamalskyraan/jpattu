@@ -2108,24 +2108,50 @@ export const searchMembers = async (req, res) => {
   try {
     const {
       type = "KR",
-      search = "",
-      page = 1,
-      limit = 10,
+      name = "",
+      mobile = "",
+      // page = 1,
+      // limit = 10,
     } = req.query;
 
+    // const currentPage = Math.max(
+    //   Number(page) || 1,
+    //   1
+    // );
+
+    // const currentLimit = Math.max(
+    //   Number(limit) || 10,
+    //   1
+    // );
+
     const result = await AdminModel.searchMembers({
-      type: String(type).toUpperCase(),
-      search: String(search).trim(),
-      page: Number(page),
-      limit: Number(limit),
+      type: String(type).trim().toUpperCase(),
+
+      name: String(name).trim(),
+
+      mobile: String(mobile).trim(),
+
+      // page: currentPage,
+
+      // limit: currentLimit,
     });
 
     return res.status(200).json({
       success: true,
-      data: result.data,
+
+      data: result.rows,
+
       total: result.total,
-      page: Number(page),
-      limit: Number(limit),
+
+      total_received_amount: result.total_received_amount,
+
+      // page: currentPage,
+
+      // limit: currentLimit,
+
+      message: result.total
+        ? "Members found successfully"
+        : "No matching members found",
     });
   } catch (error) {
     console.error("Search members error:", error);
@@ -2133,6 +2159,97 @@ export const searchMembers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error?.message || "Failed to fetch members",
+    });
+  }
+};
+
+export const getUserByMobile = async (req, res) => {
+  try {
+    const { mobile, user_type } = req.query;
+
+    if (!mobile || !String(mobile).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number is required",
+      });
+    }
+
+    if (!user_type) {
+      return res.status(400).json({
+        success: false,
+        message: "User type is required",
+      });
+    }
+
+    const type = String(user_type).trim().toUpperCase();
+
+    if (!["KR", "DS"].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user type",
+      });
+    }
+
+    const users = await AdminModel.getUserByMobile(String(mobile).trim(), type);
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+      message: users.length ? "Users found successfully" : "No users found",
+    });
+  } catch (error) {
+    console.error("Get user by mobile error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal server error",
+    });
+  }
+};
+
+export const getAllMembersForExport = async (req, res) => {
+  try {
+    const { type = "KR", name = "", mobile = "" } = req.query;
+
+    const cleanType = String(type).trim().toUpperCase();
+
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
+
+    if (!["KR", "DS"].includes(cleanType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member type",
+      });
+    }
+
+    if (!cleanName || !cleanMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and mobile are required",
+      });
+    }
+
+    const users = await AdminModel.getAllMembersForExport({
+      type: cleanType,
+      name: cleanName,
+      mobile: cleanMobile,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+      total: users.length,
+      message: users.length
+        ? "Members fetched successfully"
+        : "No matching members found",
+    });
+  } catch (error) {
+    console.error("Get all members for export error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to fetch members for export",
     });
   }
 };
