@@ -2253,3 +2253,92 @@ export const getAllMembersForExport = async (req, res) => {
     });
   }
 };
+
+export const getMemberParentSummary = async (req, res) => {
+  try {
+    const { type = "KR", name = "", mobile = "" } = req.query;
+
+    const cleanType = String(type).trim().toUpperCase();
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
+
+    if (!["KR", "DS"].includes(cleanType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member type",
+      });
+    }
+
+    if (!cleanName || !cleanMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and mobile are required",
+      });
+    }
+
+    const summary = await AdminModel.getMemberExportSummary({
+      type: cleanType,
+      name: cleanName,
+      mobile: cleanMobile,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: summary,
+      message: "Member summary fetched successfully",
+    });
+  } catch (error) {
+    console.error("Get member export summary error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to fetch member summary",
+    });
+  }
+};
+
+export const getAllParent = async (req, res) => {
+  try {
+    const { type = "KR", name = "", mobile = "" } = req.query;
+
+    const cleanType = String(type).trim().toUpperCase();
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
+
+    if (!["KR", "DS"].includes(cleanType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member type",
+      });
+    }
+
+    if (!cleanName || !cleanMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and mobile are required",
+      });
+    }
+
+    const users = await AdminModel.getAllParents({
+      type: cleanType,
+      name: cleanName,
+      mobile: cleanMobile,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+      total: users.length,
+      message: users.length
+        ? "Members fetched successfully"
+        : "No matching members found",
+    });
+  } catch (error) {
+    console.error("Get all members for export error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to fetch members for export",
+    });
+  }
+};

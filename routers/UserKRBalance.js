@@ -1,9 +1,10 @@
 import express from "express";
 import {
-    getFSBalanceLogs,
-    getKRBalanceLogs,
-    getKRLevelIncome,
-    getNPBalanceLogs,
+  getBankBalanceLogs,
+  getFSBalanceLogs,
+  getKRBalanceLogs,
+  getKRLevelIncome,
+  getNPBalanceLogs,
   getNPLevelIncome,
   getRTBalanceLogs,
   getTTBalanceLogs,
@@ -22,6 +23,8 @@ import { verifyAdmin, verifyUser } from "../middlewares/auth.js";
 const router = express.Router();
 
 router.get("/", verifyUser, getKRBalanceLogs);
+
+router.get("/get-bank-data", verifyUser, getBankBalanceLogs);
 
 router.put("/", verifyAdmin, updateKRBalanceStatus);
 

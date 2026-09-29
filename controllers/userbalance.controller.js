@@ -710,3 +710,25 @@ export const receivedKRAmount = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getBankBalanceLogs = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};

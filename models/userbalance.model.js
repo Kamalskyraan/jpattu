@@ -913,6 +913,64 @@ const UserBalanceModel = {
       throw err;
     }
   },
+
+  getBankLogs: async ({ name = "", mobile = "" }) => {
+    let query = `
+    SELECT
+      DATE_FORMAT(u.created_at, '%Y-%m') AS month,
+      DATE_FORMAT(u.created_at, '%M %Y') AS month_name,
+      SUM(u.amount) AS amount
+    FROM kr_user_balance_logs u
+
+    LEFT JOIN kr_users us
+      ON u.user_id = us.user_id
+
+    WHERE
+      u.deleted_at IS NULL
+  `;
+
+    const params = [];
+
+    // Optional name filter
+    if (name) {
+      query += ` AND us.name LIKE ? `;
+      params.push(`%${name}%`);
+    }
+
+    // Optional mobile filter
+    if (mobile) {
+      query += ` AND us.mobile LIKE ? `;
+      params.push(`%${mobile}%`);
+    }
+
+    query += `
+    GROUP BY
+      DATE_FORMAT(u.created_at, '%Y-%m'),
+      DATE_FORMAT(u.created_at, '%M %Y')
+
+    ORDER BY
+      DATE_FORMAT(u.created_at, '%Y-%m') ASC
+  `;
+
+    const [rows] = await db.query(query, params);
+
+    let cumulativeAmount = 0;
+
+    return rows.map((row) => {
+      const amount = Number(row.amount || 0);
+
+      cumulativeAmount += amount;
+
+      return {
+        month: row.month,
+        month_name: row.month_name,
+        amount,
+        cumulative_amount: cumulativeAmount,
+      };
+    });
+  },
+
+  
 };
 
 export default UserBalanceModel;

@@ -909,6 +909,131 @@ const AdminModel = {
 
     return rows;
   },
+
+  getMemberExportSummary: async (data) => {
+    const { type, name = "", mobile = "" } = data;
+
+    const config = {
+      KR: {
+        memberTable: "kr_users",
+        balanceTable: "kr_user_balance_logs",
+      },
+
+      DS: {
+        memberTable: "users",
+        balanceTable: "user_balance_logs",
+      },
+    };
+
+    const selectedConfig = config[type];
+
+    if (!selectedConfig) {
+      throw new Error("Invalid member type");
+    }
+
+    const { memberTable, balanceTable } = selectedConfig;
+
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
+
+    if (!cleanName || !cleanMobile) {
+      return {
+        user_count: 0,
+        total_amount: "0.00",
+        received_amount: "0.00",
+      };
+    }
+
+    const query = `
+    SELECT
+      COUNT(DISTINCT m.user_id) AS user_count,
+
+      CAST(
+        COUNT(DISTINCT m.user_id) * 10000000
+        AS DECIMAL(20,2)
+      ) AS total_amount,
+
+      CAST(
+        COALESCE(SUM(bl.amount), 0)
+        AS DECIMAL(20,2)
+      ) AS received_amount
+
+    FROM ${memberTable} AS m
+
+    LEFT JOIN ${balanceTable} AS bl
+      ON bl.user_id = m.user_id
+
+    WHERE m.name = ?
+      AND m.mobile = ?
+  `;
+
+    const [rows] = await db.query(query, [cleanName, cleanMobile]);
+
+    return {
+      user_count: Number(rows[0]?.user_count || 0),
+      total_amount: rows[0]?.total_amount || "0.00",
+      received_amount: rows[0]?.received_amount || "0.00",
+    };
+  },
+
+
+  getAllParents: async (data) => {
+  const {
+    type,
+    name = "",
+    mobile = "",
+  } = data;
+
+  const config = {
+    KR: {
+      memberTable: "kr_users",
+      amount: 10000000, // 1 Crore
+    },
+
+    DS: {
+      memberTable: "users",
+      amount: 100000, // 1 Lakh
+    },
+  };
+
+  const selectedConfig = config[type];
+
+  if (!selectedConfig) {
+    throw new Error("Invalid member type");
+  }
+
+  const {
+    memberTable,
+    amount,
+  } = selectedConfig;
+
+  const cleanName = String(name).trim();
+  const cleanMobile = String(mobile).trim();
+
+  if (!cleanName || !cleanMobile) {
+    return [];
+  }
+
+  const query = `
+    SELECT
+      m.user_id,
+      m.referral_id,
+      CAST(? AS DECIMAL(20,2)) AS amount
+    FROM ${memberTable} AS m
+    WHERE m.name = ?
+      AND m.mobile = ?
+    ORDER BY m.user_id ASC
+  `;
+
+  const [rows] = await db.query(query, [
+    amount,
+    cleanName,
+    cleanMobile,
+  ]);
+
+  return rows;
+},
+  
 };
 
 export default AdminModel;

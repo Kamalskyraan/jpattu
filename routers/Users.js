@@ -42,6 +42,8 @@ import {
   searchMembers,
   getUserByMobile,
   getAllMembersForExport,
+  getMemberParentSummary,
+  getAllParent,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -80,8 +82,9 @@ const screenshots = multer({
 router.delete("/delete-user/:id", deleteTempUser);
 router.get("/search-members", searchMembers);
 router.get("/get-userbymobile", getUserByMobile);
-
+router.get("/get-parent-bank", getMemberParentSummary);
 router.get("/search-members-export", getAllMembersForExport);
+router.get("/get-all-parents", getAllParent);
 
 router.post("/paidProof", screenshots.single("image"), paidProof);
 router.put("/", verifyUser, updateValidation, updateUser);
