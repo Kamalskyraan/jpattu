@@ -2110,19 +2110,13 @@ export const searchMembers = async (req, res) => {
       type = "KR",
       name = "",
       mobile = "",
-      // page = 1,
-      // limit = 10,
+      page = 1,
+      limit = 10,
     } = req.query;
 
-    // const currentPage = Math.max(
-    //   Number(page) || 1,
-    //   1
-    // );
+    const currentPage = Math.max(Number(page) || 1, 1);
 
-    // const currentLimit = Math.max(
-    //   Number(limit) || 10,
-    //   1
-    // );
+    const currentLimit = Math.max(Number(limit) || 10, 1);
 
     const result = await AdminModel.searchMembers({
       type: String(type).trim().toUpperCase(),
@@ -2131,9 +2125,9 @@ export const searchMembers = async (req, res) => {
 
       mobile: String(mobile).trim(),
 
-      // page: currentPage,
+      page: currentPage,
 
-      // limit: currentLimit,
+      limit: currentLimit,
     });
 
     return res.status(200).json({
@@ -2145,9 +2139,9 @@ export const searchMembers = async (req, res) => {
 
       total_received_amount: result.total_received_amount,
 
-      // page: currentPage,
+      page: currentPage,
 
-      // limit: currentLimit,
+      limit: currentLimit,
 
       message: result.total
         ? "Members found successfully"
@@ -2339,6 +2333,74 @@ export const getAllParent = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error?.message || "Failed to fetch members for export",
+    });
+  }
+};
+
+export const updateMemberName = async (req, res) => {
+  try {
+    const { type = "", mobile = "", old_name = "", new_name = "" } = req.body;
+
+    const cleanType = String(type).trim().toUpperCase();
+    const cleanMobile = String(mobile).trim();
+    const cleanOldName = String(old_name).trim();
+    const cleanNewName = String(new_name).trim();
+
+    console.log(type, "ct");
+
+    if (!["KR", "DS"].includes(cleanType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member type",
+      });
+    }
+
+    if (!cleanMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number is required",
+      });
+    }
+
+    if (!cleanOldName) {
+      return res.status(400).json({
+        success: false,
+        message: "Old name is required",
+      });
+    }
+
+    if (!cleanNewName) {
+      return res.status(400).json({
+        success: false,
+        message: "New name is required",
+      });
+    }
+
+    if (cleanOldName === cleanNewName) {
+      return res.status(400).json({
+        success: false,
+        message: "New name is same as old name",
+      });
+    }
+
+    const result = await AdminModel.updateMemberName({
+      type: cleanType,
+      mobile: cleanMobile,
+      old_name: cleanOldName,
+      new_name: cleanNewName,
+    });
+
+    return res.status(200).json({
+      success: true,
+      updated_count: result.updated_count,
+      message: `${result.updated_count} user(s) name updated successfully`,
+    });
+  } catch (error) {
+    console.error("Update member name error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to update member name",
     });
   }
 };

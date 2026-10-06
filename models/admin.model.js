@@ -976,45 +976,37 @@ const AdminModel = {
     };
   },
 
-
   getAllParents: async (data) => {
-  const {
-    type,
-    name = "",
-    mobile = "",
-  } = data;
+    const { type, name = "", mobile = "" } = data;
 
-  const config = {
-    KR: {
-      memberTable: "kr_users",
-      amount: 10000000, // 1 Crore
-    },
+    const config = {
+      KR: {
+        memberTable: "kr_users",
+        amount: 10000000, // 1 Crore
+      },
 
-    DS: {
-      memberTable: "users",
-      amount: 100000, // 1 Lakh
-    },
-  };
+      DS: {
+        memberTable: "users",
+        amount: 100000, // 1 Lakh
+      },
+    };
 
-  const selectedConfig = config[type];
+    const selectedConfig = config[type];
 
-  if (!selectedConfig) {
-    throw new Error("Invalid member type");
-  }
+    if (!selectedConfig) {
+      throw new Error("Invalid member type");
+    }
 
-  const {
-    memberTable,
-    amount,
-  } = selectedConfig;
+    const { memberTable, amount } = selectedConfig;
 
-  const cleanName = String(name).trim();
-  const cleanMobile = String(mobile).trim();
+    const cleanName = String(name).trim();
+    const cleanMobile = String(mobile).trim();
 
-  if (!cleanName || !cleanMobile) {
-    return [];
-  }
+    if (!cleanName || !cleanMobile) {
+      return [];
+    }
 
-  const query = `
+    const query = `
     SELECT
       m.user_id,
       m.referral_id,
@@ -1025,15 +1017,33 @@ const AdminModel = {
     ORDER BY m.user_id ASC
   `;
 
-  const [rows] = await db.query(query, [
-    amount,
-    cleanName,
-    cleanMobile,
-  ]);
+    const [rows] = await db.query(query, [amount, cleanName, cleanMobile]);
 
-  return rows;
-},
-  
+    return rows;
+  },
+
+  updateMemberName: async ({ type, mobile, old_name, new_name }) => {
+    let tableName;
+
+    if (type === "KR") {
+      tableName = "kr_users";
+    } else if (type === "DS") {
+      tableName = "users";
+    } else {
+      throw new Error("Invalid user type");
+    }
+
+    const query = `
+    UPDATE ${tableName}
+    SET name = ?
+    WHERE mobile = ?
+      AND name = ?
+  `;
+
+    const [result] = await db.query(query, [new_name, mobile, old_name]);
+
+    return result;
+  },
 };
 
 export default AdminModel;

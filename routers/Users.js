@@ -44,6 +44,7 @@ import {
   getAllMembersForExport,
   getMemberParentSummary,
   getAllParent,
+  updateMemberName,
 } from "../controllers/users.controller.js";
 import multer from "multer";
 import path from "path";
@@ -85,6 +86,7 @@ router.get("/get-userbymobile", getUserByMobile);
 router.get("/get-parent-bank", getMemberParentSummary);
 router.get("/search-members-export", getAllMembersForExport);
 router.get("/get-all-parents", getAllParent);
+router.put("/change-name" , updateMemberName)
 
 router.post("/paidProof", screenshots.single("image"), paidProof);
 router.put("/", verifyUser, updateValidation, updateUser);
