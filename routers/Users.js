@@ -113,8 +113,8 @@ router.get("/rt/:user_id", verifyUser, getRTUser);
 router.get("/temp/rt/:user_id", getTempRTUser);
 router.put("/rt", verifyUser, updateValidation, updateRTUser);
 
-// NP
 
+// NP
 router.post("/np-paidproof", screenshots.single("image"), NPPaidProof);
 router.get("/np", getNPUserName);
 router.get("/np/:user_id", verifyUser, getNPUser);

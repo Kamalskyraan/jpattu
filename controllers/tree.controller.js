@@ -728,7 +728,6 @@ WHERE u.user_id = ?
   }
 };
 
-
 export const getKRMemberOnLevel = async (req, res) => {
   try {
     const { level } = req.params || false;
@@ -746,7 +745,6 @@ export const getKRMemberOnLevel = async (req, res) => {
   }
 };
 
-
 export const getKRMembersCount = async (req, res) => {
   try {
     const { user_id } = req.query || false;
@@ -757,7 +755,7 @@ export const getKRMembersCount = async (req, res) => {
     const data = await TreeModel.getKRMembersCount(user_id);
 
     data.sort((a, b) => a.level - b.level);
-    const maxLevel = 20;
+    const maxLevel = 18;
     const base = 2;
 
     const result = Array.from({ length: maxLevel }, (_, i) => {

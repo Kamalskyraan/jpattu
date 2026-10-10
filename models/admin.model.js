@@ -917,11 +917,13 @@ const AdminModel = {
       KR: {
         memberTable: "kr_users",
         balanceTable: "kr_user_balance_logs",
+        totalAmountPerUser: 10000000, // ₹1 Crore
       },
 
       DS: {
         memberTable: "users",
         balanceTable: "user_balance_logs",
+        totalAmountPerUser: 100000000, // ₹10 Crore
       },
     };
 
@@ -931,7 +933,7 @@ const AdminModel = {
       throw new Error("Invalid member type");
     }
 
-    const { memberTable, balanceTable } = selectedConfig;
+    const { memberTable, balanceTable, totalAmountPerUser } = selectedConfig;
 
     const cleanName = String(name).trim();
     const cleanMobile = String(mobile).trim();
@@ -949,7 +951,7 @@ const AdminModel = {
       COUNT(DISTINCT m.user_id) AS user_count,
 
       CAST(
-        COUNT(DISTINCT m.user_id) * 10000000
+        COUNT(DISTINCT m.user_id) * ?
         AS DECIMAL(20,2)
       ) AS total_amount,
 
@@ -967,7 +969,11 @@ const AdminModel = {
       AND m.mobile = ?
   `;
 
-    const [rows] = await db.query(query, [cleanName, cleanMobile]);
+    const [rows] = await db.query(query, [
+      totalAmountPerUser,
+      cleanName,
+      cleanMobile,
+    ]);
 
     return {
       user_count: Number(rows[0]?.user_count || 0),

@@ -732,3 +732,23 @@ export const getBankBalanceLogs = async (req, res) => {
     });
   }
 };
+
+export const getDSBankBalanceLogs = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getDSBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};

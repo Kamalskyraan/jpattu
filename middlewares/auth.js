@@ -1,15 +1,14 @@
 import jwt from "jsonwebtoken";
 
 export const verifyUser = (req, res, next) => {
-  // const { Authorization } = req.headers;
-  // const token = Authorization.split(" ")[1];
   const token = req.cookies?.auth;
-
   if (token) {
     const data = jwt.verify(token, process.env.TOKEN_SECRET);
+
     if (data.id) {
       req.user_id = data.user_id;
       req.role = data.role;
+
       next();
     } else {
       res.status(401).json({ message: "Invalid Token" });

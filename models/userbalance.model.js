@@ -970,7 +970,58 @@ const UserBalanceModel = {
     });
   },
 
-  
+  getDSBankLogs: async ({ name = "", mobile = "" }) => {
+    let query = `
+    SELECT
+      DATE_FORMAT(ubl.created_at, '%Y-%m') AS month,
+      DATE_FORMAT(ubl.created_at, '%M %Y') AS month_name,
+      SUM(ubl.amount) AS amount
+    FROM user_balance_logs AS ubl
+
+    LEFT JOIN users AS us
+      ON ubl.user_id = us.user_id
+
+    WHERE ubl.deleted_at IS NULL
+  `;
+
+    const params = [];
+
+    if (name) {
+      query += ` AND us.name LIKE ? `;
+      params.push(`%${name}%`);
+    }
+
+    if (mobile) {
+      query += ` AND us.mobile LIKE ? `;
+      params.push(`%${mobile}%`);
+    }
+
+    query += `
+    GROUP BY
+      DATE_FORMAT(ubl.created_at, '%Y-%m'),
+      DATE_FORMAT(ubl.created_at, '%M %Y')
+
+    ORDER BY
+      DATE_FORMAT(ubl.created_at, '%Y-%m') ASC
+  `;
+
+    const [rows] = await db.query(query, params);
+
+    let cumulativeAmount = 0;
+
+    return rows.map((row) => {
+      const amount = Number(row.amount || 0);
+
+      cumulativeAmount += amount;
+
+      return {
+        month: row.month,
+        month_name: row.month_name,
+        amount,
+        cumulative_amount: cumulativeAmount,
+      };
+    });
+  },
 };
 
 export default UserBalanceModel;

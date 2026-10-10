@@ -140,6 +140,193 @@ app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
 app.get("/get-tt-admin-data", getTTAdminData);
 
+// Bank and Parent ID and CLUB Pay dummy
+
+export const addClubPay = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+    const { start, end } = req.query || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "start date and end date is required" });
+    }
+
+    const data = await UserBalanceModel.getKRLevelIncome({
+      user_id,
+      start,
+      end,
+    });
+    data.sort((a, b) => a.level - b.level);
+
+    const maxLevel = 18;
+    const base = 2;
+    let sub_total = 0;
+    const result = Array.from({ length: maxLevel }, (_, i) => {
+      const level = i + 1;
+      const members = base ** level;
+      const record = data.find((item) => item.level === level);
+      const entry = record ? record.count : 0;
+
+      const oneValues = [2, 3, 4, 6, 7, 8, 11, 13, 14, 16, 17];
+      const twoValues = [5, 9, 10, 12, 15];
+
+      const income =
+        level === 1
+          ? 50
+          : oneValues.includes(level)
+            ? 1
+            : twoValues.includes(level)
+              ? 2
+              : level === 18
+                ? 37
+                : 50;
+
+      const total_income = income * entry;
+      sub_total += total_income;
+
+      return {
+        level,
+        members,
+        entry,
+        income,
+        total_income,
+      };
+    });
+
+    res.status(200).json({ data: result, sub_total: sub_total });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const RecivedAMountForPayment = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+    const data = await UserBalanceModel.getReceivedKRAmount(user_id);
+    res.status(200).json({ data: data, message: "user logs fetched" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getClubPay = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getDsForClubPay = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getDSBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const RecivedAMountForPaymentForKR = async (req, res) => {
+  try {
+    const { user_id } = req.params || false;
+
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    } else if (user_id !== req.user_id && req.role !== "admin") {
+      return res.status(403).json({ message: "Action cannot be done!" });
+    }
+    const data = await UserBalanceModel.getReceivedKRAmount(user_id);
+    res.status(200).json({ data: data, message: "user logs fetched" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getKRForClubPay = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getDSBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const findDSAndKRDiffrence = async (req, res) => {
+  try {
+    const { name = "", mobile = "" } = req.query || {};
+
+    const data = await UserBalanceModel.getDSBankLogs({
+      name: String(name).trim(),
+      mobile: String(mobile).trim(),
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Monthly bank logs fetched successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
 app.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
 });
