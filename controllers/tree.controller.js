@@ -54,7 +54,7 @@ export const getMembersCount = async (req, res) => {
     const data = await TreeModel.getMembersCountForTotal(user_id);
 
     data.sort((a, b) => a.level - b.level);
-    const maxLevel = 9;
+    const maxLevel = 18;
     const base = 2;
 
     const result = Array.from({ length: maxLevel }, (_, i) => {
