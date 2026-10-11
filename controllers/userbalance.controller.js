@@ -752,3 +752,60 @@ export const getDSBankBalanceLogs = async (req, res) => {
     });
   }
 };
+
+export const getClubPayKR = async (req, res) => {
+  try {
+    const { start, end, status } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        message: "start date and end date is required",
+      });
+    }
+
+    const data = await UserBalanceModel.getClubPayKR({
+      start,
+      end,
+      status,
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Club pay KR logs fetched successfully",
+    });
+  } catch (err) {
+    console.error("getClubPayKR error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+export const getClubPayDS = async (req, res) => {
+  try {
+    const { start, end, status } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        message: "start date and end date is required",
+      });
+    }
+
+    const data = await UserBalanceModel.getClubPayDS({
+      start,
+      end,
+      status,
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Club pay DS logs fetched successfully",
+    });
+  } catch (err) {
+    console.error("getClubPayKR error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};

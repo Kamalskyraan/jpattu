@@ -1022,6 +1022,109 @@ const UserBalanceModel = {
       };
     });
   },
+
+  getClubPayKR: async ({ start, end, status }) => {
+    const startTime = `${start} 00:00:00`;
+    const endTime = `${end} 23:59:59`;
+
+    let query = `
+    SELECT
+      MIN(us.id) AS id,
+      COUNT(DISTINCT us.id) AS club_ids,
+      us.name,
+      us.mobile,
+
+      YEAR(?) AS year,
+      MONTH(?) AS month,
+
+      COALESCE(SUM(u.amount), 0) AS amount,
+      MAX(u.created_at) AS payment_date
+
+    FROM kr_users us
+
+    LEFT JOIN kr_user_balance_logs u
+      ON u.user_id = us.user_id
+      AND u.created_at >= ?
+      AND u.created_at <= ?
+      AND u.deleted_at IS NULL
+      ${status ? "AND u.status = ?" : ""}
+
+    GROUP BY
+      us.name,
+      us.mobile
+
+    ORDER BY
+      us.id DESC
+  `;
+
+    const params = [startTime, startTime, startTime, endTime];
+
+    if (status) {
+      params.push(status);
+    }
+
+    const [rows] = await db.query(query, params);
+
+    return rows.map((row) => ({
+      ...row,
+      id: Number(row.id),
+      club_ids: Number(row.club_ids),
+      amount: Number(row.amount),
+      month: Number(row.month),
+      year: Number(row.year),
+    }));
+  },
+  getClubPayDS: async ({ start, end, status }) => {
+    const startTime = `${start} 00:00:00`;
+    const endTime = `${end} 23:59:59`;
+
+    let query = `
+    SELECT
+      MIN(us.id) AS id,
+      COUNT(DISTINCT us.id) AS club_ids,
+      us.name,
+      us.mobile,
+
+      YEAR(?) AS year,
+      MONTH(?) AS month,
+
+      COALESCE(SUM(u.amount), 0) AS amount,
+      MAX(u.created_at) AS payment_date
+
+    FROM users us
+
+    LEFT JOIN user_balance_logs u
+      ON u.user_id = us.user_id
+      AND u.created_at >= ?
+      AND u.created_at <= ?
+      AND u.deleted_at IS NULL
+      ${status ? "AND u.status = ?" : ""}
+
+    GROUP BY
+      us.name,
+      us.mobile
+
+    ORDER BY
+      us.id DESC
+  `;
+
+    const params = [startTime, startTime, startTime, endTime];
+
+    if (status) {
+      params.push(status);
+    }
+
+    const [rows] = await db.query(query, params);
+
+    return rows.map((row) => ({
+      ...row,
+      id: Number(row.id),
+      club_ids: Number(row.club_ids),
+      amount: Number(row.amount),
+      month: Number(row.month),
+      year: Number(row.year),
+    }));
+  },
 };
 
 export default UserBalanceModel;

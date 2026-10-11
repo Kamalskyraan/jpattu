@@ -1,6 +1,8 @@
 import express from "express";
 import {
   getBalanceLogs,
+  getClubPayDS,
+  getClubPayKR,
   getDSBankBalanceLogs,
   getFSLevelIncome,
   getKRLevelIncome,
@@ -19,6 +21,9 @@ import { verifyAdmin, verifyUser } from "../middlewares/auth.js";
 
 const router = express.Router();
 router.get("/get-bank-data", verifyUser, getDSBankBalanceLogs);
+
+router.get("/club-pay-kr", verifyUser, getClubPayKR);
+router.get("/club-pay-ds", verifyUser, getClubPayDS);
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);
 router.get("/payment-history/:user_id", verifyUser, getPaymentHistory);
