@@ -100,7 +100,7 @@ const UserBalanceModel = {
         )
         .reduce((total, val) => parseInt(total) + parseInt(val.amount), 0);
       const received_amount = data
-        .filter((val) => val.status === "paid")
+        .filter((val) => val.status === "paid" || val.status === "unpaid")
         .reduce((total, val) => total + Number(val.amount), 0);
 
       return [parseInt(level_amount), parseInt(received_amount)];
@@ -181,7 +181,7 @@ const UserBalanceModel = {
   getReceivedAmount: async (user_id) => {
     try {
       const query =
-        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total_amount, COUNT(*) AS total_records FROM user_balance_logs WHERE user_id = ? AND status = 'paid' AND deleted_at IS NULL GROUP BY month ORDER BY month DESC;";
+        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(amount) AS total_amount, COUNT(*) AS total_records FROM user_balance_logs WHERE user_id = ? AND deleted_at IS NULL GROUP BY month ORDER BY month DESC;";
       const [data] = await db.query(query, [user_id]);
       return data;
     } catch (err) {
