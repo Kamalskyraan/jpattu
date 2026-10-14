@@ -1054,7 +1054,7 @@ const UserBalanceModel = {
       us.mobile
 
     ORDER BY
-      us.user_id DESC
+  CAST(MAX(us.id) AS UNSIGNED) DESC
   `;
 
     const params = [startTime, startTime, startTime, endTime];
@@ -1074,6 +1074,7 @@ const UserBalanceModel = {
       year: Number(row.year),
     }));
   },
+
   getClubPayDS: async ({ start, end, status }) => {
     const startTime = `${start} 00:00:00`;
     const endTime = `${end} 23:59:59`;
