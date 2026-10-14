@@ -1054,7 +1054,7 @@ const UserBalanceModel = {
       us.mobile
 
     ORDER BY
-      us.id DESC
+      us.user_id DESC
   `;
 
     const params = [startTime, startTime, startTime, endTime];
@@ -1105,7 +1105,7 @@ const UserBalanceModel = {
       us.mobile
 
     ORDER BY
-      us.id DESC
+      us.user_id DESC
   `;
 
     const params = [startTime, startTime, startTime, endTime];
