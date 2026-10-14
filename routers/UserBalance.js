@@ -17,6 +17,8 @@ import {
   getUserBalanceLog,
   markAllAccountsPaid,
   markAllAccountsPaidKR,
+  markSelectedAccountsPaid,
+  markSelectedKRAccountsPaid,
   receivedAmount,
   updateBalanceStatus,
   updateTTBalanceStatus,
@@ -32,6 +34,17 @@ router.put("/accounts/mark-paid", verifyUser, markAllAccountsPaid);
 router.put("/kr-accounts/mark-paid", verifyUser, markAllAccountsPaidKR);
 router.get("/get-accounts", verifyUser, getAccounts);
 router.get("/get-accounts-kr", verifyUser, getAccountsKR);
+router.put(
+  "/kr-accounts/mark-selected-paid",
+  verifyUser,
+  markSelectedKRAccountsPaid,
+);
+router.put(
+  "/accounts/mark-selected-paid",
+  verifyUser,
+  markSelectedAccountsPaid,
+);
+
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);
 router.get("/payment-history/:user_id", verifyUser, getPaymentHistory);

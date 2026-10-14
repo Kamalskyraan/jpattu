@@ -1027,12 +1027,16 @@ const UserBalanceModel = {
     const startTime = `${start} 00:00:00`;
     const endTime = `${end} 23:59:59`;
 
-    let query = `
+    const query = `
     SELECT
       MIN(us.id) AS id,
       COUNT(DISTINCT us.id) AS club_ids,
       us.name,
       us.mobile,
+
+      MAX(
+        CAST(SUBSTRING(TRIM(us.user_id), 3) AS UNSIGNED)
+      ) AS sort_user_id,
 
       YEAR(?) AS year,
       MONTH(?) AS month,
@@ -1054,7 +1058,8 @@ const UserBalanceModel = {
       us.mobile
 
     ORDER BY
-  CAST(MAX(us.id) AS UNSIGNED) DESC
+      sort_user_id DESC,
+      id DESC
   `;
 
     const params = [startTime, startTime, startTime, endTime];
@@ -1069,6 +1074,7 @@ const UserBalanceModel = {
       ...row,
       id: Number(row.id),
       club_ids: Number(row.club_ids),
+      sort_user_id: Number(row.sort_user_id),
       amount: Number(row.amount),
       month: Number(row.month),
       year: Number(row.year),
@@ -1354,6 +1360,135 @@ const UserBalanceModel = {
       last_payment_id: row.last_payment_id ? Number(row.last_payment_id) : null,
       last_payment_amount: Number(row.last_payment_amount || 0),
     }));
+  },
+
+  markSelectedKRAccountsPaid: async (users) => {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      let totalUpdated = 0;
+
+      for (const user of users) {
+        const name = String(user.name ?? "").trim();
+        const mobile = String(user.mobile ?? "").trim();
+
+        if (!name || !mobile) {
+          throw new Error("Name and mobile are required");
+        }
+
+        // Get all matching KR user IDs
+        const [userRows] = await connection.query(
+          `
+        SELECT DISTINCT user_id
+        FROM kr_users
+        WHERE name = ?
+          AND mobile = ?
+          AND deleted_at IS NULL
+        `,
+          [name, mobile],
+        );
+
+        if (!userRows.length) {
+          throw new Error(`No matching KR users found for ${name}`);
+        }
+
+        const userIds = userRows.map((row) => row.user_id);
+
+        const placeholders = userIds.map(() => "?").join(",");
+
+        // Update only unpaid logs
+        const [result] = await connection.query(
+          `
+        UPDATE kr_user_balance_logs
+        SET status = 'paid'
+        WHERE user_id IN (${placeholders})
+          AND status = 'unpaid'
+          AND deleted_at IS NULL
+        `,
+          userIds,
+        );
+
+        totalUpdated += result.affectedRows;
+      }
+
+      await connection.commit();
+
+      return {
+        updatedCount: totalUpdated,
+        selectedUsers: users.length,
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+  markSelectedAccountsPaid: async (users) => {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      let totalUpdated = 0;
+
+      for (const user of users) {
+        const name = String(user.name ?? "").trim();
+        const mobile = String(user.mobile ?? "").trim();
+
+        if (!name || !mobile) {
+          throw new Error("Name and mobile are required");
+        }
+
+        // Get all matching KR user IDs
+        const [userRows] = await connection.query(
+          `
+        SELECT DISTINCT user_id
+        FROM users
+        WHERE name = ?
+          AND mobile = ?
+          AND deleted_at IS NULL
+        `,
+          [name, mobile],
+        );
+
+        if (!userRows.length) {
+          throw new Error(`No matching DS users found for ${name}`);
+        }
+
+        const userIds = userRows.map((row) => row.user_id);
+
+        const placeholders = userIds.map(() => "?").join(",");
+
+        // Update only unpaid logs
+        const [result] = await connection.query(
+          `
+        UPDATE user_balance_logs
+        SET status = 'paid'
+        WHERE user_id IN (${placeholders})
+          AND status = 'unpaid'
+          AND deleted_at IS NULL
+        `,
+          userIds,
+        );
+
+        totalUpdated += result.affectedRows;
+      }
+
+      await connection.commit();
+
+      return {
+        updatedCount: totalUpdated,
+        selectedUsers: users.length,
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };
 

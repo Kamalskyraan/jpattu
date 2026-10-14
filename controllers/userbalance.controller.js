@@ -855,7 +855,7 @@ export const getAccountsKR = async (req, res) => {
       status,
     });
 
-    console.log(data , "dts")
+    console.log(data, "dts");
     return res.status(200).json({
       data,
       message: "Club pay KR logs fetched successfully",
@@ -1034,5 +1034,94 @@ export const markAllAccountsPaidKR = async (req, res) => {
     if (connection) {
       connection.release();
     }
+  }
+};
+
+export const markSelectedKRAccountsPaid = async (req, res) => {
+  try {
+    const { users } = req.body;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select at least one user",
+      });
+    }
+
+    if (
+      users.length > 500 ||
+      users.some(
+        (user) =>
+          !user ||
+          typeof user.name !== "string" ||
+          typeof user.mobile !== "string" ||
+          !user.name.trim() ||
+          !user.mobile.trim(),
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid selected user data",
+      });
+    }
+
+    const result = await UserBalanceModel.markSelectedKRAccountsPaid(users);
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.updatedCount} unpaid records marked as paid successfully`,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Selected KR payment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update selected KR payments",
+    });
+  }
+};
+export const markSelectedAccountsPaid = async (req, res) => {
+  try {
+    const { users } = req.body;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select at least one user",
+      });
+    }
+
+    if (
+      users.length > 500 ||
+      users.some(
+        (user) =>
+          !user ||
+          typeof user.name !== "string" ||
+          typeof user.mobile !== "string" ||
+          !user.name.trim() ||
+          !user.mobile.trim(),
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid selected user data",
+      });
+    }
+
+    const result = await UserBalanceModel.markSelectedAccountsPaid(users);
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.updatedCount} unpaid records marked as paid successfully`,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Selected KR payment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update selected KR payments",
+    });
   }
 };
