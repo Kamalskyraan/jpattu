@@ -1,3 +1,4 @@
+import db from "../configs/db.js";
 import UserBalanceModel from "../models/userbalance.model.js";
 
 export const getBalanceLogs = async (req, res) => {
@@ -807,5 +808,231 @@ export const getClubPayDS = async (req, res) => {
     return res.status(500).json({
       message: "Internal Server Error",
     });
+  }
+};
+
+export const getAccounts = async (req, res) => {
+  try {
+    const { start, end, status } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        message: "start date and end date is required",
+      });
+    }
+
+    const data = await UserBalanceModel.getAccountsDS({
+      start,
+      end,
+      status,
+    });
+
+    return res.status(200).json({
+      data,
+      message: "Club pay DS logs fetched successfully",
+    });
+  } catch (err) {
+    console.error("getClubPayDS error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+export const getAccountsKR = async (req, res) => {
+  try {
+    const { start, end, status } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({
+        message: "start date and end date is required",
+      });
+    }
+
+    const data = await UserBalanceModel.getAccountsKR({
+      start,
+      end,
+      status,
+    });
+
+    console.log(data , "dts")
+    return res.status(200).json({
+      data,
+      message: "Club pay KR logs fetched successfully",
+    });
+  } catch (err) {
+    console.error("getClubPayDS error:", err);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const markAllAccountsPaid = async (req, res) => {
+  let connection;
+
+  try {
+    const name = String(req.body?.name ?? "").trim();
+    const mobile = String(req.body?.mobile ?? "").trim();
+
+    if (!name || !mobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and mobile are required",
+      });
+    }
+
+    connection = await db.getConnection();
+
+    await connection.beginTransaction();
+
+    // Step 1: Get ALL matching IDs from users table
+    const [users] = await connection.query(
+      `
+      SELECT user_id
+      FROM users
+      WHERE TRIM(name) = ?
+        AND TRIM(mobile) = ?
+      `,
+      [name, mobile],
+    );
+
+    if (users.length === 0) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "No matching users found",
+        updatedCount: 0,
+      });
+    }
+
+    const userIds = users.map((user) => user.user_id);
+
+    // Step 2: Update all unpaid logs linked to those user IDs
+    const placeholders = userIds.map(() => "?").join(",");
+
+    const [result] = await connection.query(
+      `
+      UPDATE user_balance_logs
+      SET status = 'paid'
+      WHERE user_id IN (${placeholders})
+        AND LOWER(TRIM(status)) = 'unpaid'
+      `,
+      userIds,
+    );
+
+    await connection.commit();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        result.affectedRows > 0
+          ? `${result.affectedRows} unpaid record(s) marked as paid`
+          : "No unpaid records found for the matching users",
+      matchedUsers: users.length,
+      matchedUserIds: userIds,
+      updatedCount: result.affectedRows,
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error("markAllAccountsPaid error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update payment status",
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+export const markAllAccountsPaidKR = async (req, res) => {
+  let connection;
+
+  try {
+    const name = String(req.body?.name ?? "").trim();
+    const mobile = String(req.body?.mobile ?? "").trim();
+
+    if (!name || !mobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and mobile are required",
+      });
+    }
+
+    connection = await db.getConnection();
+
+    await connection.beginTransaction();
+
+    // Step 1: Get ALL matching IDs from users table
+    const [users] = await connection.query(
+      `
+      SELECT user_id
+      FROM kr_users
+      WHERE TRIM(name) = ?
+        AND TRIM(mobile) = ?
+      `,
+      [name, mobile],
+    );
+
+    if (users.length === 0) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "No matching users found",
+        updatedCount: 0,
+      });
+    }
+
+    const userIds = users.map((user) => user.user_id);
+
+    // Step 2: Update all unpaid logs linked to those user IDs
+    const placeholders = userIds.map(() => "?").join(",");
+
+    const [result] = await connection.query(
+      `
+      UPDATE kr_user_balance_logs
+      SET status = 'paid'
+      WHERE user_id IN (${placeholders})
+        AND LOWER(TRIM(status)) = 'unpaid'
+      `,
+      userIds,
+    );
+
+    await connection.commit();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        result.affectedRows > 0
+          ? `${result.affectedRows} unpaid record(s) marked as paid`
+          : "No unpaid records found for the matching users",
+      matchedUsers: users.length,
+      matchedUserIds: userIds,
+      updatedCount: result.affectedRows,
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error("markAllAccountsPaid error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update payment status",
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };

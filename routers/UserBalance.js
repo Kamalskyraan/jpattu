@@ -1,5 +1,7 @@
 import express from "express";
 import {
+  getAccounts,
+  getAccountsKR,
   getBalanceLogs,
   getClubPayDS,
   getClubPayKR,
@@ -13,6 +15,8 @@ import {
   getTTBalanceLogs,
   getTTLevelIncome,
   getUserBalanceLog,
+  markAllAccountsPaid,
+  markAllAccountsPaidKR,
   receivedAmount,
   updateBalanceStatus,
   updateTTBalanceStatus,
@@ -24,6 +28,10 @@ router.get("/get-bank-data", verifyUser, getDSBankBalanceLogs);
 
 router.get("/club-pay-kr", verifyUser, getClubPayKR);
 router.get("/club-pay-ds", verifyUser, getClubPayDS);
+router.put("/accounts/mark-paid", verifyUser, markAllAccountsPaid);
+router.put("/kr-accounts/mark-paid", verifyUser, markAllAccountsPaidKR);
+router.get("/get-accounts", verifyUser, getAccounts);
+router.get("/get-accounts-kr", verifyUser, getAccountsKR);
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);
 router.get("/payment-history/:user_id", verifyUser, getPaymentHistory);

@@ -22,7 +22,7 @@ const db = mysql.createPool({
 //   database: "skyraantech_rightshadow_db",
 //   connectionLimit: 10,
 //   enableKeepAlive: true,
-//   keepAliveInitialDelay: 10000,
+//   keepAliveInitialDelay: 10000,  
 // });
 
 // const db = mysql.createPool({
