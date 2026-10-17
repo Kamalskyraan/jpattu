@@ -14,6 +14,7 @@ import {
   getRTLevelIncome,
   getTTBalanceLogs,
   getTTLevelIncome,
+  getUnpaidAccountsBelow99,
   getUserBalanceLog,
   markAllAccountsPaid,
   markAllAccountsPaidKR,
@@ -44,6 +45,8 @@ router.put(
   verifyUser,
   markSelectedAccountsPaid,
 );
+
+router.get("/accounts/unpaid-below-99", verifyUser, getUnpaidAccountsBelow99);
 
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);

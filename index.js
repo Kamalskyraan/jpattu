@@ -45,7 +45,7 @@ import rtSalesRoutes from "./routers/RTSales.js";
 import npSalesRoutes from "./routers/NPSales.js";
 import fsSalesRoutes from "./routers/FSSales.js";
 import krSalesRoutes from "./routers/KRSales.js";
-import "./cron/monthEndSettlement.js";
+// import "./cron/monthEndSettlement.js";
 import {
   getAdminData,
   getTTAdminData,

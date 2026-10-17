@@ -1247,108 +1247,125 @@ const UserBalanceModel = {
     }));
   },
 
-  getAccountsKR: async ({ start, end, status }) => {
+  getAccountsKR: async ({ start, end, status, minBalance = 100 }) => {
     const query = `
     SELECT
-        g.id,
-        g.club_ids,
-        g.name,
-        g.mobile,
+      g.id,
+      g.club_ids,
+      g.name,
+      g.mobile,
 
-        COALESCE(b.bank_amount, 0) AS bank_amount,
+      COALESCE(b.bank_amount, 0) AS bank_amount,
+      COALESCE(p.paid_count, 0) AS paid_count,
+      COALESCE(p.paid_amount, 0) AS paid_amount,
 
-        COALESCE(p.paid_count, 0) AS paid_count,
-        COALESCE(p.paid_amount, 0) AS paid_amount,
+      COALESCE(b.bank_amount, 0)
+        - COALESCE(p.paid_amount, 0) AS balance_amount,
 
-        COALESCE(b.bank_amount, 0)
-          - COALESCE(p.paid_amount, 0) AS balance_amount,
+      g.txn_id,
+      g.bank_name,
+      g.holder_name,
+      g.account_number,
+      g.ifsc_code,
+      g.pancard,
+      g.branch,
 
-        g.txn_id,
-        g.bank_name,
-        g.holder_name,
-        g.account_number,
-        g.ifsc_code,
-        g.pancard,
-        g.branch,
-
-        p.last_payment_id,
-        p.last_payment_amount,
-        p.payment_date
+      p.last_payment_id,
+      p.last_payment_amount,
+      p.payment_date
 
     FROM (
-        SELECT
-            MIN(u.id) AS id,
-            COUNT(DISTINCT u.id) AS club_ids,
-            u.name,
-            u.mobile,
+      SELECT
+        MIN(u.id) AS id,
+        COUNT(DISTINCT u.id) AS club_ids,
+        u.name,
+        u.mobile,
 
-            MAX(u.txn_id) AS txn_id,
-            MAX(u.bank_name) AS bank_name,
-            MAX(u.holder_name) AS holder_name,
-            MAX(u.account_number) AS account_number,
-            MAX(u.pancard) AS pancard,
-            MAX(u.ifsc_code) AS ifsc_code,
-            MAX(u.branch) AS branch
+        MAX(u.txn_id) AS txn_id,
+        MAX(u.bank_name) AS bank_name,
+        MAX(u.holder_name) AS holder_name,
+        MAX(u.account_number) AS account_number,
+        MAX(u.pancard) AS pancard,
+        MAX(u.ifsc_code) AS ifsc_code,
+        MAX(u.branch) AS branch
 
-        FROM kr_users u
-        GROUP BY u.name, u.mobile
+      FROM kr_users u
+      GROUP BY u.name, u.mobile
     ) g
 
     LEFT JOIN (
-        SELECT
-            us.name,
-            us.mobile,
-            COALESCE(SUM(ubl.amount), 0) AS bank_amount
+      SELECT
+        us.name,
+        us.mobile,
+        COALESCE(SUM(ubl.amount), 0) AS bank_amount
 
-        FROM kr_users us
-        INNER JOIN kr_user_balance_logs ubl
-            ON ubl.user_id = us.user_id
+      FROM kr_users us
+      INNER JOIN kr_user_balance_logs ubl
+        ON ubl.user_id = us.user_id
 
-        WHERE ubl.deleted_at IS NULL
+      WHERE ubl.deleted_at IS NULL
+        AND (? IS NULL OR ubl.created_at >= ?)
+        AND (? IS NULL OR ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY))
 
-        GROUP BY us.name, us.mobile
+      GROUP BY us.name, us.mobile
     ) b
-        ON b.name = g.name
-       AND b.mobile = g.mobile
+      ON b.name = g.name
+     AND b.mobile = g.mobile
 
     LEFT JOIN (
-        SELECT
-            us.name,
-            us.mobile,
+      SELECT
+        us.name,
+        us.mobile,
 
-            COUNT(ubl.id) AS paid_count,
-            COALESCE(SUM(ubl.amount), 0) AS paid_amount,
+        COUNT(ubl.id) AS paid_count,
+        COALESCE(SUM(ubl.amount), 0) AS paid_amount,
 
-            MAX(ubl.id) AS last_payment_id,
-            MAX(ubl.created_at) AS payment_date,
+        SUBSTRING_INDEX(
+          GROUP_CONCAT(
+            ubl.id ORDER BY ubl.created_at DESC, ubl.id DESC
+          ),
+          ',',
+          1
+        ) AS last_payment_id,
 
-            SUBSTRING_INDEX(
-                GROUP_CONCAT(
-                    ubl.amount
-                    ORDER BY ubl.created_at DESC, ubl.id DESC
-                ),
-                ',',
-                1
-            ) AS last_payment_amount
+        MAX(ubl.created_at) AS payment_date,
 
-        FROM kr_users us
-        INNER JOIN kr_user_balance_logs ubl
-            ON ubl.user_id = us.user_id
+        SUBSTRING_INDEX(
+          GROUP_CONCAT(
+            ubl.amount ORDER BY ubl.created_at DESC, ubl.id DESC
+          ),
+          ',',
+          1
+        ) AS last_payment_amount
 
-        WHERE ubl.deleted_at IS NULL
-          AND ubl.status = 'paid'
+      FROM kr_users us
+      INNER JOIN kr_user_balance_logs ubl
+        ON ubl.user_id = us.user_id
 
-        GROUP BY us.name, us.mobile
+      WHERE ubl.deleted_at IS NULL
+        AND ubl.status = 'paid'
+        AND (? IS NULL OR ubl.created_at >= ?)
+        AND (? IS NULL OR ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY))
+
+      GROUP BY us.name, us.mobile
     ) p
-        ON p.name = g.name
-       AND p.mobile = g.mobile
+      ON p.name = g.name
+     AND p.mobile = g.mobile
 
-    ORDER BY g.id DESC;
+    WHERE COALESCE(b.bank_amount, 0)
+        - COALESCE(p.paid_amount, 0) > ?
+
+    ORDER BY g.id DESC
   `;
 
-    const [rows] = await db.query(query);
+    const dateParams = [start || null, start || null, end || null, end || null];
 
-    console.log(rows);
+    const [rows] = await db.query(query, [
+      ...dateParams,
+      ...dateParams,
+      minBalance,
+    ]);
+
     return rows.map((row) => ({
       ...row,
       id: Number(row.id),
@@ -1426,6 +1443,7 @@ const UserBalanceModel = {
       connection.release();
     }
   },
+
   markSelectedAccountsPaid: async (users) => {
     const connection = await db.getConnection();
 
@@ -1489,6 +1507,103 @@ const UserBalanceModel = {
     } finally {
       connection.release();
     }
+  },
+
+  markPreviousMonthKRLogsPaid: async () => {
+    const connection = await db.getConnection();
+    let transactionStarted = false;
+
+    try {
+      // Get current year and month in Indian Standard Time.
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+      }).formatToParts(new Date());
+
+      const year = Number(parts.find((p) => p.type === "year").value);
+
+      const month = Number(parts.find((p) => p.type === "month").value);
+
+      const formatDate = (date) =>
+        `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(
+          2,
+          "0",
+        )}-01`;
+
+      // First day of current month.
+      const currentMonthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+
+      // First day of previous month.
+      const previousMonthStart = formatDate(
+        new Date(Date.UTC(year, month - 2, 1)),
+      );
+
+      await connection.beginTransaction();
+      transactionStarted = true;
+
+      const [result] = await connection.query(
+        `
+      UPDATE kr_user_balance_logs
+      SET status = 'paid'
+      WHERE status = 'unpaid'
+        AND deleted_at IS NULL
+        AND created_at >= ?
+        AND created_at < ?
+      `,
+        [previousMonthStart, currentMonthStart],
+      );
+
+      await connection.commit();
+      transactionStarted = false;
+
+      return {
+        updatedCount: result.affectedRows,
+        periodStart: previousMonthStart,
+        periodEnd: currentMonthStart,
+      };
+    } catch (error) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+  getUnpaidAccountsBelow99: async () => {
+    const query = `
+    SELECT
+      MIN(u.id) AS id,
+      COUNT(DISTINCT u.id) AS club_ids,
+      u.name,
+      u.mobile,
+      COALESCE(SUM(ubl.amount), 0) AS payouts,
+      COALESCE(SUM(ubl.amount), 0) AS balance_amount
+    FROM kr_users u
+    INNER JOIN kr_user_balance_logs ubl
+      ON ubl.user_id = u.user_id
+    WHERE ubl.deleted_at IS NULL
+      AND ubl.status = 'unpaid'
+    GROUP BY
+      u.name,
+      u.mobile
+    HAVING SUM(ubl.amount) > 0
+       AND SUM(ubl.amount) < 99
+    ORDER BY MIN(u.id) DESC
+  `;
+
+    const [rows] = await db.query(query);
+
+    return rows.map((row) => ({
+      ...row,
+      id: Number(row.id),
+      club_ids: Number(row.club_ids),
+      payouts: Number(row.payouts),
+      balance_amount: Number(row.balance_amount),
+    }));
   },
 };
 

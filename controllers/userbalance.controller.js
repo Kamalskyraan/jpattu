@@ -1,5 +1,9 @@
 import db from "../configs/db.js";
 import UserBalanceModel from "../models/userbalance.model.js";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
+
+dayjs.extend(customParseFormat);
 
 export const getBalanceLogs = async (req, res) => {
   try {
@@ -855,7 +859,6 @@ export const getAccountsKR = async (req, res) => {
       status,
     });
 
-    console.log(data, "dts");
     return res.status(200).json({
       data,
       message: "Club pay KR logs fetched successfully",
@@ -1122,6 +1125,25 @@ export const markSelectedAccountsPaid = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update selected KR payments",
+    });
+  }
+};
+
+export const getUnpaidAccountsBelow99 = async (req, res) => {
+  try {
+    const data = await UserBalanceModel.getUnpaidAccountsBelow99();
+
+    return res.status(200).json({
+      success: true,
+      message: "Unpaid accounts below 99 fetched successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Get unpaid accounts below 99 error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch unpaid accounts",
     });
   }
 };
