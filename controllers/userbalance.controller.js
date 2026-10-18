@@ -864,7 +864,7 @@ export const getAccountsKR = async (req, res) => {
       message: "Club pay KR logs fetched successfully",
     });
   } catch (err) {
-    console.error("getClubPayDS error:", err);
+    console.error("getAccountsKR error:", err);
 
     return res.status(500).json({
       message: "Internal Server Error",

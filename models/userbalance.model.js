@@ -1256,6 +1256,11 @@ const UserBalanceModel = {
       g.mobile,
 
       COALESCE(b.bank_amount, 0) AS bank_amount,
+
+      FLOOR(
+        GREATEST(COALESCE(b.bank_amount, 0), 0) / 1000
+      ) AS new_id,
+
       COALESCE(p.paid_count, 0) AS paid_count,
       COALESCE(p.paid_amount, 0) AS paid_amount,
 
@@ -1371,10 +1376,16 @@ const UserBalanceModel = {
       id: Number(row.id),
       club_ids: Number(row.club_ids),
       bank_amount: Number(row.bank_amount),
+
+      // New ID
+      new_id: Number(row.new_id || 0),
+
       paid_count: Number(row.paid_count),
       paid_amount: Number(row.paid_amount),
       balance_amount: Number(row.balance_amount),
+
       last_payment_id: row.last_payment_id ? Number(row.last_payment_id) : null,
+
       last_payment_amount: Number(row.last_payment_amount || 0),
     }));
   },
