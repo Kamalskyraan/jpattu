@@ -1248,6 +1248,31 @@ const UserBalanceModel = {
   },
 
   getAccountsKR: async ({ start, end, status, minBalance = 100 }) => {
+    if (!start || !end) {
+      throw new Error("Start and end dates are required");
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!dateRegex.test(start) || !dateRegex.test(end)) {
+      throw new Error("Invalid date format. Use YYYY-MM-DD");
+    }
+
+    if (start > end) {
+      throw new Error("Start date cannot be after end date");
+    }
+
+    const now = new Date();
+
+    const currentMonth = `${now.getFullYear()}-${String(
+      now.getMonth() + 1,
+    ).padStart(2, "0")}`;
+
+    const selectedMonth = start.slice(0, 7);
+
+    const isCurrentMonth =
+      selectedMonth === end.slice(0, 7) && selectedMonth === currentMonth;
+
     const query = `
     SELECT
       g.id,
@@ -1257,15 +1282,23 @@ const UserBalanceModel = {
 
       COALESCE(b.bank_amount, 0) AS bank_amount,
 
-      FLOOR(
-        GREATEST(COALESCE(b.bank_amount, 0), 0) / 1000
-      ) AS new_id,
+      -- New IDs generated only during the selected period.
+      COALESCE(b.new_ids_generated, 0) AS new_ids_generated,
+
+      -- Keep the existing field compatible with the frontend.
+      COALESCE(b.new_ids_generated, 0) AS new_id,
 
       COALESCE(p.paid_count, 0) AS paid_count,
       COALESCE(p.paid_amount, 0) AS paid_amount,
 
-      COALESCE(b.bank_amount, 0)
-        - COALESCE(p.paid_amount, 0) AS balance_amount,
+      GREATEST(
+        COALESCE(b.bank_amount, 0)
+        - COALESCE(p.paid_amount, 0),
+        0
+      ) AS balance_amount,
+
+      -- Selected period's earnings, independent of paid status.
+      COALESCE(b.bank_amount, 0) AS pdf_balance_amount,
 
       g.txn_id,
       g.bank_name,
@@ -1302,15 +1335,65 @@ const UserBalanceModel = {
       SELECT
         us.name,
         us.mobile,
-        COALESCE(SUM(ubl.amount), 0) AS bank_amount
+
+        -- Amount earned during the selected period.
+        COALESCE(
+          SUM(
+            CASE
+              WHEN ubl.created_at >= ?
+              THEN ubl.amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS bank_amount,
+
+        -- Total accumulated amount before the selected period.
+        COALESCE(
+          SUM(
+            CASE
+              WHEN ubl.created_at < ?
+              THEN ubl.amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS amount_before_period,
+
+        -- Cumulative amount up to the selected period's end.
+        COALESCE(SUM(ubl.amount), 0) AS cumulative_amount,
+
+        -- Newly crossed ₹500 milestones in this period.
+        GREATEST(
+          FLOOR(
+            GREATEST(COALESCE(SUM(ubl.amount), 0), 0) / 500
+          )
+          -
+          FLOOR(
+            GREATEST(
+              COALESCE(
+                SUM(
+                  CASE
+                    WHEN ubl.created_at < ?
+                    THEN ubl.amount
+                    ELSE 0
+                  END
+                ),
+                0
+              ),
+              0
+            ) / 500
+          ),
+          0
+        ) AS new_ids_generated
 
       FROM kr_users us
+
       INNER JOIN kr_user_balance_logs ubl
         ON ubl.user_id = us.user_id
 
       WHERE ubl.deleted_at IS NULL
-        AND (? IS NULL OR ubl.created_at >= ?)
-        AND (? IS NULL OR ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY))
+        AND ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY)
 
       GROUP BY us.name, us.mobile
     ) b
@@ -1323,66 +1406,99 @@ const UserBalanceModel = {
         us.mobile,
 
         COUNT(ubl.id) AS paid_count,
+
         COALESCE(SUM(ubl.amount), 0) AS paid_amount,
 
         SUBSTRING_INDEX(
           GROUP_CONCAT(
-            ubl.id ORDER BY ubl.created_at DESC, ubl.id DESC
+            ubl.id
+            ORDER BY ubl.created_at DESC, ubl.id DESC
           ),
           ',',
           1
         ) AS last_payment_id,
 
-        MAX(ubl.created_at) AS payment_date,
+        MAX(ubl.paid_at) AS payment_date,
 
         SUBSTRING_INDEX(
           GROUP_CONCAT(
-            ubl.amount ORDER BY ubl.created_at DESC, ubl.id DESC
+            ubl.amount
+            ORDER BY ubl.created_at DESC, ubl.id DESC
           ),
           ',',
           1
         ) AS last_payment_amount
 
       FROM kr_users us
+
       INNER JOIN kr_user_balance_logs ubl
         ON ubl.user_id = us.user_id
 
       WHERE ubl.deleted_at IS NULL
         AND ubl.status = 'paid'
-        AND (? IS NULL OR ubl.created_at >= ?)
-        AND (? IS NULL OR ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY))
+        AND ubl.created_at >= ?
+        AND ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY)
 
       GROUP BY us.name, us.mobile
     ) p
       ON p.name = g.name
      AND p.mobile = g.mobile
 
-    WHERE COALESCE(b.bank_amount, 0)
-        - COALESCE(p.paid_amount, 0) > ?
+    WHERE (
+      (
+        ? = 1
+        AND (
+          COALESCE(b.bank_amount, 0)
+          - COALESCE(p.paid_amount, 0)
+        ) >= ?
+      )
+      OR
+      (
+        ? = 0
+        AND COALESCE(b.bank_amount, 0) >= ?
+      )
+      OR
+      COALESCE(b.new_ids_generated, 0) > 0
+    )
 
     ORDER BY g.id DESC
   `;
 
-    const dateParams = [start || null, start || null, end || null, end || null];
-
     const [rows] = await db.query(query, [
-      ...dateParams,
-      ...dateParams,
+      // b subquery: selected-period earnings and ID calculation
+      start,
+      start,
+      start,
+      end,
+
+      // p subquery: paid amounts during selected period
+      start,
+      end,
+
+      // Main WHERE conditions
+      isCurrentMonth ? 1 : 0,
+      minBalance,
+
+      isCurrentMonth ? 1 : 0,
       minBalance,
     ]);
 
     return rows.map((row) => ({
       ...row,
+
       id: Number(row.id),
       club_ids: Number(row.club_ids),
-      bank_amount: Number(row.bank_amount),
 
-      // New ID
+      bank_amount: Number(row.bank_amount || 0),
+
       new_id: Number(row.new_id || 0),
+      new_ids_generated: Number(row.new_ids_generated || 0),
 
-      paid_count: Number(row.paid_count),
-      paid_amount: Number(row.paid_amount),
-      balance_amount: Number(row.balance_amount),
+      paid_count: Number(row.paid_count || 0),
+      paid_amount: Number(row.paid_amount || 0),
+
+      balance_amount: Number(row.balance_amount || 0),
+      pdf_balance_amount: Number(row.pdf_balance_amount || 0),
 
       last_payment_id: row.last_payment_id ? Number(row.last_payment_id) : null,
 
