@@ -15,15 +15,15 @@ const db = mysql.createPool({
   timezone: "+05:30",
 });
 
-const db = mysql.createPool({
-  host: "localhost",
-  user: "skyraantech_rightshadow_user",
-  password: "%[n6mU&iiEg~NSUZ",
-  database: "skyraantech_rightshadow_db",
-  connectionLimit: 10,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,  
-});
+// const db = mysql.createPool({
+//   host: "localhost",
+//   user: "skyraantech_rightshadow_user",
+//   password: "%[n6mU&iiEg~NSUZ",
+//   database: "skyraantech_rightshadow_db",
+//   connectionLimit: 10,
+//   enableKeepAlive: true,
+//   keepAliveInitialDelay: 10000,  
+// });
 
 // const db = mysql.createPool({
 //   host: "localhost",
