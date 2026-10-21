@@ -1519,6 +1519,8 @@ export const UserModel = {
           [temp_user_id],
         );
 
+        user.user_id = newId;
+        user.referral_id = referrer.user_id;
         if (user.email) {
           user.user_id = newId;
           user.referral_id = referrer.user_id;
@@ -5493,6 +5495,9 @@ export const UserModel = {
           "UPDATE kr_temp_users SET approved = 1 WHERE user_id = ?",
           [temp_user_id],
         );
+
+        user.user_id = newId;
+        user.referral_id = referrer.user_id;
 
         if (user.email) {
           user.user_id = newId;

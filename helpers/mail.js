@@ -4747,7 +4747,7 @@ export const sendMembersFSPackageAdminMail = async ({
 
 // KERCHIEF
 
-export const sendKRMail = (user) => {
+export const sendKRMail = async (user) => {
   const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
 
   const mailContent = `
@@ -4996,7 +4996,7 @@ export const sendKRMail = (user) => {
   });
 };
 
-export const sendKRAdminMail = (user) => {
+export const sendKRAdminMail = async (user) => {
   const EMAIL_ASSET_BASE_URL = "https://rightshadow.in/server/public/email";
 
   const users = [user];
