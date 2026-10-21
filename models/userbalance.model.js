@@ -1516,10 +1516,10 @@ const UserBalanceModel = {
         -- Cumulative amount up to the selected period's end.
         COALESCE(SUM(ubl.amount), 0) AS cumulative_amount,
 
-        -- Newly crossed ₹500 milestones in this period.
+        -- Newly crossed ₹300 milestones in this period.
         GREATEST(
           FLOOR(
-            GREATEST(COALESCE(SUM(ubl.amount), 0), 0) / 500
+            GREATEST(COALESCE(SUM(ubl.amount), 0), 0) / 300
           )
           -
           FLOOR(
@@ -1535,7 +1535,7 @@ const UserBalanceModel = {
                 0
               ),
               0
-            ) / 500
+            ) / 300
           ),
           0
         ) AS new_ids_generated
