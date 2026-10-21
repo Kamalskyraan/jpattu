@@ -6,6 +6,7 @@ import {
   getClubPayDS,
   getClubPayKR,
   getDSBankBalanceLogs,
+  getDSUnpaidAccountsBelow99,
   getFSLevelIncome,
   getKRLevelIncome,
   getLevelIncome,
@@ -47,6 +48,11 @@ router.put(
 );
 
 router.get("/accounts/unpaid-below-99", verifyUser, getUnpaidAccountsBelow99);
+router.get(
+  "/accounts/ds-unpaid-below-99",
+  verifyUser,
+  getDSUnpaidAccountsBelow99,
+);
 
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);

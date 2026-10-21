@@ -836,7 +836,7 @@ export const getAccounts = async (req, res) => {
       message: "Club pay DS logs fetched successfully",
     });
   } catch (err) {
-    console.error("getClubPayDS error:", err);
+    console.error("getAccountsDS error:", err);
 
     return res.status(500).json({
       message: "Internal Server Error",
@@ -1132,6 +1132,24 @@ export const markSelectedAccountsPaid = async (req, res) => {
 export const getUnpaidAccountsBelow99 = async (req, res) => {
   try {
     const data = await UserBalanceModel.getUnpaidAccountsBelow99();
+
+    return res.status(200).json({
+      success: true,
+      message: "Unpaid accounts below 99 fetched successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Get unpaid accounts below 99 error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch unpaid accounts",
+    });
+  }
+};
+export const getDSUnpaidAccountsBelow99 = async (req, res) => {
+  try {
+    const data = await UserBalanceModel.getUnpaidDSAccountsBelow99();
 
     return res.status(200).json({
       success: true,

@@ -1133,116 +1133,269 @@ const UserBalanceModel = {
     }));
   },
 
-  getAccountsDS: async ({ start, end, status }) => {
+  getAccountsDS: async ({ start, end, status, minBalance = 100 }) => {
+    if (!start || !end) {
+      throw new Error("Start and end dates are required");
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    const isValidDate = (value) => {
+      if (!dateRegex.test(value)) return false;
+
+      const date = new Date(`${value}T00:00:00Z`);
+
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value
+      );
+    };
+
+    if (!isValidDate(start) || !isValidDate(end)) {
+      throw new Error("Invalid date. Use a valid YYYY-MM-DD date");
+    }
+
+    if (start > end) {
+      throw new Error("Start date cannot be after end date");
+    }
+
+    const threshold = Number(minBalance);
+
+    if (!Number.isFinite(threshold) || threshold < 0) {
+      throw new Error("minBalance must be a valid non-negative number");
+    }
+
+    const now = new Date();
+
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    const selectedMonth = start.slice(0, 7);
+
+    const isCurrentMonth =
+      selectedMonth === end.slice(0, 7) && selectedMonth === currentMonth;
+
     const query = `
     SELECT
-        g.id,
-        g.club_ids,
-        g.name,
-        g.mobile,
+      g.id,
+      g.club_ids,
+      g.name,
+      g.mobile,
 
-        COALESCE(b.bank_amount, 0) AS bank_amount,
+      COALESCE(b.bank_amount, 0) AS bank_amount,
+      COALESCE(b.new_ids_generated, 0) AS new_ids_generated,
+      COALESCE(b.new_ids_generated, 0) AS new_id,
 
-        COALESCE(p.paid_count, 0) AS paid_count,
-        COALESCE(p.paid_amount, 0) AS paid_amount,
+      COALESCE(p.paid_count, 0) AS paid_count,
+      COALESCE(p.paid_amount, 0) AS paid_amount,
 
-        COALESCE(b.bank_amount, 0)
-          - COALESCE(p.paid_amount, 0) AS balance_amount,
+      GREATEST(
+        COALESCE(b.bank_amount, 0) -
+        COALESCE(p.paid_amount, 0),
+        0
+      ) AS balance_amount,
 
-        g.txn_id,
-        g.bank_name,
-        g.holder_name,
-        g.account_number,
-        g.ifsc_code,
-        g.pancard,
-        g.branch,
+      COALESCE(b.bank_amount, 0) AS pdf_balance_amount,
 
-        p.last_payment_id,
-        p.last_payment_amount,
-        p.payment_date
+      g.txn_id,
+      g.bank_name,
+      g.holder_name,
+      g.account_number,
+      g.ifsc_code,
+      g.pancard,
+      g.branch,
+
+      p.last_payment_id,
+      p.last_payment_amount,
+      p.payment_date
 
     FROM (
-        SELECT
-            MIN(u.id) AS id,
-            COUNT(DISTINCT u.id) AS club_ids,
-            u.name,
-            u.mobile,
+      SELECT
+        MIN(u.id) AS id,
+        COUNT(DISTINCT u.id) AS club_ids,
+        u.name,
+        u.mobile,
 
-            MAX(u.txn_id) AS txn_id,
-            MAX(u.bank_name) AS bank_name,
-            MAX(u.holder_name) AS holder_name,
-            MAX(u.account_number) AS account_number,
-            MAX(u.pancard) AS pancard,
-            MAX(u.ifsc_code) AS ifsc_code,
-            MAX(u.branch) AS branch
+        MAX(u.txn_id) AS txn_id,
+        MAX(u.bank_name) AS bank_name,
+        MAX(u.holder_name) AS holder_name,
+        MAX(u.account_number) AS account_number,
+        MAX(u.pancard) AS pancard,
+        MAX(u.ifsc_code) AS ifsc_code,
+        MAX(u.branch) AS branch
 
-        FROM users u
-        GROUP BY u.name, u.mobile
+      FROM users u
+      GROUP BY u.name, u.mobile
     ) g
 
     LEFT JOIN (
-        SELECT
-            us.name,
-            us.mobile,
-            COALESCE(SUM(ubl.amount), 0) AS bank_amount
+      SELECT
+        us.name,
+        us.mobile,
 
-        FROM users us
-        INNER JOIN user_balance_logs ubl
-            ON ubl.user_id = us.user_id
+        -- Earnings within the selected date range.
+        COALESCE(
+          SUM(
+            CASE
+              WHEN ubl.created_at >= ?
+              THEN ubl.amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS bank_amount,
 
-        WHERE ubl.deleted_at IS NULL
+        -- Accumulated earnings before the selected start date.
+        COALESCE(
+          SUM(
+            CASE
+              WHEN ubl.created_at < ?
+              THEN ubl.amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS amount_before_period,
 
-        GROUP BY us.name, us.mobile
+        -- Newly crossed ₹3000 milestones up to the selected end date.
+        GREATEST(
+          FLOOR(
+            GREATEST(COALESCE(SUM(ubl.amount), 0), 0) / 3000
+          )
+          -
+          FLOOR(
+            GREATEST(
+              COALESCE(
+                SUM(
+                  CASE
+                    WHEN ubl.created_at < ?
+                    THEN ubl.amount
+                    ELSE 0
+                  END
+                ),
+                0
+              ),
+              0
+            ) / 3000
+          ),
+          0
+        ) AS new_ids_generated
+
+      FROM users us
+
+      INNER JOIN user_balance_logs ubl
+        ON ubl.user_id = us.user_id
+
+      WHERE ubl.deleted_at IS NULL
+        AND ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+
+      GROUP BY us.name, us.mobile
     ) b
-        ON b.name = g.name
-       AND b.mobile = g.mobile
+      ON b.name = g.name
+     AND b.mobile = g.mobile
 
     LEFT JOIN (
-        SELECT
-            us.name,
-            us.mobile,
+      SELECT
+        us.name,
+        us.mobile,
 
-            COUNT(ubl.id) AS paid_count,
-            COALESCE(SUM(ubl.amount), 0) AS paid_amount,
+        COUNT(ubl.id) AS paid_count,
+        COALESCE(SUM(ubl.amount), 0) AS paid_amount,
 
-            MAX(ubl.id) AS last_payment_id,
-            MAX(ubl.created_at) AS payment_date,
+        SUBSTRING_INDEX(
+          GROUP_CONCAT(
+            ubl.id
+            ORDER BY ubl.created_at DESC, ubl.id DESC
+          ),
+          ',',
+          1
+        ) AS last_payment_id,
 
-            SUBSTRING_INDEX(
-                GROUP_CONCAT(
-                    ubl.amount
-                    ORDER BY ubl.created_at DESC, ubl.id DESC
-                ),
-                ',',
-                1
-            ) AS last_payment_amount
+        SUBSTRING_INDEX(
+          GROUP_CONCAT(
+            ubl.amount
+            ORDER BY ubl.created_at DESC, ubl.id DESC
+          ),
+          ',',
+          1
+        ) AS last_payment_amount,
 
-        FROM users us
-        INNER JOIN user_balance_logs ubl
-            ON ubl.user_id = us.user_id
+        MAX(ubl.paid_at) AS payment_date
 
-        WHERE ubl.deleted_at IS NULL
-          AND ubl.status = 'paid'
+      FROM users us
 
-        GROUP BY us.name, us.mobile
+      INNER JOIN user_balance_logs ubl
+        ON ubl.user_id = us.user_id
+
+      WHERE ubl.deleted_at IS NULL
+        AND ubl.status = 'paid'
+        AND ubl.created_at >= ?
+        AND ubl.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+
+      GROUP BY us.name, us.mobile
     ) p
-        ON p.name = g.name
-       AND p.mobile = g.mobile
+      ON p.name = g.name
+     AND p.mobile = g.mobile
 
-    ORDER BY g.id DESC;
+    WHERE (
+      (
+        ? = 1
+        AND (
+          COALESCE(b.bank_amount, 0) -
+          COALESCE(p.paid_amount, 0)
+        ) >= ?
+      )
+      OR
+      (
+        ? = 0
+        AND COALESCE(b.bank_amount, 0) >= ?
+      )
+      OR
+      COALESCE(b.new_ids_generated, 0) > 0
+    )
+
+    ORDER BY g.id DESC
   `;
 
-    const [rows] = await db.query(query);
+    const params = [
+      // Earnings and milestone calculations
+      start,
+      start,
+      start,
+      end,
+
+      // Paid records in selected period
+      start,
+      end,
+
+      // Balance filters
+      isCurrentMonth ? 1 : 0,
+      threshold,
+
+      isCurrentMonth ? 1 : 0,
+      threshold,
+    ];
+
+    const [rows] = await db.query(query, params);
 
     return rows.map((row) => ({
       ...row,
+
       id: Number(row.id),
       club_ids: Number(row.club_ids),
-      bank_amount: Number(row.bank_amount),
-      paid_count: Number(row.paid_count),
-      paid_amount: Number(row.paid_amount),
-      balance_amount: Number(row.balance_amount),
-      last_payment_id: row.last_payment_id ? Number(row.last_payment_id) : null,
+
+      bank_amount: Number(row.bank_amount || 0),
+      new_id: Number(row.new_id || 0),
+      new_ids_generated: Number(row.new_ids_generated || 0),
+
+      paid_count: Number(row.paid_count || 0),
+      paid_amount: Number(row.paid_amount || 0),
+
+      balance_amount: Number(row.balance_amount || 0),
+      pdf_balance_amount: Number(row.pdf_balance_amount || 0),
+
+      last_payment_id:
+        row.last_payment_id != null ? Number(row.last_payment_id) : null,
+
       last_payment_amount: Number(row.last_payment_amount || 0),
     }));
   },
@@ -1731,6 +1884,104 @@ const UserBalanceModel = {
       payouts: Number(row.payouts),
       balance_amount: Number(row.balance_amount),
     }));
+  },
+  getUnpaidDSAccountsBelow99: async () => {
+    const query = `
+    SELECT
+      MIN(u.id) AS id,
+      COUNT(DISTINCT u.id) AS club_ids,
+      u.name,
+      u.mobile,
+      COALESCE(SUM(ubl.amount), 0) AS payouts,
+      COALESCE(SUM(ubl.amount), 0) AS balance_amount
+    FROM users u
+    INNER JOIN user_balance_logs ubl
+      ON ubl.user_id = u.user_id
+    WHERE ubl.deleted_at IS NULL
+      AND ubl.status = 'unpaid'
+    GROUP BY
+      u.name,
+      u.mobile
+    HAVING SUM(ubl.amount) > 0
+       AND SUM(ubl.amount) < 99
+    ORDER BY MIN(u.id) DESC
+  `;
+
+    const [rows] = await db.query(query);
+
+    return rows.map((row) => ({
+      ...row,
+      id: Number(row.id),
+      club_ids: Number(row.club_ids),
+      payouts: Number(row.payouts),
+      balance_amount: Number(row.balance_amount),
+    }));
+  },
+
+
+
+   markPreviousMonthDSLogsPaid: async () => {
+    const connection = await db.getConnection();
+    let transactionStarted = false;
+
+    try {
+      // Get current year and month in Indian Standard Time.
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+      }).formatToParts(new Date());
+
+      const year = Number(parts.find((p) => p.type === "year").value);
+
+      const month = Number(parts.find((p) => p.type === "month").value);
+
+      const formatDate = (date) =>
+        `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(
+          2,
+          "0",
+        )}-01`;
+
+      // First day of current month.
+      const currentMonthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+
+      // First day of previous month.
+      const previousMonthStart = formatDate(
+        new Date(Date.UTC(year, month - 2, 1)),
+      );
+
+      await connection.beginTransaction();
+      transactionStarted = true;
+
+      const [result] = await connection.query(
+        `
+      UPDATE user_balance_logs
+      SET status = 'paid'
+      WHERE status = 'unpaid'
+        AND deleted_at IS NULL
+        AND created_at >= ?
+        AND created_at < ?
+      `,
+        [previousMonthStart, currentMonthStart],
+      );
+
+      await connection.commit();
+      transactionStarted = false;
+
+      return {
+        updatedCount: result.affectedRows,
+        periodStart: previousMonthStart,
+        periodEnd: currentMonthStart,
+      };
+    } catch (error) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };
 
