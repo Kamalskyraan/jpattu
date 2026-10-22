@@ -1860,24 +1860,17 @@ const UserBalanceModel = {
       COUNT(DISTINCT u.id) AS club_ids,
       MIN(u.name) AS name,
       MIN(u.mobile) AS mobile,
-      b.total_amount AS payouts,
-      b.total_amount AS balance_amount
-    FROM (
-      SELECT
-        user_id,
-        SUM(amount) AS total_amount
-      FROM kr_user_balance_logs
-      WHERE deleted_at IS NULL
-        AND status = 'unpaid'
-      GROUP BY user_id
-      HAVING SUM(amount) >= 1
-         AND SUM(amount) <= 99
-    ) b
-    LEFT JOIN kr_users u
+      SUM(b.amount) AS payouts,
+      SUM(b.amount) AS balance_amount
+    FROM kr_user_balance_logs b
+    INNER JOIN kr_users u
       ON u.user_id = b.user_id
-    GROUP BY
-      b.user_id,
-      b.total_amount
+    WHERE b.deleted_at IS NULL
+      AND b.status = 'unpaid'
+      AND b.kr_accounted_at IS NULL
+    GROUP BY b.user_id
+    HAVING SUM(b.amount) > 0
+       AND SUM(b.amount) < 100
     ORDER BY MIN(u.id) DESC
   `;
 
@@ -1885,7 +1878,7 @@ const UserBalanceModel = {
 
     return rows.map((row) => ({
       ...row,
-      id: row.id === null ? null : Number(row.id),
+      id: Number(row.id),
       club_ids: Number(row.club_ids),
       payouts: Number(row.payouts),
       balance_amount: Number(row.balance_amount),
