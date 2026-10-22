@@ -1900,19 +1900,25 @@ const UserBalanceModel = {
     const query = `
     SELECT
       MIN(u.id) AS id,
-         (
+
+      (
         SELECT COUNT(DISTINCT u2.id)
         FROM users u2
         WHERE u2.name = u.name
           AND u2.mobile = u.mobile
       ) AS club_ids,
+
       u.name,
       u.mobile,
+
       COALESCE(SUM(ubl.amount), 0) AS payouts,
-      
+      COALESCE(SUM(ubl.amount), 0) AS balance_amount
+
     FROM users u
+
     INNER JOIN user_balance_logs ubl
       ON ubl.user_id = u.user_id
+
     WHERE ubl.deleted_at IS NULL
       AND ubl.status = 'unpaid'
       AND ubl.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
@@ -1920,11 +1926,14 @@ const UserBalanceModel = {
         DATE_FORMAT(CURDATE(), '%Y-%m-01'),
         INTERVAL 1 MONTH
       )
+
     GROUP BY
       u.name,
       u.mobile
+
     HAVING SUM(ubl.amount) > 0
        AND SUM(ubl.amount) <= 99
+
     ORDER BY MIN(u.id) DESC
   `;
 
