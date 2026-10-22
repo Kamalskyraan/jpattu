@@ -1858,8 +1858,8 @@ const UserBalanceModel = {
     SELECT
       MIN(u.id) AS id,
       COUNT(DISTINCT u.id) AS club_ids,
-      MIN(u.name) AS name,
-      MIN(u.mobile) AS mobile,
+      u.name,
+      u.mobile,
       SUM(b.amount) AS payouts,
       SUM(b.amount) AS balance_amount
     FROM kr_user_balance_logs b
@@ -1872,7 +1872,9 @@ const UserBalanceModel = {
         DATE_FORMAT(CURDATE(), '%Y-%m-01'),
         INTERVAL 1 MONTH
       )
-    GROUP BY b.user_id
+    GROUP BY
+      u.name,
+      u.mobile
     HAVING SUM(b.amount) > 0
        AND SUM(b.amount) < 100
     ORDER BY MIN(u.id) DESC
@@ -1888,6 +1890,7 @@ const UserBalanceModel = {
       balance_amount: Number(row.balance_amount),
     }));
   },
+
   getUnpaidDSAccountsBelow99: async () => {
     const query = `
     SELECT
@@ -1902,6 +1905,11 @@ const UserBalanceModel = {
       ON ubl.user_id = u.user_id
     WHERE ubl.deleted_at IS NULL
       AND ubl.status = 'unpaid'
+      AND ubl.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND ubl.created_at < DATE_ADD(
+        DATE_FORMAT(CURDATE(), '%Y-%m-01'),
+        INTERVAL 1 MONTH
+      )
     GROUP BY
       u.name,
       u.mobile
