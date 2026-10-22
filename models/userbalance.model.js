@@ -1867,7 +1867,6 @@ const UserBalanceModel = {
       ON u.user_id = b.user_id
     WHERE b.deleted_at IS NULL
       AND b.status = 'unpaid'
-      AND b.kr_accounted_at IS NULL
     GROUP BY b.user_id
     HAVING SUM(b.amount) > 0
        AND SUM(b.amount) < 100
