@@ -1857,7 +1857,12 @@ const UserBalanceModel = {
     const query = `
     SELECT
       MIN(u.id) AS id,
-      COUNT(DISTINCT u.id) AS club_ids,
+        (
+        SELECT COUNT(DISTINCT u2.id)
+        FROM kr_users u2
+        WHERE u2.name = u.name
+          AND u2.mobile = u.mobile
+      ) AS club_ids,
       u.name,
       u.mobile,
       SUM(b.amount) AS payouts,
@@ -1895,11 +1900,16 @@ const UserBalanceModel = {
     const query = `
     SELECT
       MIN(u.id) AS id,
-      COUNT(DISTINCT u.id) AS club_ids,
+         (
+        SELECT COUNT(DISTINCT u2.id)
+        FROM users u2
+        WHERE u2.name = u.name
+          AND u2.mobile = u.mobile
+      ) AS club_ids,
       u.name,
       u.mobile,
       COALESCE(SUM(ubl.amount), 0) AS payouts,
-      COALESCE(SUM(ubl.amount), 0) AS balance_amount
+      
     FROM users u
     INNER JOIN user_balance_logs ubl
       ON ubl.user_id = u.user_id
