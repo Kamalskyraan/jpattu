@@ -1870,10 +1870,10 @@ const UserBalanceModel = {
       WHERE deleted_at IS NULL
         AND status = 'unpaid'
       GROUP BY user_id
-      HAVING SUM(amount) > 0
+      HAVING SUM(amount) >= 1
          AND SUM(amount) <= 99
     ) b
-    INNER JOIN kr_users u
+    LEFT JOIN kr_users u
       ON u.user_id = b.user_id
     GROUP BY
       b.user_id,
@@ -1885,7 +1885,7 @@ const UserBalanceModel = {
 
     return rows.map((row) => ({
       ...row,
-      id: Number(row.id),
+      id: row.id === null ? null : Number(row.id),
       club_ids: Number(row.club_ids),
       payouts: Number(row.payouts),
       balance_amount: Number(row.balance_amount),
