@@ -50,8 +50,10 @@ import {
   getAdminData,
   getTTAdminData,
 } from "./controllers/users.controller.js";
-
+import { createServer } from "http";
+import { initChat } from "./utilities/ChatSocket.js";
 const app = express();
+
 configDotenv();
 
 app.use(
@@ -139,7 +141,9 @@ app.use("/packages", PackageRoutes);
 app.use("/nwp", NwpRoutes);
 app.get("/get-admin-data", getAdminData);
 app.get("/get-tt-admin-data", getTTAdminData);
-
+app.use("/api/health", (req, res) => {
+  res.send("Right Shadow working good");
+});
 // Bank and Parent ID and CLUB Pay dummy
 
 export const addClubPay = async (req, res) => {
@@ -327,6 +331,16 @@ export const findDSAndKRDiffrence = async (req, res) => {
   }
 };
 
-app.listen(process.env.PORT, () => {
+// app.listen(process.env.PORT, () => {
+//   console.log(`Server running @ ${process.env.PORT}`);
+// });
+
+const httpServer = createServer(app);
+
+initChat(httpServer, {
+  origins: (process.env.CHAT_ORIGINS || "http://localhost:5173").split(","),
+});
+
+httpServer.listen(process.env.PORT, () => {
   console.log(`Server running @ ${process.env.PORT}`);
 });

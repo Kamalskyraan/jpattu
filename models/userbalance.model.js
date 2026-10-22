@@ -1858,20 +1858,26 @@ const UserBalanceModel = {
     SELECT
       MIN(u.id) AS id,
       COUNT(DISTINCT u.id) AS club_ids,
-      u.name,
-      u.mobile,
-      COALESCE(SUM(ubl.amount), 0) AS payouts,
-      COALESCE(SUM(ubl.amount), 0) AS balance_amount
-    FROM kr_users u
-    INNER JOIN kr_user_balance_logs ubl
-      ON ubl.user_id = u.user_id
-    WHERE ubl.deleted_at IS NULL
-      AND ubl.status = 'unpaid'
+      MIN(u.name) AS name,
+      MIN(u.mobile) AS mobile,
+      b.total_amount AS payouts,
+      b.total_amount AS balance_amount
+    FROM (
+      SELECT
+        user_id,
+        SUM(amount) AS total_amount
+      FROM kr_user_balance_logs
+      WHERE deleted_at IS NULL
+        AND status = 'unpaid'
+      GROUP BY user_id
+      HAVING SUM(amount) > 0
+         AND SUM(amount) <= 99
+    ) b
+    INNER JOIN kr_users u
+      ON u.user_id = b.user_id
     GROUP BY
-      u.name,
-      u.mobile
-    HAVING SUM(ubl.amount) > 0
-       AND SUM(ubl.amount) < 99
+      b.user_id,
+      b.total_amount
     ORDER BY MIN(u.id) DESC
   `;
 
@@ -1903,7 +1909,7 @@ const UserBalanceModel = {
       u.name,
       u.mobile
     HAVING SUM(ubl.amount) > 0
-       AND SUM(ubl.amount) < 99
+       AND SUM(ubl.amount) <= 99
     ORDER BY MIN(u.id) DESC
   `;
 
@@ -1918,9 +1924,7 @@ const UserBalanceModel = {
     }));
   },
 
-
-
-   markPreviousMonthDSLogsPaid: async () => {
+  markPreviousMonthDSLogsPaid: async () => {
     const connection = await db.getConnection();
     let transactionStarted = false;
 
