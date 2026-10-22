@@ -1867,6 +1867,11 @@ const UserBalanceModel = {
       ON u.user_id = b.user_id
     WHERE b.deleted_at IS NULL
       AND b.status = 'unpaid'
+      AND b.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND b.created_at < DATE_ADD(
+        DATE_FORMAT(CURDATE(), '%Y-%m-01'),
+        INTERVAL 1 MONTH
+      )
     GROUP BY b.user_id
     HAVING SUM(b.amount) > 0
        AND SUM(b.amount) < 100
