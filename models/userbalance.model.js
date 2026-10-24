@@ -1932,7 +1932,7 @@ const UserBalanceModel = {
       u.mobile
 
     HAVING SUM(ubl.amount) > 0
-       AND SUM(ubl.amount) <= 999
+       AND SUM(ubl.amount) <= 99
 
     ORDER BY MIN(u.id) DESC
   `;
