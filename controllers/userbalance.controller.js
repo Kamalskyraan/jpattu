@@ -1198,6 +1198,8 @@ export const getRebirthIds = async (req, res) => {
 
     const rows = await db.query(query, [name, mobile]);
 
+    console.log(rows)
+
     const totalAmount = Number(rows[0].total_amount) || 0;
     const rebirthIds = Math.floor(totalAmount / unitAmount);
 
