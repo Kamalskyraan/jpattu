@@ -1173,7 +1173,10 @@ export const getRebirthIds = async (req, res) => {
     const types = type ? [String(type).toLowerCase()] : ["ds", "kr"];
 
     if (types.some((t) => !["ds", "kr"].includes(t))) {
-      return sendResponse(res, 400, false, "Invalid type");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type",
+      });
     }
 
     const results = [];
