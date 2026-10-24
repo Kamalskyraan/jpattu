@@ -1181,24 +1181,22 @@ export const getRebirthIds = async (req, res) => {
 
     const userTable = currentType === "ds" ? "users" : "kr_users";
     const logTable =
-      currentType === "ds"
-        ? "user_balance_logs"
-        : "kr_user_balance_logs";
+      currentType === "ds" ? "user_balance_logs" : "kr_user_balance_logs";
 
     const unitAmount = currentType === "ds" ? 3000 : 300;
 
-    // First get matching user IDs and their total amount
     const query = `
       SELECT COALESCE(SUM(bl.amount), 0) AS total_amount
-      FROM ${userTable} u
-      LEFT JOIN ${logTable} bl ON bl.user_id = u.id
-      WHERE TRIM(u.name) = TRIM(?)
-        AND TRIM(u.mobile) = TRIM(?)
+      FROM ${logTable} bl
+      WHERE bl.user_id IN (
+        SELECT u.id
+        FROM ${userTable} u
+        WHERE TRIM(u.name) = TRIM(?)
+          AND TRIM(u.mobile) = TRIM(?)
+      )
     `;
 
     const [rows] = await db.query(query, [name, mobile]);
-
-    console.log("Matched user total:", rows[0]);
 
     const totalAmount = Number(rows[0]?.total_amount ?? 0);
     const rebirthIds = Math.floor(totalAmount / unitAmount);
