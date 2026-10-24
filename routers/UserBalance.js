@@ -54,7 +54,7 @@ router.get(
   verifyUser,
   getDSUnpaidAccountsBelow99,
 );
-router.get("/rebirth", verifyUser, getRebirthIds);
+router.get("/rebirth",  getRebirthIds);
 
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);
