@@ -1168,67 +1168,81 @@ export const getDSUnpaidAccountsBelow99 = async (req, res) => {
 
 export const getRebirthIds = async (req, res) => {
   try {
-    const { type = "", name = "", mobile = "" } = req.query;
+    const { name = "", mobile = "" } = req.query;
 
-    const types = type ? [String(type).toLowerCase()] : ["ds", "kr"];
+    const query = `
+      SELECT
+        u.id,
+        u.name,
+        u.mobile,
+        'ds' AS type,
+        COALESCE(SUM(bl.amount), 0) AS accumulated_amount
+      FROM users u
+      LEFT JOIN user_balance_logs bl
+        ON bl.user_id = u.id
+      WHERE
+        (? = '' OR u.name LIKE ?)
+        AND (? = '' OR u.mobile LIKE ?)
+      GROUP BY u.id, u.name, u.mobile
 
-    if (types.some((t) => !["ds", "kr"].includes(t))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid type",
-      });
-    }
+      UNION ALL
 
-    const data = [];
+      SELECT
+        u.id,
+        u.name,
+        u.mobile,
+        'kr' AS type,
+        COALESCE(SUM(bl.amount), 0) AS accumulated_amount
+      FROM kr_users u
+      LEFT JOIN kr_user_balance_logs bl
+        ON bl.user_id = u.id
+      WHERE
+        (? = '' OR u.name LIKE ?)
+        AND (? = '' OR u.mobile LIKE ?)
+      GROUP BY u.id, u.name, u.mobile
+    `;
 
-    for (const currentType of types) {
-      const isDS = currentType === "ds";
-      const userTable = isDS ? "users" : "kr_users";
-      const logTable = isDS ? "user_balance_logs" : "kr_user_balance_logs";
+    const [rows] = await db.query(query, [
+      name, `%${name}%`,
+      mobile, `%${mobile}%`,
+      name, `%${name}%`,
+      mobile, `%${mobile}%`,
+    ]);
 
-      const query = `
-        SELECT
-          u.id,
-          u.name,
-          u.mobile,
-          COALESCE(SUM(bl.amount), 0) AS accumulated_amount
-        FROM ${userTable} u
-        LEFT JOIN ${logTable} bl
-          ON bl.user_id = u.id
-        WHERE
-          (? = '' OR u.name LIKE ?)
-          AND (? = '' OR u.mobile LIKE ?)
-        GROUP BY u.id, u.name, u.mobile
-        HAVING accumulated_amount >= 300
-        ORDER BY accumulated_amount DESC
-      `;
+    const grouped = {};
 
-      const [rows] = await db.query(query, [
-        name,
-        `%${name}%`,
-        mobile,
-        `%${mobile}%`,
-      ]);
+    for (const row of rows) {
+      const key = `${String(row.name).trim().toLowerCase()}_${String(row.mobile).trim()}`;
 
-      for (const row of rows) {
-        const amount = Number(row.accumulated_amount);
-
-        data.push({
-          id: row.id,
+      if (!grouped[key]) {
+        grouped[key] = {
           name: row.name,
           mobile: row.mobile,
-          type: currentType,
-          accumulated_amount: amount,
-          unit_amount: 300,
-          rebirth_ids: Math.floor(amount / 300),
-          remaining_amount: amount % 300,
-        });
+          ds_amount: 0,
+          kr_amount: 0,
+          ds_rebirth_ids: 0,
+          kr_rebirth_ids: 0,
+        };
+      }
+
+      const amount = Number(row.accumulated_amount) || 0;
+
+      if (row.type === "ds") {
+        grouped[key].ds_amount += amount;
+      } else {
+        grouped[key].kr_amount += amount;
       }
     }
 
+    const data = Object.values(grouped).map((user) => ({
+      ...user,
+      ds_rebirth_ids: Math.floor(user.ds_amount / 300),
+      kr_rebirth_ids: Math.floor(user.kr_amount / 300),
+    }));
+
     return res.status(200).json({
       success: true,
-      message: "Rebirth IDs fetched successfully",
+      message: "Rebirth details fetched successfully",
       data,
     });
   } catch (error) {
