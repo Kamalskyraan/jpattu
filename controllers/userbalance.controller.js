@@ -1181,8 +1181,8 @@ export const getRebirthIds = async (req, res) => {
       LEFT JOIN user_balance_logs bl
         ON bl.user_id = u.id
       WHERE
-        (? = '' OR u.name LIKE ?)
-        AND (? = '' OR u.mobile LIKE ?)
+        (? = '' OR TRIM(u.name) = TRIM(?))
+        AND (? = '' OR TRIM(u.mobile) = TRIM(?))
       GROUP BY u.id, u.name, u.mobile
 
       UNION ALL
@@ -1197,16 +1197,16 @@ export const getRebirthIds = async (req, res) => {
       LEFT JOIN kr_user_balance_logs bl
         ON bl.user_id = u.id
       WHERE
-        (? = '' OR u.name LIKE ?)
-        AND (? = '' OR u.mobile LIKE ?)
+        (? = '' OR TRIM(u.name) = TRIM(?))
+        AND (? = '' OR TRIM(u.mobile) = TRIM(?))
       GROUP BY u.id, u.name, u.mobile
     `;
 
     const [rows] = await db.query(query, [
-      name, `%${name}%`,
-      mobile, `%${mobile}%`,
-      name, `%${name}%`,
-      mobile, `%${mobile}%`,
+      name, name,
+      mobile, mobile,
+      name, name,
+      mobile, mobile,
     ]);
 
     const grouped = {};
@@ -1220,8 +1220,6 @@ export const getRebirthIds = async (req, res) => {
           mobile: row.mobile,
           ds_amount: 0,
           kr_amount: 0,
-          ds_rebirth_ids: 0,
-          kr_rebirth_ids: 0,
         };
       }
 
