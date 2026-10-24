@@ -1189,7 +1189,7 @@ export const getRebirthIds = async (req, res) => {
       SELECT
         COALESCE(SUM(bl.amount), 0) AS total_amount
       FROM ${userTable} u
-      LEFT JOIN ${logTable} bl
+      INNER JOIN ${logTable} bl
         ON bl.user_id = u.id
       WHERE
         TRIM(u.name) = TRIM(?)
