@@ -1196,7 +1196,7 @@ export const getRebirthIds = async (req, res) => {
         AND TRIM(u.mobile) = TRIM(?)
     `;
 
-    const [rows] = await db.query(query, [name, mobile]);
+    const rows = await db.query(query, [name, mobile]);
 
     const totalAmount = Number(rows[0].total_amount) || 0;
     const rebirthIds = Math.floor(totalAmount / unitAmount);
