@@ -1198,7 +1198,6 @@ export const getRebirthIds = async (req, res) => {
         FROM ${userTable} u
         LEFT JOIN ${logTable} bl
           ON bl.user_id = u.id
-          AND bl.type = ?
         WHERE
           (? = '' OR u.name LIKE ?)
           AND (? = '' OR u.mobile LIKE ?)
