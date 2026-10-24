@@ -1177,7 +1177,7 @@ export const getRebirthIds = async (req, res) => {
 
     // 1. Name + mobile match aagura users
     const [users] = await db.query(
-      `SELECT id, name, mobile
+      `SELECT user_id, name, mobile
    FROM ${userTable}
    WHERE TRIM(name) = TRIM(?)
      AND TRIM(mobile) = TRIM(?)`,
@@ -1188,7 +1188,7 @@ export const getRebirthIds = async (req, res) => {
 
     // 2. Matching user IDs-oda balance logs
     if (users.length > 0) {
-      const ids = users.map((user) => user.id);
+      const ids = users.map((user) => user.user_id);
 
       const [logs] = await db.query(
         `SELECT user_id, amount
