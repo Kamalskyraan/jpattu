@@ -1171,43 +1171,38 @@ export const getRebirthIds = async (req, res) => {
     const { type = "", name = "", mobile = "" } = req.query;
 
     const currentType = String(type).toLowerCase();
-
-    if (!["ds", "kr"].includes(currentType)) {
-      return res.status(400).json({
-        success: false,
-        message: "Type must be ds or kr",
-      });
-    }
-
     const userTable = currentType === "ds" ? "users" : "kr_users";
     const logTable =
       currentType === "ds" ? "user_balance_logs" : "kr_user_balance_logs";
 
-    const unitAmount = currentType === "ds" ? 3000 : 300;
+    // 1. Name + mobile match aagura users
+    const [users] = await db.query(
+      `SELECT id, name, mobile
+   FROM ${userTable}
+   WHERE TRIM(name) = TRIM(?)
+     AND TRIM(mobile) = TRIM(?)`,
+      [name, mobile],
+    );
 
-    const query = `
-      SELECT COALESCE(SUM(bl.amount), 0) AS total_amount
-      FROM ${logTable} bl
-      WHERE bl.user_id IN (
-        SELECT u.id
-        FROM ${userTable} u
-        WHERE TRIM(u.name) = TRIM(?)
-          AND TRIM(u.mobile) = TRIM(?)
-      )
-    `;
+    console.log("MATCHING USERS:", users);
 
-    const [rows] = await db.query(query, [name, mobile]);
-    console.log(rows);
+    // 2. Matching user IDs-oda balance logs
+    if (users.length > 0) {
+      const ids = users.map((user) => user.id);
 
-    const totalAmount = Number(rows[0]?.total_amount ?? 0);
-    const rebirthIds = Math.floor(totalAmount / unitAmount);
+      const [logs] = await db.query(
+        `SELECT user_id, amount
+     FROM ${logTable}
+     WHERE user_id IN (?)`,
+        [ids],
+      );
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        rebirth_ids: rebirthIds,
-      },
-    });
+      console.log("MATCHING LOGS:", logs);
+      console.log(
+        "TOTAL AMOUNT:",
+        logs.reduce((sum, log) => sum + Number(log.amount || 0), 0),
+      );
+    }
   } catch (error) {
     console.error("Get Rebirth IDs Error:", error);
 
