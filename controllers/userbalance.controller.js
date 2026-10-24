@@ -1179,37 +1179,33 @@ export const getRebirthIds = async (req, res) => {
       });
     }
 
-    const isDS = currentType === "ds";
-    const userTable = isDS ? "users" : "kr_users";
-    const logTable = isDS ? "user_balance_logs" : "kr_user_balance_logs";
+    const userTable = currentType === "ds" ? "users" : "kr_users";
+    const logTable =
+      currentType === "ds"
+        ? "user_balance_logs"
+        : "kr_user_balance_logs";
 
-    const unitAmount = isDS ? 3000 : 300;
+    const unitAmount = currentType === "ds" ? 3000 : 300;
 
+    // First get matching user IDs and their total amount
     const query = `
-      SELECT
-        COALESCE(SUM(bl.amount), 0) AS total_amount
+      SELECT COALESCE(SUM(bl.amount), 0) AS total_amount
       FROM ${userTable} u
-      INNER JOIN ${logTable} bl
-        ON bl.user_id = u.id
-      WHERE
-        TRIM(u.name) = TRIM(?)
+      LEFT JOIN ${logTable} bl ON bl.user_id = u.id
+      WHERE TRIM(u.name) = TRIM(?)
         AND TRIM(u.mobile) = TRIM(?)
     `;
 
-    const rows = await db.query(query, [name, mobile]);
+    const [rows] = await db.query(query, [name, mobile]);
 
-    console.log(rows)
+    console.log("Matched user total:", rows[0]);
 
-    const totalAmount = Number(rows[0].total_amount) || 0;
+    const totalAmount = Number(rows[0]?.total_amount ?? 0);
     const rebirthIds = Math.floor(totalAmount / unitAmount);
 
     return res.status(200).json({
       success: true,
-      message: "Rebirth count fetched successfully",
       data: {
-        type: currentType,
-        name,
-        mobile,
         rebirth_ids: rebirthIds,
       },
     });
