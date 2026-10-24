@@ -1207,7 +1207,7 @@ export const getRebirthIds = async (req, res) => {
         ORDER BY accumulated_amount DESC
       `;
 
-      const rows = await executeQuery(query, [
+      const [rows] = await db.query(query, [
         currentType,
         name,
         `%${name}%`,
@@ -1238,7 +1238,8 @@ export const getRebirthIds = async (req, res) => {
       data: results,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Get Rebirth IDs Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",
