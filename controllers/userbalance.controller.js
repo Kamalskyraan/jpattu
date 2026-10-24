@@ -1238,6 +1238,7 @@ export const getRebirthIds = async (req, res) => {
       data: results,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
