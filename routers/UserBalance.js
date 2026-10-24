@@ -12,6 +12,7 @@ import {
   getLevelIncome,
   getNPLevelIncome,
   getPaymentHistory,
+  getRebirthIds,
   getRTLevelIncome,
   getTTBalanceLogs,
   getTTLevelIncome,
@@ -53,6 +54,7 @@ router.get(
   verifyUser,
   getDSUnpaidAccountsBelow99,
 );
+router.get("/rebirth", verifyUser, getRebirthIds);
 
 router.get("/", verifyUser, getBalanceLogs);
 router.put("/", verifyAdmin, updateBalanceStatus);

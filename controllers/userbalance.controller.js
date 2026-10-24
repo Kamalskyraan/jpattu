@@ -1165,3 +1165,79 @@ export const getDSUnpaidAccountsBelow99 = async (req, res) => {
     });
   }
 };
+
+export const getRebirthIds = async (req, res) => {
+  try {
+    const { type = "", name = "", mobile = "" } = req.query;
+
+    const types = type ? [String(type).toLowerCase()] : ["ds", "kr"];
+
+    if (types.some((t) => !["ds", "kr"].includes(t))) {
+      return sendResponse(res, 400, false, "Invalid type");
+    }
+
+    const results = [];
+
+    for (const currentType of types) {
+      const isDS = currentType === "ds";
+
+      const userTable = isDS ? "users" : "kr_users";
+      const logTable = isDS ? "user_balance_logs" : "kr_user_balance_logs";
+
+      const unitAmount = isDS ? 3000 : 300;
+
+      const query = `
+        SELECT
+          u.id,
+          u.name,
+          u.mobile,
+          COALESCE(SUM(bl.amount), 0) AS accumulated_amount
+        FROM ${userTable} u
+        LEFT JOIN ${logTable} bl
+          ON bl.user_id = u.id
+          AND bl.type = ?
+        WHERE
+          (? = '' OR u.name LIKE ?)
+          AND (? = '' OR u.mobile LIKE ?)
+        GROUP BY u.id, u.name, u.mobile
+        HAVING accumulated_amount >= ?
+        ORDER BY accumulated_amount DESC
+      `;
+
+      const rows = await executeQuery(query, [
+        currentType,
+        name,
+        `%${name}%`,
+        mobile,
+        `%${mobile}%`,
+        unitAmount,
+      ]);
+
+      for (const row of rows) {
+        const amount = Number(row.accumulated_amount);
+
+        results.push({
+          id: row.id,
+          name: row.name,
+          mobile: row.mobile,
+          type: currentType,
+          accumulated_amount: amount,
+          unit_amount: unitAmount,
+          rebirth_ids: Math.floor(amount / unitAmount),
+          remaining_amount: amount % unitAmount,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Rebirth IDs fetched successfully",
+      data: results,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
