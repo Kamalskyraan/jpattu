@@ -1168,80 +1168,48 @@ export const getDSUnpaidAccountsBelow99 = async (req, res) => {
 
 export const getRebirthIds = async (req, res) => {
   try {
-    const { name = "", mobile = "" } = req.query;
+    const { type = "", name = "", mobile = "" } = req.query;
+
+    const currentType = String(type).toLowerCase();
+
+    if (!["ds", "kr"].includes(currentType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Type must be ds or kr",
+      });
+    }
+
+    const isDS = currentType === "ds";
+    const userTable = isDS ? "users" : "kr_users";
+    const logTable = isDS ? "user_balance_logs" : "kr_user_balance_logs";
+
+    const unitAmount = isDS ? 3000 : 300;
 
     const query = `
       SELECT
-        u.id,
-        u.name,
-        u.mobile,
-        'ds' AS type,
-        COALESCE(SUM(bl.amount), 0) AS accumulated_amount
-      FROM users u
-      LEFT JOIN user_balance_logs bl
+        COALESCE(SUM(bl.amount), 0) AS total_amount
+      FROM ${userTable} u
+      LEFT JOIN ${logTable} bl
         ON bl.user_id = u.id
       WHERE
-        (? = '' OR TRIM(u.name) = TRIM(?))
-        AND (? = '' OR TRIM(u.mobile) = TRIM(?))
-      GROUP BY u.id, u.name, u.mobile
-
-      UNION ALL
-
-      SELECT
-        u.id,
-        u.name,
-        u.mobile,
-        'kr' AS type,
-        COALESCE(SUM(bl.amount), 0) AS accumulated_amount
-      FROM kr_users u
-      LEFT JOIN kr_user_balance_logs bl
-        ON bl.user_id = u.id
-      WHERE
-        (? = '' OR TRIM(u.name) = TRIM(?))
-        AND (? = '' OR TRIM(u.mobile) = TRIM(?))
-      GROUP BY u.id, u.name, u.mobile
+        TRIM(u.name) = TRIM(?)
+        AND TRIM(u.mobile) = TRIM(?)
     `;
 
-    const [rows] = await db.query(query, [
-      name, name,
-      mobile, mobile,
-      name, name,
-      mobile, mobile,
-    ]);
+    const [rows] = await db.query(query, [name, mobile]);
 
-    const grouped = {};
-
-    for (const row of rows) {
-      const key = `${String(row.name).trim().toLowerCase()}_${String(row.mobile).trim()}`;
-
-      if (!grouped[key]) {
-        grouped[key] = {
-          name: row.name,
-          mobile: row.mobile,
-          ds_amount: 0,
-          kr_amount: 0,
-        };
-      }
-
-      const amount = Number(row.accumulated_amount) || 0;
-
-      if (row.type === "ds") {
-        grouped[key].ds_amount += amount;
-      } else {
-        grouped[key].kr_amount += amount;
-      }
-    }
-
-    const data = Object.values(grouped).map((user) => ({
-      ...user,
-      ds_rebirth_ids: Math.floor(user.ds_amount / 300),
-      kr_rebirth_ids: Math.floor(user.kr_amount / 300),
-    }));
+    const totalAmount = Number(rows[0].total_amount) || 0;
+    const rebirthIds = Math.floor(totalAmount / unitAmount);
 
     return res.status(200).json({
       success: true,
-      message: "Rebirth details fetched successfully",
-      data,
+      message: "Rebirth count fetched successfully",
+      data: {
+        type: currentType,
+        name,
+        mobile,
+        rebirth_ids: rebirthIds,
+      },
     });
   } catch (error) {
     console.error("Get Rebirth IDs Error:", error);
