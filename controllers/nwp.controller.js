@@ -196,47 +196,47 @@ export const PackageApproved = async (req, res) => {
         allInserts.push({ pkgId, insertResult });
       }
 
-      await sendNWPMail({
-        email,
-        userName: user_name,
-        userId: user_id,
-        joinDate: dayjs(created_at).format("DD MMM YYYY"),
-        mobile,
+      // await sendNWPMail({
+      //   email,
+      //   userName: user_name,
+      //   userId: user_id,
+      //   joinDate: dayjs(created_at).format("DD MMM YYYY"),
+      //   mobile,
 
-        packageAmount: package_amount,
+      //   packageAmount: package_amount,
 
-        totalMonths: schedule.meta.totalMonths,
+      //   totalMonths: schedule.meta.totalMonths,
 
-        perMonthAmount: schedule.meta.perMonthAmount,
+      //   perMonthAmount: schedule.meta.perMonthAmount,
 
-        dailyAmount: parseFloat(schedule.meta.perDayAmount),
+      //   dailyAmount: parseFloat(schedule.meta.perDayAmount),
 
-        benefitAmount: package_amount,
+      //   benefitAmount: package_amount,
 
-        settlementAmount: package_amount,
+      //   settlementAmount: package_amount,
 
-        totalAmount: package_amount * 2,
-      });
+      //   totalAmount: package_amount * 2,
+      // });
 
-      await sendNWPAdminMail({
-        email,
-        userName: user_name,
-        userId: user_id,
-        joinDate: dayjs(created_at).format("DD MMM YYYY"),
-        mobile,
-        packageAmount: package_amount,
+      // await sendNWPAdminMail({
+      //   email,
+      //   userName: user_name,
+      //   userId: user_id,
+      //   joinDate: dayjs(created_at).format("DD MMM YYYY"),
+      //   mobile,
+      //   packageAmount: package_amount,
 
-        // countingDays: schedule.meta.totalDaysAllowed,
+      //   // countingDays: schedule.meta.totalDaysAllowed,
 
-        dailyAmount: parseFloat(schedule.meta.perDayAmount),
-        totalMonths: schedule.meta.totalMonths,
+      //   dailyAmount: parseFloat(schedule.meta.perDayAmount),
+      //   totalMonths: schedule.meta.totalMonths,
 
-        perMonthAmount: schedule.meta.perMonthAmount,
-        benefitAmount: package_amount,
-        settlementAmount: package_amount,
+      //   perMonthAmount: schedule.meta.perMonthAmount,
+      //   benefitAmount: package_amount,
+      //   settlementAmount: package_amount,
 
-        totalAmount: package_amount * 2,
-      });
+      //   totalAmount: package_amount * 2,
+      // });
     }
 
     if (connection) {
