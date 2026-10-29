@@ -1219,3 +1219,46 @@ export const getRebirthIds = async (req, res) => {
 };
 
 
+
+
+
+
+
+export const getMonthlyRebirthIds = async (type, year, month) => {
+  const logTable =
+    type === "ds"
+      ? "user_balance_logs"
+      : "kr_user_balance_logs";
+
+  const unitAmount = type === "ds" ? 3000 : 300;
+
+  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+
+  const nextMonthDate = new Date(year, month, 1);
+
+  const endDate = `${nextMonthDate.getFullYear()}-${String(
+    nextMonthDate.getMonth() + 1
+  ).padStart(2, "0")}-01`;
+
+  const query = `
+    SELECT COALESCE(
+      SUM(FLOOR(user_totals.total_amount / ?)),
+      0
+    ) AS rebirth_ids
+    FROM (
+      SELECT bl.user_id, SUM(bl.amount) AS total_amount
+      FROM ${logTable} bl
+      WHERE bl.created_at >= ?
+        AND bl.created_at < ?
+      GROUP BY bl.user_id
+    ) AS user_totals
+  `;
+
+  const [rows] = await db.query(query, [
+    unitAmount,
+    startDate,
+    endDate,
+  ]);
+
+  return Number(rows[0]?.rebirth_ids ?? 0);
+};

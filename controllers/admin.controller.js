@@ -15,6 +15,7 @@ import {
 } from "../models/nwp.model.js";
 import db from "../configs/db.js";
 import { getTotalSettlementAmount } from "./nwp.controller.js";
+import { getMonthlyRebirthIds } from "./userbalance.controller.js";
 
 export const LoginAdmin = async (req, res) => {
   try {
@@ -263,6 +264,12 @@ export const getHomeDetails = async (req, res) => {
       true,
     );
 
+    // rebirth
+
+    const ds_rebirth_ids = await getMonthlyRebirthIds("ds", year, month);
+
+    const kr_rebirth_ids = await getMonthlyRebirthIds("kr", year, month);
+
     const user_count = await UserModel.getUsersCount(true, year, month, false);
 
     const stockAvailable =
@@ -483,7 +490,8 @@ export const getHomeDetails = async (req, res) => {
         parseInt(totalFSPaidLevelAmount) + parseInt(FStotalPaidCashbackAmount),
       kr_total_paid_amount:
         parseInt(totalKRPaidLevelAmount) + parseInt(KRtotalPaidCashbackAmount),
-
+      ds_rebirth_ids,
+      kr_rebirth_ids,
       user_data: userData,
       nwp_details: nwpDetails,
       nwp_details_all: nwpDetailsAll,
