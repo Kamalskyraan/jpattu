@@ -993,7 +993,7 @@ const AdminModel = {
 
       DS: {
         memberTable: "users",
-        amount: 100000, // 1 Lakh
+        amount: 100000000, // 10cr
       },
     };
 
